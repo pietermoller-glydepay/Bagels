@@ -11,7 +11,7 @@ def create_record(record_data: dict):
         db.session.commit()
         return (record.date, record.description, record.amount)
 
-def getRecordTableRows():
+def get_record_table_rows():
     with app.app_context():
         records = Record.query.join(Record.category).all()
         arr = []

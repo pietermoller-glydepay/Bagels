@@ -1,11 +1,13 @@
+from datetime import datetime
+
 from textual.app import ComposeResult
-from textual.widgets import Static, DataTable, Label, Rule
-from textual.containers import Horizontal, Container
+from textual.containers import Container, Horizontal
+from textual.widgets import Checkbox, DataTable, Label, Rule, Static
+
 from components.base import BasePage
-from components.modals import ConfirmationModal
-from components.base import BasePage
-from components.home.modals import NewRecordModal
-from controllers.records import getRecordTableRows
+from components.modals import ConfirmationModal, InputModal
+from controllers.accounts import get_all_accounts_with_balance
+
 
 class Page(Static):
     def on_mount(self) -> None:
@@ -18,25 +20,25 @@ class Page(Static):
         table.clear()
         if not table.columns:
             table.add_columns("T", "Date", "Category", "Amount", "Label")
-        # table.add_rows(getRecordTableRows())
+        # table.add_rows(get_record_table_rows())
         table.cursor_type = 'cell'
         table.zebra_stripes = True
         table.focus()
     
-    def action_newRecords(self) -> None:
-        def checkResult(result: bool) -> None:
+    def action_new_records(self) -> None:
+        def check_result(result: bool) -> None:
             if result:
                 pass
         
-        self.app.push_screen(NewRecordModal(), callback=checkResult)
+        self.app.push_screen(InputModal(RECORD_FORM), callback=check_result)
         pass
 
-    def action_deleteRecord(self) -> None:
-        def checkDelete(result: bool) -> None:
+    def action_delete_record(self) -> None:
+        def check_delete(result: bool) -> None:
             if result:
                 self.mount(Label("Deleted"))
         
-        self.app.push_screen(ConfirmationModal("Are you sure you want to delete this record?"), checkDelete)
+        self.app.push_screen(ConfirmationModal("Are you sure you want to delete this record?"), check_delete)
 
     # --------------- View --------------- #
     
@@ -44,14 +46,36 @@ class Page(Static):
         self.basepage = BasePage(
             pageName="Home",
             bindings=[
-                ("ctrl+n", "newRecords", "New Records", self.action_newRecords), 
+                ("ctrl+n", "new_records", "New Records", self.action_new_records), 
             ],
         )
         with self.basepage:
             with Horizontal(classes="home-accounts-list"):
-                for i in range(5):
+                for account in get_all_accounts_with_balance():
                     with Container(classes="account-container"):
-                        yield Label(f"[bold]ACCOUNT NAME {i}[/bold]", classes="account-name", markup=True)
-                        yield Label(f"${i}", classes="account-balance")
+                        yield Label(f"[bold]{account['name']}[/bold][italic] {account['description']}[/italic]", classes="account-name", markup=True)
+                        yield Label(f"${account['balance']}", classes="account-balance")
             yield Rule(classes="home-divider", line_style="double")
             yield DataTable(id="records-table")
+
+RECORD_FORM = [
+    {
+        "placeholder": "Label",
+        "title": "Label",
+        "key": "label",
+        "type": "string",
+    },
+    {
+        "placeholder": "0.00",
+        "title": "Amount",
+        "key": "amount",
+        "type": "number",
+    },
+    {
+        "placeholder": "dd (mm) (yy)",
+        "title": "Date",
+        "key": "date",
+        "type": "dateAutoDay",
+        "defaultValue": datetime.now().strftime("%d")
+    },
+]

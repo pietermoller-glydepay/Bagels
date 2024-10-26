@@ -77,10 +77,6 @@ Container.account-container {
   height: 1fr;
   border: round $primary-background-lighten-3;
   align-vertical: middle;
-
-  &:hover {
-    background: $accent 10%;
-  }
 }
 
 .account-balance {

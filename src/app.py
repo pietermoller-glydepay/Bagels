@@ -1,11 +1,12 @@
-from datetime import datetime
-from textual.app import App as TextualApp, ComposeResult
-from textual.widgets import Footer, Tabs, Tab, Header
+from textual.app import App as TextualApp
+from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.css.query import NoMatches
-from rich import print as rprint
-from pages import Home, Settings, Reports, Accounts, Categories, Receivables
+from textual.widgets import Footer, Header, Tab, Tabs
+
 from models.database.app import init_db
+from pages import Accounts, Categories, Home, Receivables, Reports, Settings
+
 
 class App(TextualApp):
 
@@ -46,6 +47,9 @@ class App(TextualApp):
     def newBinding(self, binding: Binding) -> None:
         self._bindings.key_to_bindings.setdefault(binding.key, []).append(binding)
         self.refresh_bindings()
+    
+    def checkBindingExists(self, key: str) -> bool:
+        return key in self._bindings.key_to_bindings
 
     def removeBinding(self, key: str) -> None:
         binding = self._bindings.key_to_bindings.pop(key, None)

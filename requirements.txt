@@ -25,3 +25,4 @@ typing_extensions==4.12.2
 uc-micro-py==1.0.3
 yarl==1.16.0
 sqlalchemy==1.4.46
+Flask-SQLAlchemy==3.1.1

@@ -1,28 +1,39 @@
 from datetime import datetime
 from textual.app import App as TextualApp, ComposeResult
-from controllers.transactions import create_transaction, get_transactions
 from textual.widgets import Footer, Tabs, Tab, Header
 from textual.binding import Binding
 from textual.css.query import NoMatches
 from rich import print as rprint
-from pages import Settings, Transactions, Reports
-from models.database import init_db
+from pages import Home, Settings, Reports, Accounts, Categories, Receivables
+from models.database.app import init_db
 
 class App(TextualApp):
 
-    CSS_PATH = "index.tcss"
+    CSS_PATH = "index.scss"
     BINDINGS = [
         ("ctrl+q", "quit", "Quit")
     ]
 
     PAGES = [
     {
-        "name": "Transactions",
-        "widget": Transactions.Page(classes="content")
+        "name": "Home",
+        "widget": Home.Page(classes="content")
+    },
+    {
+        "name": "Receivables",
+        "widget": Receivables.Page(classes="content")
     },
     {
         "name": "Reports",
         "widget": Reports.Page(classes="content")
+    },
+    {
+        "name": "Accounts",
+        "widget": Accounts.Page(classes="content")
+    },
+    {
+        "name": "Categories",
+        "widget": Categories.Page(classes="content")
     },
     {
         "name": "Settings",
@@ -66,21 +77,13 @@ class App(TextualApp):
     # --------------- View --------------- #
     def compose(self) -> ComposeResult:
         yield Header()
-        # yield Tabs(Tab("Transactions", id="t1"), Tab("Reports", id="t2"), Tab("Settings", id="t3"))
-        yield Tabs(*[Tab(page["name"], id=f"t{index + 1}") for index, page in enumerate(self.PAGES)])
+        yield Tabs(*[Tab(f"{page["name"]} [{index+1}]", id=f"t{index + 1}") for index, page in enumerate(self.PAGES)])
         yield Footer()
     
 
 if __name__ == "__main__":
     app = App()
     init_db()
-    # print(get_transactions())
-    # create_transaction({
-    #     "date": datetime.now(),
-    #     "description": "Test",
-    #     "amount": 100
-    # })
-    # rprint(get_transactions())
     app.run()
 
 

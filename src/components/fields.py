@@ -3,19 +3,14 @@ from textual.containers import Container
 from textual.widgets import Label, Input, Static
 
 class Field(Static):
-    def __init__(self, placeholder: str, title: str, name: str, type: str, defaultValue: str):
+    def __init__(self, field: dict):
         super().__init__()
-        self.placeholder = placeholder
-        self.title = title
-        self._name = name
-        self.type = type
-        self.defaultValue = defaultValue
-        
-    @property
-    def name(self):
-        return self._name
+        self.field = field
 
     def compose(self) -> ComposeResult:
-        with Container(classes="row"):
-            yield Label(f"{self.title}:")
-            yield Input(placeholder=self.placeholder, id=self.name, value=self.defaultValue)
+        with Container(classes="row", id=f"row-field-{self.field['key']}"):
+            yield Label(f"{self.field['title']}:")
+            yield Input(placeholder=self.field["placeholder"],
+                        id=f"field-{self.field['key']}",
+                        value=self.field.get("defaultValue", "")
+                    )

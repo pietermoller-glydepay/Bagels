@@ -8,8 +8,8 @@ def validateForm(formComponent: Widget, formData: list[dict]):
     isValid = True
 
     for field in formData:
-        fieldName = field["title"].lower()
-        fieldValue = formComponent.query_one(f"#{field['title'].lower()}").value
+        fieldKey = field["key"]
+        fieldValue = formComponent.query_one(f"#field-{fieldKey}").value
 
         try:
             match field["type"]:
@@ -18,11 +18,11 @@ def validateForm(formComponent: Widget, formData: list[dict]):
                         if fieldValue.isdigit():
                             if "min" in field and "max" in field and field["min"] is not None and field["max"] is not None:
                                 if field["min"] <= fieldValue <= field["max"]:
-                                    result[fieldName] = fieldValue
+                                    result[fieldKey] = fieldValue
                                 else:
                                     raise ValueError(f"Field must be between {field['min']} and {field['max']}")
                             else:
-                                result[fieldName] = fieldValue
+                                result[fieldKey] = fieldValue
                         else:
                             raise ValueError("Field must be a number")
                     else:
@@ -31,7 +31,7 @@ def validateForm(formComponent: Widget, formData: list[dict]):
                     if fieldValue != "":
                         formattedDate = datetime.strptime(fieldValue, "%d %m %y")
                         if formattedDate:
-                            result[fieldName] = formattedDate
+                            result[fieldKey] = formattedDate
                         else:
                             raise ValueError("Field must be in dd mm yy format")
                     else:
@@ -42,18 +42,18 @@ def validateForm(formComponent: Widget, formData: list[dict]):
                         thisYear = datetime.now().strftime("%y")
                         formattedDate = datetime.strptime(f"{fieldValue} {thisMonth} {thisYear}", "%d %m %y")
                         if formattedDate:
-                            result[fieldName] = formattedDate
+                            result[fieldKey] = formattedDate
                         else:
                             raise ValueError("Field must be in dd (mm) (yy) format. (optional)")
                     else:
                         raise ValueError("Field is required")
                 case _:
                     if fieldValue != "":
-                        result[fieldName] = fieldValue
+                        result[fieldKey] = fieldValue
                     else:
                         raise ValueError("Field is required")
         except ValueError as e:
-            errors[fieldName] = e.args[0]
+            errors[fieldKey] = e.args[0]
             isValid = False
         
     return result, errors, isValid

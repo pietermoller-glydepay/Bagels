@@ -1,0 +1,88 @@
+Input {
+  background: black 0%;
+  border: none;
+  height: 1;
+}
+
+.base-page {
+  padding: 0 1;
+}
+
+#confirmation-modal-screen {
+  align: center middle;
+  background: $background 40%;
+}
+
+.dialog {
+  padding: 0 1;
+  width: 80%;
+  height: 5;
+  border: round $accent;
+  background: $surface;
+  align-vertical: middle;
+
+  Label {
+    color: white;
+    width: 1fr;
+    text-align: center;
+  }
+}
+
+#input-modal-screen {
+  align: center bottom;
+  background: $background 40%;
+}
+
+.input-dialog {
+  margin: 2;
+  padding: 1 2;
+  width: 1fr;
+  height: 10;
+  border: round $accent;
+  background: $surface;
+}
+
+#question {
+  column-span: 2;
+  height: 1fr;
+  width: 1fr;
+  content-align: center middle;
+}
+
+.row {
+  height: 1;
+  layout: horizontal;
+
+  Label {
+    color: $accent;
+  }
+
+  Label.error {
+    color: red;
+    dock: right;
+  }
+}
+
+.home-accounts-list {
+  height: 4;
+  width: 1fr;
+}
+
+.home-divider {
+  color: $primary-background-lighten-3;
+  margin: 0;
+}
+
+Container.account-container {
+  height: 1fr;
+  border: round $primary-background-lighten-3;
+  align-vertical: middle;
+
+  &:hover {
+    background: $accent 10%;
+  }
+}
+
+.account-balance {
+  color: $secondary;
+}

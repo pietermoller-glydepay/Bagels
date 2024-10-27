@@ -29,7 +29,7 @@ Input {
 }
 
 #input-modal-screen {
-  align: center bottom;
+  align: center top;
   background: $background 40%;
 }
 
@@ -37,6 +37,7 @@ Input {
   margin: 2;
   padding: 1 2;
   width: 1fr;
+  max-width: 80;
   height: 10;
   border: round $accent;
   background: $surface;
@@ -80,5 +81,14 @@ Container.account-container {
 }
 
 .account-balance {
+  color: $secondary;
+}
+
+.hidden {
+  visibility: hidden;
+}
+
+DataTable > .datatable--cursor {
+  background: $secondary 50%;
   color: $secondary;
 }

@@ -46,6 +46,10 @@ def get_all_accounts_with_balance():
 
         return accounts_with_balance
 
+def get_account_by_id(account_id):
+    with app.app_context():
+        return Account.query.get(account_id)
+
 def update_account(account_id, data):
     with app.app_context():
         account = Account.query.get(account_id)

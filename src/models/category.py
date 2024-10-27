@@ -4,9 +4,12 @@ from .database.db import db
 
 
 class Nature(Enum):
-    WANT = "want"
-    NEED = "need"
-    MUST = "must"
+    WANT = "Want"
+    NEED = "Need"
+    MUST = "Must"
+
+    def __str__(self):
+        return self.value
 
 class Category(db.Model):
     __tablename__ = "category"

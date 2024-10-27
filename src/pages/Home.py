@@ -30,7 +30,7 @@ class Page(Static):
             if result:
                 pass
         
-        self.app.push_screen(InputModal(RECORD_FORM), callback=check_result)
+        self.app.push_screen(InputModal("New Record", RECORD_FORM), callback=check_result)
         pass
 
     def action_delete_record(self) -> None:
@@ -53,7 +53,7 @@ class Page(Static):
             with Horizontal(classes="home-accounts-list"):
                 for account in get_all_accounts_with_balance():
                     with Container(classes="account-container"):
-                        yield Label(f"[bold]{account['name']}[/bold][italic] {account['description']}[/italic]", classes="account-name", markup=True)
+                        yield Label(f"[bold]{account['name']}[/bold][italic] {account['description'] or ""}[/italic]", classes="account-name", markup=True)
                         yield Label(f"${account['balance']}", classes="account-balance")
             yield Rule(classes="home-divider", line_style="double")
             yield DataTable(id="records-table")

@@ -11,11 +11,12 @@ def validateForm(formComponent: Widget, formData: list[dict]):
 
     for field in formData:
         fieldKey = field["key"]
-        fieldValue = formComponent.query_one(f"#field-{fieldKey}").value
+        fieldWidget = formComponent.query_one(f"#field-{fieldKey}")
+        fieldValue = fieldWidget.heldValue if hasattr(fieldWidget, "heldValue") else fieldWidget.value
 
         try:
             match field["type"]:
-                case "number":
+                case "integer":
                     if field.get("isRequired", False) is True and fieldValue == "":
                         raise ValueError(f"{field["title"]} is required")
                     if fieldValue != "":
@@ -28,7 +29,15 @@ def validateForm(formComponent: Widget, formData: list[dict]):
                             else:
                                 result[fieldKey] = fieldValue
                         else:
-                            raise ValueError(f"{field["title"]} must be a number")
+                            raise ValueError(f"{field["title"]} must be an integer")
+                case "float":
+                    if field.get("isRequired", False) is True and fieldValue == "":
+                        raise ValueError(f"{field["title"]} is required")
+                    if fieldValue != "":
+                        if fieldValue.replace('.', '', 1).isdigit():
+                            result[fieldKey] = fieldValue
+                        else:
+                            raise ValueError(f"{field["title"]} must be a float")
                 case "date":
                     if field.get("isRequired", False) is True and fieldValue == "":
                         raise ValueError(f"{field["title"]} is required")
@@ -49,6 +58,13 @@ def validateForm(formComponent: Widget, formData: list[dict]):
                             result[fieldKey] = formattedDate
                         else:
                             raise ValueError(f"{field["title"]} must be in dd (mm) (yy) format. (optional)")
+                case "autocomplete":
+                    if field.get("isRequired", False) is True and fieldValue == "":
+                        raise ValueError(f"{field["title"]} must be selected")
+                    if fieldValue != "":
+                        if str(fieldWidget.value) != str(fieldValue):
+                            raise ValueError(f"Did you press tab?")
+                        result[fieldKey] = fieldValue
                 case _:
                     if field.get("isRequired", False) is True and fieldValue == "":
                         raise ValueError(f"{field["title"]} is required")

@@ -1,3 +1,5 @@
+from rich.text import Text
+
 from models.category import Category, Nature
 from models.database.app import get_app
 from models.database.db import db
@@ -33,7 +35,7 @@ def get_all_categories(): # special function to get the categories in a tree for
                 if category.parentCategoryId == parent_id:
                     # Determine the node symbol based on depth
                     if depth == 0:
-                        node = "◯"
+                        node = Text("●", style=category.color)
                     else:
                         node = " " * (depth - 1) + ("└" if is_last(category, parent_id) else "├")
                     
@@ -47,6 +49,10 @@ def get_all_categories(): # special function to get the categories in a tree for
             return category == siblings[-1]
 
         return build_category_tree()
+
+def get_category_by_id(category_id):
+    with app.app_context():
+        return Category.query.get(category_id)  
 
 def update_category(category_id, data):
     with app.app_context():

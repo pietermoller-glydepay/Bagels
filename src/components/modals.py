@@ -24,13 +24,14 @@ class ConfirmationModal(ModalScreen):
             self.dismiss(False)
 
 class InputModal(ModalScreen):
-    def __init__(self, form: list[dict], *args, **kwargs):
+    def __init__(self, title: str, form: list[dict], *args, **kwargs):
         super().__init__(id="input-modal-screen", *args, **kwargs)
+        self.title = title
         self.form = form
 
     def compose(self) -> ComposeResult:
         with Container(classes="input-dialog"):
-            yield Label("[bold]New Account[/bold]")
+            yield Label(f"[bold]{self.title}[/bold]")
             for field in self.form:
                 yield Field(field)
     

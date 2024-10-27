@@ -1,3 +1,5 @@
+import copy
+
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.widgets import DataTable, Label, Static
@@ -5,7 +7,8 @@ from textual.widgets import DataTable, Label, Static
 from components.base import BasePage
 from components.modals import ConfirmationModal, InputModal
 from controllers.accounts import (create_account, delete_account,
-                                  get_all_accounts)
+                                  get_account_by_id, get_all_accounts,
+                                  update_account)
 
 
 class Page(Static):
@@ -19,7 +22,8 @@ class Page(Static):
     
     def on_unmount(self) -> None:
         self.basePage.removeBinding("backspace")
-    
+        self.basePage.removeBinding("ctrl+e")
+        
     # ------------- Callbacks ------------ #
     
     def build_table(self) -> None:
@@ -30,6 +34,7 @@ class Page(Static):
         accounts = get_all_accounts()
         if accounts:
             self.basePage.newBinding("backspace", "delete_account", "Delete Account", self.action_delete_account)
+            self.basePage.newBinding("ctrl+e", "edit_account", "Edit Account", self.action_edit_account)
             for account in accounts:
                 table.add_row(account.name, account.description, account.beginningBalance, account.repaymentDate, key=str(account.id))
         
@@ -46,18 +51,38 @@ class Page(Static):
                 try:
                     create_account(result)
                 except Exception as e:
-                    self.mount(Label(f"[bold red]{e}[/bold red]"))
+                    self.app.notify(title="Error", message=f"{e}", severity="error", timeout=10)
+                self.app.notify(title="Success", message=f"Account {result['name']} created", severity="information", timeout=3)
                 self.build_table()
         
-        self.app.push_screen(InputModal(ACCOUNT_FORM), callback=check_result)
+        self.app.push_screen(InputModal("New Account", ACCOUNT_FORM), callback=check_result)
 
     def action_delete_account(self) -> None:
         def check_delete(result: bool) -> None:
             if result:
                 delete_account(self.current_row)
+                self.app.notify(title="Success", message=f"Deleted account", severity="information", timeout=3)
                 self.build_table()
         
-        self.app.push_screen(ConfirmationModal("Are you sure you want to delete this record?"), check_delete)
+        self.app.push_screen(ConfirmationModal("Are you sure you want to delete this account? Your existing transactions will not be deleted."), check_delete)
+    
+    def action_edit_account(self) -> None:
+        def check_result(result: bool) -> None:
+            if result:
+                try:
+                    update_account(self.current_row, result)
+                except Exception as e:
+                    self.app.notify(title="Error", message=f"{e}", severity="error", timeout=10)
+                self.app.notify(title="Success", message=f"Account {result['name']} updated", severity="information", timeout=3)
+                self.build_table()
+        
+        account = get_account_by_id(self.current_row)
+        if account:
+            filled_account_form = copy.deepcopy(ACCOUNT_FORM)
+            for field in filled_account_form:
+                value = getattr(account, field["key"])
+                field["defaultValue"] = str(value) if value is not None else ""
+            self.app.push_screen(InputModal("Edit Account", filled_account_form), callback=check_result)
     
     # --------------- View --------------- #
     def compose(self) -> ComposeResult:
@@ -88,7 +113,7 @@ ACCOUNT_FORM = [
         "placeholder": "0.00",
         "title": "Beginning Balance",
         "key": "beginningBalance",
-        "type": "number",
+        "type": "float",
         "defaultValue": "0",
         "isRequired": True
     },
@@ -96,6 +121,6 @@ ACCOUNT_FORM = [
         "placeholder": "dd",
         "title": "Repayment Date",
         "key": "repaymentDate",
-        "type": "number",
+        "type": "integer",
     }
 ]

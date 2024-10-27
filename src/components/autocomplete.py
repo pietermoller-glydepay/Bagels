@@ -132,11 +132,6 @@ CompletionStrategy = (
 
 
 class AutoComplete(Widget):
-    DEFAULT_CSS = """\
-AutoComplete {
-    align-horizontal: center;
-}
-    """
 
     def __init__(
         self,
@@ -287,6 +282,7 @@ Dropdown .autocomplete--selection-cursor {
         # edge: str = "bottom",  # Literal["top", "bottom"]
         # tracking: Whether the dropdown should follow the cursor or remain static.
         # tracking: str = "follow_cursor",  # Literal["follow_cursor", "static"]
+        show_on_focus: bool = True,
         id: str | None = None,
         classes: str | None = None,
     ):
@@ -309,7 +305,7 @@ Dropdown .autocomplete--selection-cursor {
         # self._tracking = tracking
         self.items = items
         self.input_widget: Input
-
+        self.show_on_focus = show_on_focus
     def compose(self) -> ComposeResult:
         self.child = DropdownChild(self.input_widget)
         yield self.child
@@ -387,7 +383,7 @@ Dropdown .autocomplete--selection-cursor {
             self.sync_state(value, self.input_widget.cursor_position)
         
     def _input_focus_changed(self, has_focus: bool) -> None:
-        if self.input_widget is not None:
+        if self.input_widget is not None and self.show_on_focus:
             self.sync_state(self.input_widget.value, self.input_widget.cursor_position)
 
     def sync_state(self, value: str, input_cursor_position: int) -> None:

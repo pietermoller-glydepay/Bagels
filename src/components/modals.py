@@ -1,10 +1,14 @@
+
+from datetime import datetime
+
 from textual import events
 from textual.app import ComposeResult
-from textual.containers import Container
+from textual.containers import Container, Horizontal
 from textual.screen import ModalScreen
-from textual.widgets import Label
+from textual.widgets import Input, Label, ListItem, ListView
 
-from components.fields import Field
+from components.fields import Fields
+from controllers.accounts import get_all_accounts_with_balance
 from utils.form import validateForm
 
 
@@ -31,9 +35,8 @@ class InputModal(ModalScreen):
 
     def compose(self) -> ComposeResult:
         with Container(classes="input-dialog"):
-            yield Label(f"[bold]{self.title}[/bold]")
-            for field in self.form:
-                yield Field(field)
+            yield Label(f"[bold]{self.title}[/bold]", classes="input-dialog-title")
+            yield Fields(self.form)
     
     # --------------- Hooks -------------- #
 
@@ -52,7 +55,6 @@ class InputModal(ModalScreen):
     def action_submit(self):
         resultForm, errors, isValid = validateForm(self, self.form)
         if isValid:
-            # transaction = create_transaction(resultForm)
             self.dismiss(resultForm)
         else: 
             previousErrors = self.query(".error")
@@ -60,4 +62,98 @@ class InputModal(ModalScreen):
                 error.remove()
             for key, value in errors.items():
                 field = self.query_one(f"#row-field-{key}")
-                field.mount(Label(f"{value}!", classes="error"))
+                field.mount(Label(value, classes="error"))
+
+class TransferModal(ModalScreen):
+    def __init__(self, *args, **kwargs):
+        super().__init__(id="transfer-modal-screen", *args, **kwargs)
+        self.accounts = get_all_accounts_with_balance()
+        self.form = [
+            {
+                "title": "Label",
+                "key": "label",
+                "type": "string",
+                "placeholder": "Label",
+                "isRequired": True
+            },
+            {
+                "title": "Amount",
+                "key": "amount",
+                "type": "number",
+                "placeholder": "0.00",
+                "isRequired": True
+            },
+            {
+                "placeholder": "dd (mm) (yy)",
+                "title": "Date",
+                "key": "date",
+                "type": "dateAutoDay",
+                "defaultValue": datetime.now().strftime("%d")
+            }
+        ]
+        self.fromAccount = self.accounts[0]["id"]
+        self.toAccount = self.accounts[1]["id"]
+    
+    def on_key(self, event: events.Key):
+        if event.key == "right":
+            self.screen.focus_next()
+        elif event.key == "left":
+            self.screen.focus_previous()
+        elif event.key == "enter":
+            self.action_submit()
+        elif event.key == "escape":
+            self.dismiss(None)
+    
+    def on_list_view_highlighted(self, event: ListView.Highlighted):
+        accountId = event.item.id.split("-")[1]
+        if event.list_view.id == "from-accounts":
+            self.fromAccount = accountId
+        elif event.list_view.id == "to-accounts":
+            self.toAccount = accountId
+    
+    def action_submit(self):
+        resultForm, errors, isValid = validateForm(self, self.form)
+        if self.fromAccount == self.toAccount:
+            self.query_one("#transfer-error").update("From and to accounts cannot be the same")
+        else:
+            self.query_one("#transfer-error").update("")
+            if isValid:
+                resultForm["accountId"] = self.fromAccount
+                resultForm["transferToAccountId"] = self.toAccount
+                resultForm["isTransfer"] = True
+                self.dismiss(resultForm)
+            else: 
+                previousErrors = self.query(".error")
+                for error in previousErrors:
+                    error.remove()
+                for key, value in errors.items():
+                    field = self.query_one(f"#row-field-{key}")
+                    field.mount(Label(value, classes="error"))
+    
+    def compose(self) -> ComposeResult:
+        with Container(classes="transfer-modal"):
+            yield Label(f"[bold]New transfer[/bold]", classes="title")
+            yield Fields(self.form)
+            with Container(id="accounts-container"):
+                yield ListView(
+                        *[ListItem(
+                                Label(f"{account["name"]} (Bal: [yellow]{account['balance']}[/yellow])", classes="account-name"),
+                                classes="item",
+                                id=f"account-{account['id']}"
+                            ) for account in self.accounts]
+                        , id="from-accounts", 
+                        classes="accounts"
+                    )
+                yield Label("<====>", classes="arrow")
+                yield ListView(
+                        *[ListItem(
+                                Label(f"{account["name"]} (Bal: [yellow]{account['balance']}[/yellow])", classes="account-name"),
+                                classes="item",
+                                id=f"account-{account['id']}"
+                            ) for account in self.accounts]
+                        , id="to-accounts",
+                        classes="accounts",
+                        initial_index=1
+                    )
+            yield Label(id="transfer-error")
+                

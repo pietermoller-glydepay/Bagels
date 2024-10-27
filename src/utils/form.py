@@ -62,8 +62,15 @@ def validateForm(formComponent: Widget, formData: list[dict]):
                     if field.get("isRequired", False) is True and fieldValue == "":
                         raise ValueError(f"{field["title"]} must be selected")
                     if fieldValue != "":
-                        if str(fieldWidget.value) != str(fieldValue):
-                            raise ValueError(f"Did you press tab?")
+                        if field["options"][0].get("text", "") != "":
+                            fieldInputValue = ""
+                            for item in field["options"]:
+                                if item["text"] == fieldWidget.value:
+                                    fieldInputValue = item["value"]
+                                    break
+                            # if the input's entered text's value of the field is not the same as registered value
+                            if str(fieldInputValue) != str(fieldValue):
+                                raise ValueError(f"Did you press tab?")
                         result[fieldKey] = fieldValue
                 case _:
                     if field.get("isRequired", False) is True and fieldValue == "":

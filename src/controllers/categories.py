@@ -15,6 +15,10 @@ def create_default_categories():
             category = Category(**category_data)
             db.session.add(category)
         db.session.commit()
+        
+def check_any_category():
+    with app.app_context():
+        return Category.query.count() > 0
 
 def create_category(data):
     with app.app_context():
@@ -37,7 +41,7 @@ def get_all_categories(): # special function to get the categories in a tree for
                     if depth == 0:
                         node = Text("●", style=category.color)
                     else:
-                        node = " " * (depth - 1) + ("└" if is_last(category, parent_id) else "├")
+                        node = Text(" " * (depth - 1) + ("└" if is_last(category, parent_id) else "├"), style=category.color)
                     
                     result.append((category, node))
                     # Recursively add subcategories with increased depth

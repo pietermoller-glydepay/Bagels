@@ -1,9 +1,18 @@
 from textual.app import ComposeResult
 from textual.containers import Container
-from textual.widgets import Input, Label, Static
+from textual.widgets import Checkbox, Input, Label, Static, Switch
 
 from components.autocomplete import AutoComplete, Dropdown, DropdownItem
 
+
+class Fields(Static):
+    def __init__(self, fields: list[dict]):
+        super().__init__()
+        self.fields = fields
+    
+    def compose(self) -> ComposeResult:
+        for field in self.fields:
+            yield Field(field)
 
 class Field(Static):
     def __init__(self, field: dict):
@@ -12,9 +21,15 @@ class Field(Static):
         self.input = Input(placeholder=self.field.get("placeholder", ""),
                             id=f"field-{self.field['key']}",
                         )
-        if self.field["type"] == "autocomplete":
+        self.field_type = self.field["type"]
+        if self.field_type in ["integer", "number"]:
+            self.input.type = self.field_type
+        elif self.field_type == "autocomplete":
             self.input.__setattr__("heldValue", self.field.get("defaultValue", ""))
-            self.input.value = str(self.field.get("defaultValue", ""))
+            self.input.value = str(self.field.get("defaultValueText", self.field.get("defaultValue", "")))
+        
+        if self.field_type not in ["boolean", "autocomplete"]:
+            self.input.value = self.field.get("defaultValue", "")
     
     def on_auto_complete_selected(self, event: AutoComplete.Selected) -> None:
         for item in self.field["options"]:
@@ -26,7 +41,7 @@ class Field(Static):
     def compose(self) -> ComposeResult:
         if self.field["type"] != "hidden":
             with Container(classes="row", id=f"row-field-{self.field['key']}"):
-                yield Label(f"{self.field['title']}:")
+                yield Label(f"{self.field['title']}", classes="row-label")
                 if self.field["type"] == "autocomplete":
                     yield AutoComplete(
                         self.input,
@@ -34,13 +49,17 @@ class Field(Static):
                             DropdownItem(item.get("text", item["value"]),
                                         item.get("prefix", ""),
                                         item.get("postfix", "⇥")) for item in self.field["options"]
-                        ])
+                        ], show_on_focus=False)
+                        ,classes="field-autocomplete"
                     )
+                elif self.field["type"] == "boolean":
+                    with Container(classes="switch-group"):
+                        yield Label(f"[italic]{self.field["labels"][0]}[/italic]")
+                        yield Switch(id=f"field-{self.field['key']}",
+                                    value=self.field.get("defaultValue", False))
+                        yield Label(f"[italic]{self.field["labels"][1]}[/italic]")
                 else:
-                    yield Input(placeholder=self.field.get("placeholder", ""),
-                            id=f"field-{self.field['key']}",
-                            value=self.field.get("defaultValue", "")
-                        )
+                    yield self.input
         else:
             self.input = Static(id=f"field-{self.field['key']}")
             self.input.__setattr__("heldValue", self.field.get("defaultValue", ""))

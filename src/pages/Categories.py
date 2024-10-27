@@ -25,7 +25,11 @@ class Page(Static):
     def on_unmount(self) -> None:
         self.basePage.removeBinding("backspace")
         self.basePage.removeBinding("ctrl+d")
-        self.basePage.removeBinding("ctrl+e")
+        self.basePage.removeBinding("space")
+    
+    def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
+        if event.row_key:
+            self.current_row = event.row_key.value
         
     # ------------- Callbacks ------------ #
     
@@ -37,17 +41,13 @@ class Page(Static):
         categories = get_all_categories()
         if categories:
             self.basePage.newBinding("ctrl+d", "new_subcategory", "New Subcategory", self.action_new_subcategory)
-            self.basePage.newBinding("ctrl+e", "edit_category", "Edit", self.action_edit_category)
+            self.basePage.newBinding("space", "edit_category", "Edit", self.action_edit_category)
             self.basePage.newBinding("backspace", "delete_category", "Delete", self.action_delete_category)
             for category, node in categories:
                 table.add_row(node, category.name, category.nature.value, key=category.id)
         
         table.zebra_stripes = True
         table.focus()
-    
-    def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
-        if event.row_key:
-            self.current_row = event.row_key.value
     
     def action_new_category(self) -> None:
         def check_result(result: bool) -> None:
@@ -56,7 +56,9 @@ class Page(Static):
                     create_category(result)
                 except Exception as e:
                     self.app.notify(title="Error", message=f"{e}", severity="error", timeout=10)
-                self.build_table()
+                else:
+                    self.app.notify(title="Success", message=f"Category created", severity="information", timeout=3)
+                    self.build_table()
         
         self.app.push_screen(InputModal("New Category", CATEGORY_FORM), callback=check_result)
     
@@ -67,12 +69,14 @@ class Page(Static):
                     create_category(result)
                 except Exception as e:
                     self.app.notify(title="Error", message=f"{e}", severity="error", timeout=10)
-                self.build_table()
+                else:
+                    self.app.notify(title="Success", message=f"Subcategory created", severity="information", timeout=3)
+                    self.build_table()
         subcategory_form = copy.deepcopy(CATEGORY_FORM)
         subcategory_form.append({
             "key": "parentCategoryId",
             "type": "hidden",
-            "defaultValue": self.current_row
+            "defaultValue": str(self.current_row)
         })
         parent_category = get_category_by_id(self.current_row)
         self.app.push_screen(InputModal(f"New Subcategory of {parent_category.name}", subcategory_form), callback=check_result)
@@ -100,11 +104,18 @@ class Page(Static):
                     self.build_table()
         
         category = get_category_by_id(self.current_row)
+        filled_category_form = copy.deepcopy(CATEGORY_FORM)
         if category:
-            filled_category_form = [
-                {**field, "defaultValue": getattr(category, field["key"], "")}
-                for field in CATEGORY_FORM
-            ]
+            for field in filled_category_form:
+                value = getattr(category, field["key"])
+                if field["key"] == "nature":
+                    field["defaultValue"] = category.nature
+                    field["defaultValueText"] = category.nature.value
+                elif field["key"] == "color":
+                    field["defaultValue"] = category.color
+                    field["defaultValueText"] = category.color
+                else:
+                    field["defaultValue"] = str(value) if value is not None else ""
             self.app.push_screen(InputModal("Edit Category", filled_category_form), callback=check_result)
     
     # --------------- View --------------- #
@@ -117,6 +128,8 @@ class Page(Static):
         )
         with self.basePage:
             yield DataTable(id="categories-table", cursor_type="row")
+            if not get_all_categories():
+                yield Label("No categories. Use [bold yellow][^n][/bold yellow] to create one.", classes="label-empty")
 
 CATEGORY_FORM = [
     {
@@ -156,35 +169,35 @@ CATEGORY_FORM = [
         "type": "autocomplete",
         "options": [
             {
-                "value": "red",
+                "value": "Red",
                 "prefix": Text("●", style="red")
             },
             {
-                "value": "orange",
+                "value": "Orange",
                 "prefix": Text("●", style="orange")
             },
             {
-                "value": "yellow",
+                "value": "Yellow",
                 "prefix": Text("●", style="yellow")
             },
             {
-                "value": "green",
+                "value": "Green",
                 "prefix": Text("●", style="green")
             },
             {
-                "value": "blue",
+                "value": "Blue",
                 "prefix": Text("●", style="blue")
             },
             {
-                "value": "purple",
+                "value": "Purple",
                 "prefix": Text("●", style="purple")
             },
             {
-                "value": "grey",
+                "value": "Grey",
                 "prefix": Text("●", style="grey")
             },
             {
-                "value": "white",
+                "value": "White",
                 "prefix": Text("●", style="white")
             }
         ],

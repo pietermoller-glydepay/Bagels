@@ -7,6 +7,46 @@ from models.record import Record
 
 app = get_app()
 
+# -------------- Helpers ------------- #
+
+def get_all_accounts():
+    with app.app_context():
+        return Account.query.all()
+    
+def calculate_account_balance(account_id):
+    total_income = db.session.query(func.sum(Record.amount)).filter(
+        Record.accountId == account_id,
+        Record.isIncome.is_(True)
+    ).scalar() or 0
+
+    total_expense = db.session.query(func.sum(Record.amount)).filter(
+        Record.accountId == account_id,
+        Record.isIncome.is_(False),
+        Record.isTransfer.is_(False)
+    ).scalar() or 0
+    
+    total_transfer_received = db.session.query(func.sum(Record.amount)).filter(
+        Record.transferToAccountId == account_id,
+        Record.isTransfer.is_(True)
+    ).scalar() or 0
+    
+    total_transfer_sent = db.session.query(func.sum(Record.amount)).filter(
+        Record.accountId == account_id,
+        Record.isTransfer.is_(True)
+    ).scalar() or 0
+
+    account = Account.query.get(account_id)
+    if account is None:
+        return None
+
+    return account.beginningBalance + total_income - total_expense + total_transfer_received - total_transfer_sent
+    
+# --------------- CRUD --------------- #
+
+def check_any_account():
+    with app.app_context():
+        return Account.query.count() > 0
+
 def create_account(data):
     with app.app_context():
         new_account = Account(**data)
@@ -14,26 +54,14 @@ def create_account(data):
         db.session.commit()
     return new_account
 
-def get_all_accounts():
-    with app.app_context():
-        return Account.query.all()
-
 def get_all_accounts_with_balance():
     with app.app_context():
-        # Query all accounts
         accounts = Account.query.all()
-
-        # Prepare a list to hold account data with balances
         accounts_with_balance = []
 
         for account in accounts:
-            # Calculate the sum of all record amounts for each account
-            total_amount = db.session.query(func.sum(Record.amount)).filter(Record.accountId == account.id).scalar() or 0
+            updated_balance = calculate_account_balance(account.id)
 
-            # Calculate the updated balance
-            updated_balance = account.beginningBalance + total_amount
-
-            # Add account data to the list as a dictionary
             account_data = {
                 "id": account.id,
                 "name": account.name,
@@ -45,6 +73,10 @@ def get_all_accounts_with_balance():
             accounts_with_balance.append(account_data)
 
         return accounts_with_balance
+
+def get_account_balance_by_id(account_id):
+    with app.app_context():
+        return calculate_account_balance(account_id)
 
 def get_account_by_id(account_id):
     with app.app_context():

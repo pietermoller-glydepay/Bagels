@@ -18,4 +18,6 @@ class Category(db.Model):
     parentCategoryId = db.Column(db.Integer, db.ForeignKey("category.id"), nullable=True)
     name = db.Column(db.String, nullable=False)
     nature = db.Column(db.Enum(Nature), nullable=False)
-    color = db.Column(db.String)
+    color = db.Column(db.String, nullable=False)
+    
+    records = db.relationship("Record", back_populates="category")

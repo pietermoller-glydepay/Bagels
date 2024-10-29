@@ -43,9 +43,9 @@ def calculate_account_balance(account_id):
     
 # --------------- CRUD --------------- #
 
-def check_any_account():
+def get_accounts_count():
     with app.app_context():
-        return Account.query.count() > 0
+        return Account.query.count()
 
 def create_account(data):
     with app.app_context():

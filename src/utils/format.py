@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
-def formatDateToReadable(date):
+
+def format_date_to_readable(date):
     today = datetime.now().date()
     if date.date() == today:
         return "Today"

@@ -127,7 +127,7 @@ class Page(Static):
             ],
         )
         with self.basePage:
-            yield DataTable(id="categories-table", cursor_type="row")
+            yield DataTable(id="categories-table", cursor_type="row", cursor_foreground_priority=True)
             if not get_all_categories():
                 yield Label("No categories. Use [bold yellow][^n][/bold yellow] to create one.", classes="label-empty")
 

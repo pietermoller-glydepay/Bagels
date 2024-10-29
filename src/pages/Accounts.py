@@ -93,7 +93,7 @@ class Page(Static):
             ],
         )
         with self.basePage:
-            yield DataTable(id="accounts-table", cursor_type="row")
+            yield DataTable(id="accounts-table", cursor_type="row", cursor_foreground_priority=True)
             if not get_all_accounts():
                 yield Label("No accounts. Use [bold yellow][^n][/bold yellow] to create one.", classes="label-empty")
 

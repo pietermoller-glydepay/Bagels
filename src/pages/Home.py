@@ -9,12 +9,13 @@ from textual.widgets import Checkbox, DataTable, Label, Rule, Static
 
 from components.base import BasePage
 from components.modals import ConfirmationModal, InputModal, TransferModal
-from controllers.accounts import (check_any_account, get_account_balance_by_id,
-                                  get_all_accounts,
+from controllers.accounts import (get_account_balance_by_id,
+                                  get_accounts_count, get_all_accounts,
                                   get_all_accounts_with_balance)
 from controllers.categories import check_any_category, get_all_categories
 from controllers.records import (create_record, delete_record,
                                  get_record_by_id, get_records, update_record)
+from utils.format import format_date_to_readable
 
 
 class Page(Static):
@@ -26,10 +27,13 @@ class Page(Static):
     def on_mount(self) -> None:
         self.build_table()
         self.update_record_form()
+        if get_accounts_count() > 1:
+            self.basePage.newBinding("ctrl+t", "new_transfer", "Transfer", self.action_new_transfer)
     
     def on_unmount(self) -> None:
         self.basePage.removeBinding("backspace")
         self.basePage.removeBinding("space")
+        self.basePage.removeBinding("ctrl+t")
     
     def update_record_form(self) -> None:
         accounts = get_all_accounts()   
@@ -53,7 +57,10 @@ class Page(Static):
     
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         if event.row_key:
+            # if hasattr(self, "current_row"):
+            #     event.data_table.update_cell(self.current_row, "pointer", " ")
             self.current_row = event.row_key.value
+            # event.data_table.update_cell(event.row_key, "pointer", "←")
 
     # ------------- Callbacks ------------ #
     
@@ -62,12 +69,13 @@ class Page(Static):
         table.clear()
         if not table.columns:
             table.add_columns(" ", "Date", "Category", "Amount", "Label")
+            # table.add_column(" ", width=1, key="pointer")
         records = get_records()
         if records: 
             self.basePage.newBinding("backspace", "delete_record", "Delete Record", self.action_delete_record)
             self.basePage.newBinding("space", "edit_record", "Edit Record", self.action_edit_record)
             for record in records:
-                flow_icon = "[green]+[/green]" if record.isIncome else "[red]-[/red]"
+                flow_icon = "[green]+[/green]" if record.isIncome else "-"
                 type_icon = "⏲" if record.isAllUnpaidCleared == False else " "
                 if record.isTransfer:
                     category_string = "⇌ Transfer"
@@ -77,12 +85,11 @@ class Page(Static):
                     category_string = f"[{color_tag}]●[/{color_tag}] {record.category.name}"
                     amount_string = f"{flow_icon} {record.amount}"
                 table.add_row(type_icon,
-                            record.date.strftime("%d-%m"),
+                            format_date_to_readable(record.date),
                             category_string,
                             amount_string,
                             record.label,
                             key=str(record.id))
-        table.zebra_stripes = True
         table.focus()
         
     def update_account_balance(self, account_id: int) -> None:
@@ -118,22 +125,25 @@ class Page(Static):
         
         record = get_record_by_id(self.current_row)
         if record:
-            filled_record_form = copy.deepcopy(RECORD_FORM)
-            for field in filled_record_form:
-                value = getattr(record, field["key"])
-                if field["key"] == "date":
-                    field["defaultValue"] = value.strftime("%d")
-                elif field["key"] == "isIncome":
-                    field["defaultValue"] = value
-                elif field["key"] == "categoryId":
-                    field["defaultValue"] = record.category.id
-                    field["defaultValueText"] = record.category.name
-                elif field["key"] == "accountId":
-                    field["defaultValue"] = record.account.id
-                    field["defaultValueText"] = record.account.name
-                else:
-                    field["defaultValue"] = str(value) if value is not None else ""
-            self.app.push_screen(InputModal("Edit Record", filled_record_form), callback=check_result)
+            if record.isTransfer:
+                pass
+            else:
+                filled_record_form = copy.deepcopy(RECORD_FORM)
+                for field in filled_record_form:
+                    value = getattr(record, field["key"])
+                    if field["key"] == "date":
+                        field["defaultValue"] = value.strftime("%d")
+                    elif field["key"] == "isIncome":
+                        field["defaultValue"] = value
+                    elif field["key"] == "categoryId":
+                        field["defaultValue"] = record.category.id
+                        field["defaultValueText"] = record.category.name
+                    elif field["key"] == "accountId":
+                        field["defaultValue"] = record.account.id
+                        field["defaultValueText"] = record.account.name
+                    else:
+                        field["defaultValue"] = str(value) if value is not None else ""
+                self.app.push_screen(InputModal("Edit Record", filled_record_form), callback=check_result)
 
     def action_delete_record(self) -> None:
         def check_delete(result: bool) -> None:
@@ -169,7 +179,6 @@ class Page(Static):
             pageName="Home",
             bindings=[
                 ("ctrl+n", "new_record", "New", self.action_new_record), 
-                ("ctrl+t", "new_transfer", "Transfer", self.action_new_transfer),
             ],
         )
         with self.basePage:
@@ -179,8 +188,11 @@ class Page(Static):
                         yield Label(f"[bold]{account['name']}[/bold][italic] {account['description'] or ""}[/italic]", classes="account-name", markup=True)
                         yield Label(f"${account['balance']}", classes="account-balance", id=f"account-{account['id']}-balance")
             yield Rule(classes="home-divider", line_style="double")
-            yield DataTable(id="records-table", cursor_type="row")
-            if not check_any_account() and not check_any_category():
+            yield DataTable(id="records-table", 
+                            cursor_type="row", 
+                            cursor_foreground_priority=True, 
+                            zebra_stripes=True)
+            if not get_accounts_count() and not check_any_category():
                 yield Label("Please create at least one account and one category to get started.", classes="label-empty")
 
 RECORD_FORM = [
@@ -203,6 +215,7 @@ RECORD_FORM = [
         "title": "Amount",
         "key": "amount",
         "type": "number",
+        "min": 0,
         "isRequired": True,
     },
     {

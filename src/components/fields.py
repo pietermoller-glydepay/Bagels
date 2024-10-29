@@ -32,6 +32,7 @@ class Field(Static):
             self.input.value = self.field.get("defaultValue", "")
     
     def on_auto_complete_selected(self, event: AutoComplete.Selected) -> None:
+        self.screen.focus_next()
         for item in self.field["options"]:
             if str(item.get("text", item["value"])) == str(event.item.main):
                 ## set a new property on the input widget

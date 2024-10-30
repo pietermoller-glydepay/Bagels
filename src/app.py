@@ -1,15 +1,20 @@
+from typing import Iterable
+
 from textual.app import App as TextualApp
-from textual.app import ComposeResult
+from textual.app import ComposeResult, SystemCommand
 from textual.binding import Binding
 from textual.css.query import NoMatches
+from textual.screen import Screen
 from textual.widgets import Footer, Header, Tab, Tabs
 
+# from controllers.categories import create_default_categories
+from controllers.categories import create_default_categories
 from models.database.app import init_db
 from pages import Accounts, Categories, Home, Receivables, Reports, Settings
 
 
 class App(TextualApp):
-
+    
     CSS_PATH = "index.scss"
     BINDINGS = [
         ("ctrl+q", "quit", "Quit")
@@ -41,7 +46,10 @@ class App(TextualApp):
         "widget": Settings.Page(classes="content")
     }
     ]
-
+    
+    def get_system_commands(self, screen: Screen) -> Iterable[SystemCommand]:
+        yield from super().get_system_commands(screen)  
+        yield SystemCommand("Import default categories", "Import default categories", create_default_categories)  
 
     # ---------- Bindings helper ---------- #
     def newBinding(self, binding: Binding) -> None:
@@ -86,8 +94,8 @@ class App(TextualApp):
     
 
 if __name__ == "__main__":
+    init_db() # fix issue with home screen accessing accounts before db initialized
     app = App()
-    init_db()
     app.run()
 
 

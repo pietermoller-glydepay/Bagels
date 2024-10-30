@@ -1,10 +1,12 @@
 from flask import Flask
-from .db import db
-from models.record import Record
+
 from models.account import Account
 from models.category import Category
-from models.unpaidRecord import UnpaidRecord
 from models.person import Person
+from models.record import Record
+from models.unpaidRecord import UnpaidRecord
+
+from .db import db
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///./db.db"

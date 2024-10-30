@@ -1,20 +1,11 @@
 from rich.text import Text
 
+from constants.categories import DEFAULT_CATEGORIES
 from models.category import Category, Nature
 from models.database.app import get_app
 from models.database.db import db
 
 app = get_app()
-
-def create_default_categories():
-    with app.app_context():
-        sample_categories = [
-            {"name": "Test", "parentCategoryId": 6, "nature": Nature.MUST, "color": "#900C3F"},
-        ]
-        for category_data in sample_categories:
-            category = Category(**category_data)
-            db.session.add(category)
-        db.session.commit()
         
 def check_any_category():
     with app.app_context():
@@ -25,6 +16,8 @@ def create_category(data):
         new_category = Category(**data)
         db.session.add(new_category)
         db.session.commit()
+        db.session.refresh(new_category)
+        db.session.expunge(new_category)
         return new_category
 
 def get_all_categories(): # special function to get the categories in a tree format
@@ -75,3 +68,22 @@ def delete_category(category_id):
             db.session.commit()
             return True
         return False
+
+def create_default_categories():
+
+    with app.app_context():
+        for category in DEFAULT_CATEGORIES:
+            parent = create_category({
+                "name": category["name"],
+                "nature": category["nature"],
+                "color": category["color"],
+                "parentCategoryId": None
+            })
+
+            for subcategory in category["subcategories"]:
+                create_category({
+                    "name": subcategory["name"],
+                    "nature": subcategory["nature"],
+                    "color": category["color"],
+                    "parentCategoryId": parent.id
+                })

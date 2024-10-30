@@ -65,7 +65,7 @@ class InputModal(ModalScreen):
                 field.mount(Label(value, classes="error"))
 
 class TransferModal(ModalScreen):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, record=None, *args, **kwargs):
         super().__init__(id="transfer-modal-screen", *args, **kwargs)
         self.accounts = get_all_accounts_with_balance()
         self.form = [
@@ -74,32 +74,46 @@ class TransferModal(ModalScreen):
                 "key": "label",
                 "type": "string",
                 "placeholder": "Label",
-                "isRequired": True
+                "isRequired": True,
+                "defaultValue": str(record.label) if record else ""
             },
             {
                 "title": "Amount",
                 "key": "amount",
                 "type": "number",
                 "placeholder": "0.00",
-                "isRequired": True
+                "min": 0,
+                "isRequired": True,
+                "defaultValue": str(record.amount) if record else ""
             },
             {
                 "placeholder": "dd (mm) (yy)",
                 "title": "Date",
                 "key": "date",
                 "type": "dateAutoDay",
-                "defaultValue": datetime.now().strftime("%d")
+                "defaultValue": record.date.strftime("%d") if record else datetime.now().strftime("%d")
             }
         ]
-        self.fromAccount = self.accounts[0]["id"]
-        self.toAccount = self.accounts[1]["id"]
+        self.fromAccount = record.accountId if record else self.accounts[0]["id"]
+        self.toAccount = record.transferToAccountId if record else self.accounts[1]["id"]
+        if record:
+            self.label = "Edit transfer"
+        else:
+            self.label = "New transfer"
+        self.atAccountList = False
     
     def on_key(self, event: events.Key):
-        if event.key == "right":
-            self.screen.focus_next()
-        elif event.key == "left":
-            self.screen.focus_previous()
-        elif event.key == "enter":
+        if self.atAccountList:
+            if event.key == "right":
+                self.screen.focus_next()
+            elif event.key == "left":
+                self.screen.focus_previous()
+        else:
+            if event.key == "up":
+                self.screen.focus_previous()
+            elif event.key == "down":
+                self.screen.focus_next()
+        if event.key == "enter":
             self.action_submit()
         elif event.key == "escape":
             self.dismiss(None)
@@ -110,7 +124,7 @@ class TransferModal(ModalScreen):
             self.fromAccount = accountId
         elif event.list_view.id == "to-accounts":
             self.toAccount = accountId
-    
+            
     def action_submit(self):
         resultForm, errors, isValid = validateForm(self, self.form)
         if self.fromAccount == self.toAccount:
@@ -132,7 +146,7 @@ class TransferModal(ModalScreen):
     
     def compose(self) -> ComposeResult:
         with Container(classes="transfer-modal"):
-            yield Label(f"[bold]New transfer[/bold]", classes="title")
+            yield Label(f"[bold]{self.label}[/bold]", classes="title")
             yield Fields(self.form)
             with Container(id="accounts-container"):
                 yield ListView(
@@ -142,9 +156,10 @@ class TransferModal(ModalScreen):
                                 id=f"account-{account['id']}"
                             ) for account in self.accounts]
                         , id="from-accounts", 
-                        classes="accounts"
+                        classes="accounts",
+                        initial_index=self.fromAccount - 1
                     )
-                yield Label("<====>", classes="arrow")
+                yield Label("[italic]-- to ->[/italic]", classes="arrow")
                 yield ListView(
                         *[ListItem(
                                 Label(f"{account["name"]} (Bal: [yellow]{account['balance']}[/yellow])", classes="account-name"),
@@ -153,7 +168,6 @@ class TransferModal(ModalScreen):
                             ) for account in self.accounts]
                         , id="to-accounts",
                         classes="accounts",
-                        initial_index=1
+                        initial_index=self.toAccount - 1
                     )
             yield Label(id="transfer-error")
-                

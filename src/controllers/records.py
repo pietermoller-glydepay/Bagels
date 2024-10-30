@@ -43,7 +43,8 @@ def get_records(start_time: datetime = None, end_time: datetime = None, sort_by:
     with app.app_context():
         query = Record.query.options(
             db.joinedload(Record.category),
-            db.joinedload(Record.account)
+            db.joinedload(Record.account),
+            db.joinedload(Record.transferToAccount)
         )
 
         if start_time:

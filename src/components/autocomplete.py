@@ -201,6 +201,8 @@ class AutoComplete(Widget):
                 self._select_item()
                 if not self.tab_moves_focus:
                     event.stop()  # Prevent focus change
+        elif key == "backspace":
+            self.input.action_delete_left_all()
 
     def on_input_submitted(self) -> None:
         self._select_item()

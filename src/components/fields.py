@@ -50,7 +50,7 @@ class Field(Static):
                             DropdownItem(item.get("text", item["value"]),
                                         item.get("prefix", ""),
                                         item.get("postfix", "⇥")) for item in self.field["options"]
-                        ], show_on_focus=False)
+                        ], show_on_focus=True)
                         ,classes="field-autocomplete"
                     )
                 elif self.field["type"] == "boolean":

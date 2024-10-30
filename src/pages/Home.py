@@ -12,7 +12,9 @@ from components.modals import ConfirmationModal, InputModal, TransferModal
 from controllers.accounts import (get_account_balance_by_id,
                                   get_accounts_count, get_all_accounts,
                                   get_all_accounts_with_balance)
-from controllers.categories import check_any_category, get_all_categories
+from controllers.categories import (get_all_categories_by_freq,
+                                    get_all_categories_tree,
+                                    get_categories_count)
 from controllers.records import (create_record, delete_record,
                                  get_record_by_id, get_records, update_record)
 from utils.format import format_date_to_readable
@@ -22,9 +24,9 @@ class Page(Static):
     
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.record_form = RecordForm()
     
     def on_mount(self) -> None:
+        self.record_form = RecordForm()
         self.build_table()
         if get_accounts_count() > 1:
             self.basePage.newBinding("ctrl+t", "new_transfer", "Transfer", self.action_new_transfer)
@@ -41,7 +43,9 @@ class Page(Static):
     # ------------- Callbacks ------------ #
     
     def build_table(self) -> None:
-        table = self.query_one("#records-table")
+        def get_table() -> DataTable:
+            return self.query_one("#records-table")
+        table = get_table()
         table.clear()
         if not table.columns:
             table.add_columns(" ", "Date", "Category", "Amount", "Label")
@@ -51,7 +55,7 @@ class Page(Static):
             self.basePage.newBinding("space", "edit_record", "Edit Record", self.action_edit_record)
             for record in records:
                 flow_icon = "[green]+[/green]" if record.isIncome else "[red]-[/red]"
-                type_icon = "⏲" if record.isAllUnpaidCleared == False else " "
+                type_icon = " "
                 if record.isTransfer:
                     category_string = record.account.name + " → " + record.transferToAccount.name
                     amount_string = record.amount
@@ -65,7 +69,7 @@ class Page(Static):
                     category_string,
                     amount_string,
                     record.label,
-                    key=str(record.id)
+                    key=str(record.id),
                 )
         table.focus()
         
@@ -167,7 +171,7 @@ class Page(Static):
                 cursor_foreground_priority=True, 
                 zebra_stripes=True
             )
-            if not get_accounts_count() or not check_any_category():
+            if not get_accounts_count() or not get_categories_count():
                 yield Label(
                     "Please create at least one account and one category to get started.",
                     classes="label-empty"
@@ -225,23 +229,26 @@ class RecordForm:
         self._populate_form_options()
 
     def _populate_form_options(self):
-        accounts = get_all_accounts()   
+        accounts = get_all_accounts_with_balance()   
         self.form[3]["options"] = [
             {
-                "text": account.name,
-                "value": account.id
+                "text": account["name"],
+                "value": account["id"],
+                "postfix": Text(f"{account['balance']}", style="yellow")
             }
             for account in accounts
         ]
-        categories = get_all_categories()
         if accounts:
-            self.form[3]["defaultValue"] = accounts[0].id
-            self.form[3]["defaultValueText"] = accounts[0].name
+            self.form[3]["defaultValue"] = accounts[0]["id"]
+            self.form[3]["defaultValueText"] = accounts[0]["name"]
 
+        categories = get_all_categories_by_freq()
         self.form[1]["options"] = [
             {
                 "text": category.name,
-                "value": category.id
+                "value": category.id,
+                "prefix": Text("●", style=category.color),
+                "postfix": Text(f"↪ {category.parentCategory.name}" if category.parentCategory else "", style=category.parentCategory.color) if category.parentCategory else ""
             }
             for category, _ in categories
         ]

@@ -12,7 +12,7 @@ from textual.app import ComposeResult
 from textual.geometry import Region, Size
 from textual.message import Message
 from textual.widget import Widget
-from textual.widgets import Input
+from textual.widgets import Input, Label
 
 
 class DropdownRender:
@@ -204,8 +204,9 @@ class AutoComplete(Widget):
         elif key == "backspace":
             self.input.action_delete_left_all()
 
-    def on_input_submitted(self) -> None:
-        self._select_item()
+    # def on_input_submitted(self, event: Input.Submitted) -> None:
+    #     event.prevent_default()
+    #     self._select_item()
 
     def _select_item(self):
         selected = self.dropdown.selected_item
@@ -267,6 +268,18 @@ Dropdown .autocomplete--highlight-match {
 Dropdown .autocomplete--selection-cursor {
     background: $boost;
 }
+
+Dropdown .autocomplete--left-column {
+    width: 1;
+}
+
+Dropdown .autocomplete--main-column {
+    width: 1fr;
+}
+
+Dropdown .autocomplete--right-column {
+    width: auto;
+}
     """
 
     COMPONENT_CLASSES: ClassVar[set[str]] = {
@@ -308,6 +321,7 @@ Dropdown .autocomplete--selection-cursor {
         self.items = items
         self.input_widget: Input
         self.show_on_focus = show_on_focus
+        
     def compose(self) -> ComposeResult:
         self.child = DropdownChild(self.input_widget)
         yield self.child
@@ -415,7 +429,16 @@ Dropdown .autocomplete--selection-cursor {
             )
 
         self.child.matches = matches
-        # Change this line to show the dropdown when the input has focus, regardless of value
+        
+        # # If there's exactly one match and input has focus, auto-select it
+        # if len(matches) == 1 and self.input_widget and self.input_widget.has_focus and (self.input_widget.value != matches[0].main.plain):
+        #     self.input_widget.value = matches[0].main.plain
+        #     self.app.mount(Label(matches[0].main.plain))
+        #     self.display = False
+        #     self.post_message(AutoComplete.Selected(item=matches[0]))
+        #     return
+
+        # Otherwise show dropdown when input has focus
         self.display = self.input_widget.has_focus
         self.cursor_home()
         self.reposition(input_cursor_position)

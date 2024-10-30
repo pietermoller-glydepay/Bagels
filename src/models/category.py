@@ -21,3 +21,5 @@ class Category(db.Model):
     color = db.Column(db.String, nullable=False)
     
     records = db.relationship("Record", back_populates="category")
+    parentCategory = db.relationship("Category", back_populates="subCategories", remote_side=[id])
+    subCategories = db.relationship("Category", back_populates="parentCategory", remote_side=[parentCategoryId])

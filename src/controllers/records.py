@@ -15,22 +15,6 @@ def create_record(record_data: dict):
         db.session.commit()
         return record
 
-def get_record_table_rows():
-    with app.app_context():
-        records = Record.query.join(Record.category).all()
-        arr = []
-        for record in records:
-            match record.isAllUnpaidCleared:
-                case True:
-                    T = "✔︎"
-                case False:
-                    T = "⊙"
-                case _:
-                    T = ""
-                
-            arr.append((T, record.date, record.category.name, record.amount, record.label))
-        return arr
-
 def get_record_by_id(record_id: int):
     with app.app_context():
         record = Record.query.options(

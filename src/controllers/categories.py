@@ -7,9 +7,9 @@ from models.database.db import db
 
 app = get_app()
         
-def check_any_category():
+def get_categories_count():
     with app.app_context():
-        return Category.query.count() > 0
+        return Category.query.count()
 
 def create_category(data):
     with app.app_context():
@@ -20,10 +20,10 @@ def create_category(data):
         db.session.expunge(new_category)
         return new_category
 
-def get_all_categories(): # special function to get the categories in a tree format
+def get_all_categories_tree(): # special function to get the categories in a tree format
     with app.app_context():
         # Fetch all categories
-        categories = Category.query.order_by(Category.id).all()
+        categories = Category.query.options(db.joinedload(Category.parentCategory)).order_by(Category.id).all()
 
         # Helper function to recursively build the category tree
         def build_category_tree(parent_id=None, depth=0):
@@ -46,6 +46,20 @@ def get_all_categories(): # special function to get the categories in a tree for
             return category == siblings[-1]
 
         return build_category_tree()
+
+def get_all_categories_by_freq():
+    with app.app_context():
+        # Query categories and count their usage in records
+        categories = db.session.query(
+            Category,
+            db.func.count(Category.records).label('record_count')
+        ).outerjoin(Category.records)\
+         .group_by(Category.id)\
+         .order_by(db.desc('record_count'))\
+         .options(db.joinedload(Category.parentCategory))\
+         .all()
+        
+        return categories
 
 def get_category_by_id(category_id):
     with app.app_context():

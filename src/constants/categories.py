@@ -30,12 +30,8 @@ DEFAULT_CATEGORIES = [
                     "nature": Nature.NEED
                 },
                 {
-                    "name": "Fuel",
-                    "nature": Nature.NEED
-                },
-                {
-                    "name": "Vehicle Maintenance",
-                    "nature": Nature.NEED
+                    "name": "Taxi",
+                    "nature": Nature.WANT
                 }
             ]
         },
@@ -49,11 +45,15 @@ DEFAULT_CATEGORIES = [
                     "nature": Nature.MUST
                 },
                 {
-                    "name": "Restaurants",
-                    "nature": Nature.WANT
+                    "name": "Dine out",
+                    "nature": Nature.NEED
                 },
                 {
                     "name": "Takeout",
+                    "nature": Nature.WANT
+                },
+                {
+                    "name": "Snacks",
                     "nature": Nature.WANT
                 }
             ]
@@ -79,7 +79,7 @@ DEFAULT_CATEGORIES = [
         },
         {
             "name": "Shopping",
-            "color": "magenta",
+            "color": "cyan",
             "nature": Nature.WANT,
             "subcategories": [
                 {
@@ -87,18 +87,14 @@ DEFAULT_CATEGORIES = [
                     "nature": Nature.NEED
                 },
                 {
-                    "name": "Electronics",
+                    "name": "Gifts",
                     "nature": Nature.WANT
-                },
-                {
-                    "name": "Home",
-                    "nature": Nature.NEED
                 }
             ]
         },
         {
             "name": "Bills",
-            "color": "cyan",
+            "color": "magenta",
             "nature": Nature.MUST,
             "subcategories": [
                 {

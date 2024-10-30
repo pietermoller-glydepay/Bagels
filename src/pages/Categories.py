@@ -8,7 +8,7 @@ from textual.widgets import DataTable, Label, Select, Static
 from components.base import BasePage
 from components.modals import ConfirmationModal, InputModal
 from controllers.categories import (create_category, create_default_categories,
-                                    delete_category, get_all_categories,
+                                    delete_category, get_all_categories_tree,
                                     get_category_by_id, update_category)
 from models.category import Nature
 
@@ -38,7 +38,7 @@ class Page(Static):
         table.clear()
         if not table.columns:
             table.add_columns(*self.COLUMNS)
-        categories = get_all_categories()
+        categories = get_all_categories_tree()
         if categories:
             self.basePage.newBinding("ctrl+d", "new_subcategory", "New Subcategory", self.action_new_subcategory)
             self.basePage.newBinding("space", "edit_category", "Edit", self.action_edit_category)
@@ -128,7 +128,7 @@ class Page(Static):
         )
         with self.basePage:
             yield DataTable(id="categories-table", cursor_type="row", cursor_foreground_priority=True)
-            if not get_all_categories():
+            if not get_all_categories_tree():
                 yield Label("No categories. Use [bold yellow][^n][/bold yellow] to create one.", classes="label-empty")
 
 CATEGORY_FORM = [

@@ -4,7 +4,7 @@ from models.account import Account
 from models.category import Category
 from models.person import Person
 from models.record import Record
-from models.unpaidRecord import UnpaidRecord
+from models.split import Split
 
 from .db import db
 

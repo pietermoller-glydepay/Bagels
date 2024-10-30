@@ -48,8 +48,8 @@ class Field(Static):
                         self.input,
                         Dropdown(items=[
                             DropdownItem(item.get("text", item["value"]),
-                                        item.get("prefix", ""),
-                                        item.get("postfix", "⇥")) for item in self.field["options"]
+                                        item.get("prefix", item["prefix"] if "prefix" in item else ""),
+                                        item.get("postfix", item["postfix"] if "postfix" in item else "")) for item in self.field["options"]
                         ], show_on_focus=True)
                         ,classes="field-autocomplete"
                     )

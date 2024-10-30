@@ -10,6 +10,11 @@ Input {
   padding-left: 0;
 }
 
+Rule {
+  margin: 0;
+  color: $primary-background;
+}
+
 .base-page {
   padding: 0 1;
 }
@@ -46,7 +51,7 @@ DataTable > .datatable--cursor {
 /*             Input modal            */
 /* ---------------------------------- */
 
-#input-modal-screen,
+.input-modal-screen,
 #transfer-modal-screen {
   align: center top;
   background: $background 40%;
@@ -61,6 +66,31 @@ DataTable > .datatable--cursor {
   height: auto;
   background: $surface;
   border: round $accent;
+}
+
+.input-dialog {
+  .input-dialog-header {
+    height: 1;
+    .hint-container {
+      height: 1;
+      dock: right;
+      width: auto;
+      background: $primary-background;
+      padding-left: 2;
+      layout: horizontal;
+
+      Label {
+        margin-right: 2;
+      }
+    }
+  }
+  #splits-container {
+    height: auto;
+    .split {
+      border-top: ascii $primary-background;
+      height: auto;
+    }
+  }
 }
 
 /* ---------------------------------- */

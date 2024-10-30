@@ -8,7 +8,8 @@ from textual.reactive import reactive
 from textual.widgets import Checkbox, DataTable, Label, Rule, Static
 
 from components.base import BasePage
-from components.modals import ConfirmationModal, InputModal, TransferModal
+from components.modals import (ConfirmationModal, InputModal, RecordModal,
+                               TransferModal)
 from controllers.accounts import (get_account_balance_by_id,
                                   get_accounts_count, get_all_accounts,
                                   get_all_accounts_with_balance)
@@ -17,6 +18,7 @@ from controllers.categories import (get_all_categories_by_freq,
                                     get_categories_count)
 from controllers.records import (create_record, delete_record,
                                  get_record_by_id, get_records, update_record)
+from controllers.splits import create_split, delete_splits_by_record_id
 from utils.format import format_date_to_readable
 
 
@@ -79,8 +81,23 @@ class Page(Static):
     def action_new_record(self) -> None:
         def check_result(result: bool) -> None:
             if result:
-                try: 
-                    create_record(result)
+                try:
+                    # Handle splits if present
+                    splits = result.pop('splits', [])
+                    record = create_record(result)
+                    
+                    # Create splits if any
+                    if splits:
+                        for split in splits:
+                            split_data = {
+                                'recordId': record.id,
+                                'personId': split['person_id'],
+                                'amount': split['amount'],
+                                'isPaid': False
+                            }
+                            db.session.add(Split(**split_data))
+                        db.session.commit()
+                        
                 except Exception as e:
                     self.app.notify(title="Error", message=f"{e}", severity="error", timeout=10)
                 else:   
@@ -88,14 +105,32 @@ class Page(Static):
                     self.update_account_balance(result['accountId'])
                     self.build_table()
         
-        self.app.push_screen(InputModal("New Record", self.record_form.get_form()), callback=check_result)
+        self.app.push_screen(RecordModal("New Record", self.record_form.get_form()), callback=check_result)
     
     def action_edit_record(self) -> None:
         record = get_record_by_id(self.current_row)
         def check_result(result: bool) -> None:
             if result:
                 try:
+                    # Handle splits if present
+                    splits = result.pop('splits', [])
                     update_record(self.current_row, result)
+                    
+                    # Update splits if any
+                    if splits:
+                        # Delete existing splits
+                        delete_splits_by_record_id(self.current_row)
+                        
+                        # Create new splits
+                        for split in splits:
+                            split_data = {
+                                'recordId': self.current_row,
+                                'personId': split['person_id'],
+                                'amount': split['amount'],
+                                'isPaid': False
+                            }
+                            create_split(split_data)
+                        
                 except Exception as e:
                     self.app.notify(title="Error", message=f"{e}", severity="error", timeout=10)
                 else:
@@ -112,7 +147,7 @@ class Page(Static):
                 self.app.push_screen(TransferModal(record), callback=check_result)
             else:
                 filled_form = self.record_form.get_filled_form(record)
-                self.app.push_screen(InputModal("Edit Record", filled_form), callback=check_result)
+                self.app.push_screen(RecordModal("Edit Record", filled_form), callback=check_result)
 
     def action_delete_record(self) -> None:
         def check_delete(result: bool) -> None:

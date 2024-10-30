@@ -50,8 +50,12 @@ class Field(Static):
                             DropdownItem(item.get("text", item["value"]),
                                         item.get("prefix", item["prefix"] if "prefix" in item else ""),
                                         item.get("postfix", item["postfix"] if "postfix" in item else "")) for item in self.field["options"]
-                        ], show_on_focus=True)
-                        ,classes="field-autocomplete"
+                        ], 
+                        show_on_focus=True,
+                        create_option=True
+                        ),
+                        classes="field-autocomplete",
+                        create_action=self.field.get("create_action", None)
                     )
                 elif self.field["type"] == "boolean":
                     with Container(classes="switch-group"):

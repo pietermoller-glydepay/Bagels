@@ -51,7 +51,7 @@ class DropdownRender:
             main_text = cast(Text, match.main)
             if self.filter != "":
                 highlight_style = self.component_styles["highlight-match"]
-                if match.highlight_ranges is not None:
+                if match.highlight_ranges is not None and match.is_create_option is False:
                     # If the user has supplied their own ranges to highlight
                     for start, end in match.highlight_ranges:
                         main_text.stylize(highlight_style, start, end)
@@ -109,6 +109,8 @@ class DropdownItem:
     main: TextType = ""
     left_meta: TextType = ""
     right_meta: TextType = ""
+    is_create_option: bool = False
+    create_option_text: str = ""
     highlight_ranges: Iterable[tuple[int, int]] | None = None
 
     def __post_init__(self):
@@ -139,6 +141,7 @@ class AutoComplete(Widget):
         dropdown: Dropdown,
         tab_moves_focus: bool = False,
         completion_strategy: CompletionStrategy = "replace",
+        create_action: Callable[[str], None] | None = None,
         *,
         id: str | None = None,
         classes: str | None = None,
@@ -169,6 +172,7 @@ class AutoComplete(Widget):
         self.dropdown.input_widget = self.input
         self.tab_moves_focus = tab_moves_focus
         self.completion_strategy = completion_strategy
+        self.create_action = create_action
 
     def compose(self) -> ComposeResult:
         yield self.input
@@ -213,7 +217,10 @@ class AutoComplete(Widget):
         completion_strategy = self.completion_strategy
         if self.dropdown.display and selected is not None:
             selected_value = selected.main.plain
-            if completion_strategy == "replace":
+            selected_is_create_option = selected.is_create_option
+            if selected_is_create_option and self.create_action is not None:
+                self.create_action(selected.create_option_text)
+            elif completion_strategy == "replace":
                 self.input.value = ""
                 self.input.insert_text_at_cursor(selected_value)
             elif completion_strategy == "insert":
@@ -293,11 +300,8 @@ Dropdown .autocomplete--right-column {
     def __init__(
         self,
         items: list[DropdownItem] | Callable[[InputState], list[DropdownItem]],
-        # edge: Whether the dropdown should appear above or below.
-        # edge: str = "bottom",  # Literal["top", "bottom"]
-        # tracking: Whether the dropdown should follow the cursor or remain static.
-        # tracking: str = "follow_cursor",  # Literal["follow_cursor", "static"]
         show_on_focus: bool = True,
+        create_option: bool = False,
         id: str | None = None,
         classes: str | None = None,
     ):
@@ -316,12 +320,11 @@ Dropdown .autocomplete--right-column {
             id=id,
             classes=classes,
         )
-        # self._edge = edge
-        # self._tracking = tracking
         self.items = items
         self.input_widget: Input
         self.show_on_focus = show_on_focus
-        
+        self.create_option = create_option
+
     def compose(self) -> ComposeResult:
         self.child = DropdownChild(self.input_widget)
         yield self.child
@@ -426,6 +429,17 @@ Dropdown .autocomplete--right-column {
                 key=lambda match: not cast(Text, match.main)
                 .plain.lower()
                 .startswith(value.lower()),
+            )
+
+        # Add "Create" option if no matches and create_action is set
+        if len(matches) == 0 and self.create_option is True and value.strip():
+            matches.append(
+                DropdownItem(
+                    left_meta="+",  # Optional: Add a plus icon
+                    main=f"Create '{value}'",
+                    is_create_option=True,
+                    create_option_text=value
+                )
             )
 
         self.child.matches = matches

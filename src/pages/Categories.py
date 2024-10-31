@@ -7,6 +7,7 @@ from textual.widgets import DataTable, Label, Select, Static
 
 from components.base import BasePage
 from components.modals import ConfirmationModal, InputModal
+from constants.config import CONFIG
 from controllers.categories import (create_category, create_default_categories,
                                     delete_category, get_all_categories_tree,
                                     get_category_by_id, update_category)
@@ -23,9 +24,9 @@ class Page(Static):
         self.build_table()
     
     def on_unmount(self) -> None:
-        self.basePage.removeBinding("backspace")
+        self.basePage.removeBinding(CONFIG["hotkeys"]["delete"])
         self.basePage.removeBinding("ctrl+d")
-        self.basePage.removeBinding("space")
+        self.basePage.removeBinding(CONFIG["hotkeys"]["edit"])
     
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         if event.row_key:
@@ -41,8 +42,8 @@ class Page(Static):
         categories = get_all_categories_tree()
         if categories:
             self.basePage.newBinding("ctrl+d", "new_subcategory", "New Subcategory", self.action_new_subcategory)
-            self.basePage.newBinding("space", "edit_category", "Edit", self.action_edit_category)
-            self.basePage.newBinding("backspace", "delete_category", "Delete", self.action_delete_category)
+            self.basePage.newBinding(CONFIG["hotkeys"]["edit"], "edit_category", "Edit", self.action_edit_category)
+            self.basePage.newBinding(CONFIG["hotkeys"]["delete"], "delete_category", "Delete", self.action_delete_category)
             for category, node in categories:
                 table.add_row(node, category.name, category.nature.value, key=category.id)
         
@@ -123,7 +124,7 @@ class Page(Static):
         self.basePage = BasePage(
             pageName="Categories",
             bindings=[
-                ("ctrl+n", "new_category", "New", self.action_new_category), 
+                (CONFIG["hotkeys"]["new"], "new_category", "New", self.action_new_category), 
             ],
         )
         with self.basePage:

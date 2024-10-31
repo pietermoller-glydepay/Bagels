@@ -51,44 +51,47 @@ DataTable > .datatable--cursor {
 /*             Input modal            */
 /* ---------------------------------- */
 
-.input-modal-screen,
-#transfer-modal-screen {
+.modal-screen {
   align: center top;
   background: $background 40%;
-}
 
-.input-dialog,
-.transfer-modal {
-  margin: 2;
-  padding: 1 2;
-  width: 1fr;
-  max-width: 80;
-  height: auto;
-  background: $surface;
-  border: round $accent;
-}
+  .wrapper {
+    margin: 2;
+    width: 1fr;
+    max-width: 80;
+    height: auto;
+    background: $surface;
 
-.input-dialog {
-  .input-dialog-header {
-    height: 1;
-    .hint-container {
+    Header {
+      background: $primary-background-lighten-1;
+    }
+
+    .footer {
+      width: 1fr;
       height: 1;
-      dock: right;
-      width: auto;
-      background: $primary-background;
-      padding-left: 2;
+      background: $primary-background-lighten-1;
+      padding-left: 1;
+      padding-right: 1;
       layout: horizontal;
 
       Label {
         margin-right: 2;
       }
     }
-  }
-  #splits-container {
-    height: auto;
-    .split {
-      border-top: ascii $primary-background;
+
+    .container {
+      padding: 1 2;
       height: auto;
+      border-left: outer $primary-background-lighten-1;
+      border-right: outer $primary-background-lighten-1;
+
+      #splits-container {
+        height: auto;
+        .split {
+          border-top: ascii $primary-background;
+          height: auto;
+        }
+      }
     }
   }
 }
@@ -97,8 +100,9 @@ DataTable > .datatable--cursor {
 /*           Transfer Modal           */
 /* ---------------------------------- */
 
-.transfer-modal {
+#transfer-modal {
   align-horizontal: center;
+  height: auto;
 
   #transfer-error {
     color: red;

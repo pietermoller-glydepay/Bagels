@@ -5,7 +5,9 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Horizontal
 from textual.screen import ModalScreen
-from textual.widgets import Footer, Input, Label, ListItem, ListView, Rule
+from textual.widget import Widget
+from textual.widgets import (Footer, Header, Input, Label, ListItem, ListView,
+                             Rule)
 
 from components.fields import Fields
 from controllers.accounts import get_all_accounts_with_balance
@@ -29,17 +31,27 @@ class ConfirmationModal(ModalScreen):
         elif event.key == "escape":
             self.dismiss(False)
 
-class InputModal(ModalScreen):
-    def __init__(self, title: str, form: list[dict], *args, **kwargs):
-        super().__init__(classes="input-modal-screen", *args, **kwargs)
-        self.title = title
-        self.form = form
+class ModalContainer(Widget):
+    # usage: ModalContainer(w1, w2, w3..... hotkeys=[])
+    def __init__(self, *content, hotkeys: list[dict] = []):
+        super().__init__(classes="wrapper")
+        self.content = content
+        self.hotkeys = hotkeys
 
     def compose(self) -> ComposeResult:
-        with Container(classes="input-dialog"):
-            yield Label(f"[bold]{self.title}[/bold]", classes="input-dialog-title")
-            yield Rule(line_style="ascii")
-            yield Fields(self.form)
+        yield Header(show_clock=False)
+        with Container(classes="container"):
+            for widget in self.content:
+                yield widget
+        with Container(classes="footer"):
+            for hotkey in self.hotkeys:
+                yield Label(f"[bold yellow]{hotkey['key']}[/bold yellow] {hotkey['label']}")
+
+class InputModal(ModalScreen):
+    def __init__(self, title: str, form: list[dict], *args, **kwargs):
+        super().__init__(classes="modal-screen", *args, **kwargs)
+        self.title = title
+        self.form = form
     
     # --------------- Hooks -------------- #
 
@@ -67,9 +79,14 @@ class InputModal(ModalScreen):
                 field = self.query_one(f"#row-field-{key}")
                 field.mount(Label(value, classes="error"))
 
+    # -------------- Compose ------------- #
+    
+    def compose(self) -> ComposeResult:
+        yield ModalContainer(Fields(self.form))
+
 class TransferModal(ModalScreen):
     def __init__(self, record=None, *args, **kwargs):
-        super().__init__(id="transfer-modal-screen", *args, **kwargs)
+        super().__init__(classes="modal-screen", *args, **kwargs)
         self.accounts = get_all_accounts_with_balance()
         self.form = [
             {
@@ -100,9 +117,9 @@ class TransferModal(ModalScreen):
         self.fromAccount = record.accountId if record else self.accounts[0]["id"]
         self.toAccount = record.transferToAccountId if record else self.accounts[1]["id"]
         if record:
-            self.label = "Edit transfer"
+            self.title = "Edit transfer"
         else:
-            self.label = "New transfer"
+            self.title = "New transfer"
         self.atAccountList = False
     
     def on_key(self, event: events.Key):
@@ -148,37 +165,41 @@ class TransferModal(ModalScreen):
                     field.mount(Label(value, classes="error"))
     
     def compose(self) -> ComposeResult:
-        with Container(classes="transfer-modal"):
-            yield Label(f"[bold]{self.label}[/bold]", classes="title")
-            yield Rule(line_style="ascii")
-            yield Fields(self.form)
-            with Container(id="accounts-container"):
-                yield ListView(
+        yield ModalContainer(
+            Container(
+                Fields(self.form),
+                Container(
+                    ListView(
+                            *[ListItem(
+                                Label(f"{account["name"]} (Bal: [yellow]{account['balance']}[/yellow])", classes="account-name"),
+                                    classes="item",
+                                    id=f"account-{account['id']}"
+                                ) for account in self.accounts]
+                            , id="from-accounts", 
+                            classes="accounts",
+                            initial_index=self.fromAccount - 1
+                        ),
+                    Label("[italic]-- to ->[/italic]", classes="arrow"),
+                    ListView(
                         *[ListItem(
                                 Label(f"{account["name"]} (Bal: [yellow]{account['balance']}[/yellow])", classes="account-name"),
                                 classes="item",
                                 id=f"account-{account['id']}"
                             ) for account in self.accounts]
-                        , id="from-accounts", 
-                        classes="accounts",
-                        initial_index=self.fromAccount - 1
-                    )
-                yield Label("[italic]-- to ->[/italic]", classes="arrow")
-                yield ListView(
-                        *[ListItem(
-                                Label(f"{account["name"]} (Bal: [yellow]{account['balance']}[/yellow])", classes="account-name"),
-                                classes="item",
-                                id=f"account-{account['id']}"
-                            ) for account in self.accounts]
-                        , id="to-accounts",
-                        classes="accounts",
+                            , id="to-accounts",
+                            classes="accounts",
                         initial_index=self.toAccount - 1
-                    )
-            yield Label(id="transfer-error")
+                    ),
+                    id="accounts-container"
+                ),
+                Label(id="transfer-error"),
+                id="transfer-modal"
+            )
+        )
 
 class RecordModal(InputModal):
-    def __init__(self, title: str, form: list[dict], *args, **kwargs):
-        super().__init__(title, form, *args, **kwargs)
+    def __init__(self, title: str, *args, **kwargs):
+        super().__init__(title, *args, **kwargs)
         self.splits = []
         self.persons = get_all_persons()
         self.split_form = [
@@ -273,12 +294,11 @@ class RecordModal(InputModal):
                 field.mount(Label(value, classes="error"))
 
     def compose(self) -> ComposeResult:
-        with Container(classes="input-dialog"):
-            with Container(classes="input-dialog-header"):
-                yield Label(f"[bold]{self.title}[/bold]", classes="input-dialog-title")
-                with Container(classes="hint-container"):
-                    yield Label(f"[bold yellow]^a[/bold yellow] Split amount")
-                    yield Label(f"[bold yellow]^d[/bold yellow] Delete split")
-            yield Rule(line_style="ascii")
-            yield Fields(self.form)
-            yield Container(id="splits-container")
+        yield ModalContainer(
+            Fields(self.form),
+            Container(id="splits-container"),
+            hotkeys=[
+                {"key": "^a", "label": "Split amount"},
+                {"key": "^d", "label": "Delete split"}
+            ]
+        )

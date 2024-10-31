@@ -10,6 +10,7 @@ from textual.widgets import Checkbox, DataTable, Label, Rule, Static
 from components.base import BasePage
 from components.modals import (ConfirmationModal, InputModal, RecordModal,
                                TransferModal)
+from constants.config import CONFIG
 from controllers.accounts import (get_account_balance_by_id,
                                   get_accounts_count, get_all_accounts,
                                   get_all_accounts_with_balance)
@@ -34,8 +35,8 @@ class Page(Static):
             self.basePage.newBinding("ctrl+t", "new_transfer", "Transfer", self.action_new_transfer)
     
     def on_unmount(self) -> None:
-        self.basePage.removeBinding("backspace")
-        self.basePage.removeBinding("space")
+        self.basePage.removeBinding(CONFIG["hotkeys"]["delete"])
+        self.basePage.removeBinding(CONFIG["hotkeys"]["edit"])
         self.basePage.removeBinding("ctrl+t")
     
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
@@ -53,8 +54,8 @@ class Page(Static):
             table.add_columns(" ", "Date", "Category", "Amount", "Label")
         records = get_records()
         if records: 
-            self.basePage.newBinding("backspace", "delete_record", "Delete Record", self.action_delete_record)
-            self.basePage.newBinding("space", "edit_record", "Edit Record", self.action_edit_record)
+            self.basePage.newBinding(CONFIG["hotkeys"]["delete"], "delete_record", "Delete Record", self.action_delete_record)
+            self.basePage.newBinding(CONFIG["hotkeys"]["edit"], "edit_record", "Edit Record", self.action_edit_record)
             for record in records:
                 flow_icon = "[green]+[/green]" if record.isIncome else "[red]-[/red]"
                 type_icon = " "
@@ -182,7 +183,7 @@ class Page(Static):
         self.basePage = BasePage(
             pageName="Home",
             bindings=[
-                ("ctrl+n", "new_record", "New", self.action_new_record), 
+                (CONFIG["hotkeys"]["new"], "new_record", "New", self.action_new_record), 
             ],
         )
         with self.basePage:

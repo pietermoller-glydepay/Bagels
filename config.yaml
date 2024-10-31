@@ -1,0 +1,8 @@
+hotkeys:
+  new: "ctrl+a"
+  delete: "backspace"
+  edit: "space"
+  home:
+    splits:
+      new: "ctrl+s"
+      delete: "ctrl+d"

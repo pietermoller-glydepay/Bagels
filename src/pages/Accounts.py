@@ -6,6 +6,7 @@ from textual.widgets import DataTable, Label, Static
 
 from components.base import BasePage
 from components.modals import ConfirmationModal, InputModal
+from constants.config import CONFIG
 from controllers.accounts import (create_account, delete_account,
                                   get_account_by_id, get_all_accounts,
                                   update_account)
@@ -21,8 +22,8 @@ class Page(Static):
         self.build_table()
     
     def on_unmount(self) -> None:
-        self.basePage.removeBinding("backspace")
-        self.basePage.removeBinding("space")
+        self.basePage.removeBinding(CONFIG["hotkeys"]["delete"])
+        self.basePage.removeBinding(CONFIG["hotkeys"]["edit"])
     
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         if event.row_key:
@@ -37,8 +38,8 @@ class Page(Static):
             table.add_columns(*self.COLUMNS)
         accounts = get_all_accounts()
         if accounts:
-            self.basePage.newBinding("backspace", "delete_account", "Delete Account", self.action_delete_account)
-            self.basePage.newBinding("space", "edit_account", "Edit Account", self.action_edit_account)
+            self.basePage.newBinding(CONFIG["hotkeys"]["delete"], "delete_account", "Delete Account", self.action_delete_account)
+            self.basePage.newBinding(CONFIG["hotkeys"]["edit"], "edit_account", "Edit Account", self.action_edit_account)
             for account in accounts:
                 table.add_row(account.name, account.description, account.beginningBalance, account.repaymentDate, key=str(account.id))
         
@@ -89,7 +90,7 @@ class Page(Static):
         self.basePage = BasePage(
             pageName="Accounts",
             bindings=[
-                ("ctrl+n", "new_account", "New Account", self.action_new_account), 
+                (CONFIG["hotkeys"]["new"], "new_account", "New Account", self.action_new_account), 
             ],
         )
         with self.basePage:

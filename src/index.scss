@@ -85,11 +85,23 @@ DataTable > .datatable--cursor {
       border-left: outer $primary-background-lighten-1;
       border-right: outer $primary-background-lighten-1;
 
+      #split-total {
+        border-top: double $primary-background;
+        width: 1fr;
+        margin-top: 1;
+      }
+
       #splits-container {
         height: auto;
+
         .split {
           border-top: ascii $primary-background;
           height: auto;
+
+          .label-paid {
+            color: $secondary;
+            dock: right;
+          }
         }
       }
     }
@@ -230,6 +242,8 @@ Container.account-container {
 
 .hidden {
   visibility: hidden;
+  margin: 0;
+  padding: 0;
 }
 
 .label-empty {

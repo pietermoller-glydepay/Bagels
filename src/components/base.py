@@ -27,6 +27,11 @@ class BasePage(Static):
             if page["name"] != self.pageName:
                 app.newBinding(Binding(key=str(i + 1), action=f"goToTab({i + 1})", description=page["name"], show=False))
     
+    # def on_unmount(self) -> None:
+    #     for binding in self.bindings:
+    #         self.app.removeBinding(binding.key)
+    # FIX: BINDINGS NOT REMOVED IF CHANGED TO PAGE DOES NOT HAVE THIS BINDING
+    
     def newBinding(self, key: str, action: str, description: str, func: Callable):
         self.app.newBinding(Binding(key=key, action=action, description=description))
         setattr(self.app, f"action_{action}", func)

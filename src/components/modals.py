@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from rich.text import Text
 from textual import events
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -7,13 +8,15 @@ from textual.containers import Container, Horizontal
 from textual.screen import ModalScreen
 from textual.widget import Widget
 from textual.widgets import (Footer, Header, Input, Label, ListItem, ListView,
-                             Rule)
+                             Rule, Static)
 
 from components.fields import Fields
+from constants.config import CONFIG
 from controllers.accounts import get_all_accounts_with_balance
 from controllers.persons import create_person, get_all_persons
 from models.split import Split
-from utils.form import validateForm
+from utils.forms import RecordForm
+from utils.validation import validateForm
 
 
 class ConfirmationModal(ModalScreen):
@@ -45,7 +48,8 @@ class ModalContainer(Widget):
                 yield widget
         with Container(classes="footer"):
             for hotkey in self.hotkeys:
-                yield Label(f"[bold yellow]{hotkey['key']}[/bold yellow] {hotkey['label']}")
+                key_display = self.app.get_key_display(Binding(hotkey["key"], ""))
+                yield Label(f"[bold yellow]{key_display}[/bold yellow] {hotkey['label']}")
 
 class InputModal(ModalScreen):
     def __init__(self, title: str, form: list[dict], *args, **kwargs):
@@ -114,8 +118,8 @@ class TransferModal(ModalScreen):
                 "defaultValue": record.date.strftime("%d") if record else datetime.now().strftime("%d")
             }
         ]
-        self.fromAccount = record.accountId if record else self.accounts[0]["id"]
-        self.toAccount = record.transferToAccountId if record else self.accounts[1]["id"]
+        self.fromAccount = record.accountId if record else self.accounts[0].id
+        self.toAccount = record.transferToAccountId if record else self.accounts[1].id
         if record:
             self.title = "Edit transfer"
         else:
@@ -171,9 +175,9 @@ class TransferModal(ModalScreen):
                 Container(
                     ListView(
                             *[ListItem(
-                                Label(f"{account["name"]} (Bal: [yellow]{account['balance']}[/yellow])", classes="account-name"),
+                                Label(f"{account.name} (Bal: [yellow]{account.balance}[/yellow])", classes="account-name"),
                                     classes="item",
-                                    id=f"account-{account['id']}"
+                                    id=f"account-{account.balance}"
                                 ) for account in self.accounts]
                             , id="from-accounts", 
                             classes="accounts",
@@ -182,9 +186,9 @@ class TransferModal(ModalScreen):
                     Label("[italic]-- to ->[/italic]", classes="arrow"),
                     ListView(
                         *[ListItem(
-                                Label(f"{account["name"]} (Bal: [yellow]{account['balance']}[/yellow])", classes="account-name"),
+                                Label(f"{account.name} (Bal: [yellow]{account.balance}[/yellow])", classes="account-name"),
                                 classes="item",
-                                id=f"account-{account['id']}"
+                                id=f"account-{account.balance}"
                             ) for account in self.accounts]
                             , id="to-accounts",
                             classes="accounts",
@@ -200,27 +204,41 @@ class TransferModal(ModalScreen):
 class RecordModal(InputModal):
     def __init__(self, title: str, *args, **kwargs):
         super().__init__(title, *args, **kwargs)
-        self.splits = []
+        self.record_form = RecordForm()
+        self.splitCount = 0
+        self.splitForm = []
         self.persons = get_all_persons()
-        self.split_form = [
-            {
-                "title": "Person",
-                "key": "person_id", 
-                "type": "autocomplete",
-                "options": [{"text": person.name, "value": person.id} for person in self.persons],
-                "create_action": self.action_create_person,
-                "isRequired": True,
-                "placeholder": "Select Person"
-            },
-            {
-                "title": "Amount",
-                "key": "amount",
-                "type": "number", 
-                "min": 0,
-                "isRequired": True,
-                "placeholder": "0.00"
-            }
-        ]
+        self.accounts = get_all_accounts_with_balance()
+        self.total_amount = 0
+        
+    # -------------- Helpers ------------- #
+    
+    def _get_splits_from_result(self, resultForm: dict):
+        splits = []
+        for i in range(self.splitCount):
+            splits.append({
+                "personId": resultForm[f"personId-{i}"],
+                "amount": resultForm[f"amount-{i}"],
+                "isPaid": resultForm[f"isPaid-{i}"],
+                "accountId": resultForm[f"accountId-{i}"]
+            })
+        return splits
+
+    def _update_split_total(self, update_new: bool = True):
+        my_amount = self.query_one("#field-amount").value
+        total = float(my_amount) if my_amount else 0
+        if update_new:
+            for i in range(1, self.splitCount + 1):
+                amount = self.query_one(f"#field-amount-{i}").value
+                total += float(amount) if amount else 0
+        self.split_total.update(f"Total amount: [bold yellow]{total:.2f}[/bold yellow]")
+        self.total_amount = total
+    
+    # ------------- Callbacks ------------ #
+    
+    def on_input_changed(self, event: Input.Changed):
+        if event.input.id.startswith("field-amount"):
+            self._update_split_total()
 
     def on_key(self, event: events.Key):
         if event.key == "down":
@@ -231,74 +249,75 @@ class RecordModal(InputModal):
             self.action_submit()
         elif event.key == "escape":
             self.dismiss(None)
-        elif event.key == "ctrl+a":
-            self.action_add_split()
-        elif event.key == "ctrl+d":
+        elif event.key == CONFIG["hotkeys"]["record_modal"]["new_split"]:
+            self.action_add_split(paid=False)
+        elif event.key == CONFIG["hotkeys"]["record_modal"]["new_paid_split"]:
+            self.action_add_split(paid=True)
+        elif event.key == CONFIG["hotkeys"]["record_modal"]["delete_last_split"]:
             self.action_delete_last_split()
     
     def action_create_person(self, name: str):
         create_person({"name": name})
+        self.app.notify("Person created")
 
-    def action_add_split(self):
+    def action_add_split(self, paid: bool = False):
         splits_container = self.query_one("#splits-container", Container)
-        self.splits.append(self.split_form)
+        self.splitCount += 1
+        current_split_index = self.splitCount
+        new_split_form_fields = self.record_form.get_split_form(current_split_index, paid)
+        for field in new_split_form_fields:
+            self.splitForm.append(field)
         splits_container.mount(
             Container(
-                Fields(self.split_form),
-                id=f"split-{len(self.splits)}",
+                Fields(new_split_form_fields),
+                Label("Paid", classes="label-paid") if paid else Static(),
+                id=f"split-{current_split_index}",
                 classes="split"
             )
         )
+        if self.splitCount == 1:
+            self.split_total.set_classes("")
+            self._update_split_total(update_new=False)
 
     def action_delete_last_split(self):
-        if len(self.splits) > 0:
-            self.query_one(f"#split-{len(self.splits)}").remove()
-            self.splits.pop()
+        if self.splitCount > 0:
+            self.query_one(f"#split-{self.splitCount}").remove()
+            amountToPop = len(self.splitForm) / self.splitCount
+            for i in range(int(amountToPop)):
+                self.splitForm.pop()
+            self.splitCount -= 1
+            if self.splitCount == 0:
+                self.split_total.update("")
+                self.split_total.set_classes("hidden")
 
     def action_submit(self):
-        resultForm, errors, isValid = validateForm(self, self.form)
+        resultForm, errors, isValid = validateForm(self, self.form + self.splitForm)
         if isValid:
-            # Validate and collect splits data
-            splits_valid = True
-            self.splits = []
-            
-            for split_id in range(len(self.query("#splits-container Fields"))):
-                split_result, split_errors, split_valid = validateForm(
-                    self,
-                    self.split_form,
-                    form_id=f"split-{split_id}"
-                )
-                if split_valid:
-                    # Add person name for display purposes
-                    person = next(p for p in self.persons if p.id == split_result["person_id"])
-                    split_result["person_name"] = person.name
-                    self.splits.append(split_result)
-                else:
-                    splits_valid = False
-                    # Show errors on split forms
-                    split_container = self.query_one(f"#split-{split_id}")
-                    for key, value in split_errors.items():
-                        field = split_container.query_one(f"#row-field-{key}")
-                        field.mount(Label(value, classes="error"))
+            recordResult = resultForm[:len(self.form)]
+            splitResult = resultForm[len(self.form):]
+            splitsResult = self._get_splits_from_result(splitResult)
+            return {
+                "record": recordResult,
+                "splits": splitsResult
+            }
+        previousErrors = self.query(".error")
+        for error in previousErrors:
+            error.remove()
+        for key, value in errors.items():
+            field = self.query_one(f"#row-field-{key}")
+            field.mount(Label(value, classes="error"))
 
-            if splits_valid:
-                if self.splits:
-                    resultForm["splits"] = self.splits
-                self.dismiss(resultForm)
-        else:
-            previousErrors = self.query(".error")
-            for error in previousErrors:
-                error.remove()
-            for key, value in errors.items():
-                field = self.query_one(f"#row-field-{key}")
-                field.mount(Label(value, classes="error"))
+    # -------------- Compose ------------- #
 
     def compose(self) -> ComposeResult:
+        self.split_total = Label("", id="split-total", classes="hidden")
         yield ModalContainer(
             Fields(self.form),
             Container(id="splits-container"),
+            self.split_total,
             hotkeys=[
-                {"key": "^a", "label": "Split amount"},
-                {"key": "^d", "label": "Delete split"}
+                {"key": CONFIG["hotkeys"]["record_modal"]["new_split"], "label": "Split amount"},
+                {"key": CONFIG["hotkeys"]["record_modal"]["new_paid_split"], "label": "Split paid"},
+                {"key": CONFIG["hotkeys"]["record_modal"]["delete_last_split"], "label": "Delete split"}
             ]
         )

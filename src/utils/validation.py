@@ -93,6 +93,7 @@ def validateForm(formComponent: Widget, formData: list[dict]):
     for field in formData:
         fieldKey = field["key"]
         fieldWidget = formComponent.query_one(f"#field-{fieldKey}")
+        print(f"#field-{fieldKey}")
         fieldValue = fieldWidget.heldValue if hasattr(fieldWidget, "heldValue") else fieldWidget.value
 
         error = None

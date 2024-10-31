@@ -2,7 +2,9 @@ hotkeys:
   new: "ctrl+a"
   delete: "backspace"
   edit: "space"
-  home:
-    splits:
-      new: "ctrl+s"
-      delete: "ctrl+d"
+  record_modal:
+    new_split: "ctrl+a"
+    new_paid_split: "ctrl+s"
+    delete_last_split: "ctrl+d"
+  categories:
+    new_subcategory: "ctrl+s"

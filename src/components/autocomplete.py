@@ -51,11 +51,11 @@ class DropdownRender:
             main_text = cast(Text, match.main)
             if self.filter != "":
                 highlight_style = self.component_styles["highlight-match"]
-                if match.highlight_ranges is not None and match.is_create_option is False:
+                if match.highlight_ranges is not None:
                     # If the user has supplied their own ranges to highlight
                     for start, end in match.highlight_ranges:
                         main_text.stylize(highlight_style, start, end)
-                else:
+                elif match.is_create_option is False:
                     # Otherwise, by default, we highlight case-insensitive substrings
                     main_text.highlight_words(
                         [self.filter],

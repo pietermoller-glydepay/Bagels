@@ -21,6 +21,7 @@ from controllers.records import (create_record, delete_record,
                                  get_record_by_id, get_records, update_record)
 from controllers.splits import create_split, delete_splits_by_record_id
 from utils.format import format_date_to_readable
+from utils.forms import RecordForm
 
 
 class Page(Static):
@@ -54,8 +55,8 @@ class Page(Static):
             table.add_columns(" ", "Date", "Category", "Amount", "Label")
         records = get_records()
         if records: 
-            self.basePage.newBinding(CONFIG["hotkeys"]["delete"], "delete_record", "Delete Record", self.action_delete_record)
-            self.basePage.newBinding(CONFIG["hotkeys"]["edit"], "edit_record", "Edit Record", self.action_edit_record)
+            self.basePage.newBinding(CONFIG["hotkeys"]["delete"], "delete_record", "Delete", self.action_delete_record)
+            self.basePage.newBinding(CONFIG["hotkeys"]["edit"], "edit_record", "Edit", self.action_edit_record)
             for record in records:
                 flow_icon = "[green]+[/green]" if record.isIncome else "[red]-[/red]"
                 type_icon = " "
@@ -83,22 +84,7 @@ class Page(Static):
         def check_result(result: bool) -> None:
             if result:
                 try:
-                    # Handle splits if present
-                    splits = result.pop('splits', [])
-                    record = create_record(result)
-                    
-                    # Create splits if any
-                    if splits:
-                        for split in splits:
-                            split_data = {
-                                'recordId': record.id,
-                                'personId': split['person_id'],
-                                'amount': split['amount'],
-                                'isPaid': False
-                            }
-                            db.session.add(Split(**split_data))
-                        db.session.commit()
-                        
+                    pass
                 except Exception as e:
                     self.app.notify(title="Error", message=f"{e}", severity="error", timeout=10)
                 else:   
@@ -113,24 +99,7 @@ class Page(Static):
         def check_result(result: bool) -> None:
             if result:
                 try:
-                    # Handle splits if present
-                    splits = result.pop('splits', [])
-                    update_record(self.current_row, result)
-                    
-                    # Update splits if any
-                    if splits:
-                        # Delete existing splits
-                        delete_splits_by_record_id(self.current_row)
-                        
-                        # Create new splits
-                        for split in splits:
-                            split_data = {
-                                'recordId': self.current_row,
-                                'personId': split['person_id'],
-                                'amount': split['amount'],
-                                'isPaid': False
-                            }
-                            create_split(split_data)
+                    pass
                         
                 except Exception as e:
                     self.app.notify(title="Error", message=f"{e}", severity="error", timeout=10)
@@ -147,7 +116,7 @@ class Page(Static):
             if record.isTransfer:
                 self.app.push_screen(TransferModal(record), callback=check_result)
             else:
-                filled_form = self.record_form.get_filled_form(record)
+                filled_form = self.record_form.get_filled_form(record.id)
                 self.app.push_screen(RecordModal("Edit Record", filled_form), callback=check_result)
 
     def action_delete_record(self) -> None:
@@ -183,7 +152,7 @@ class Page(Static):
         self.basePage = BasePage(
             pageName="Home",
             bindings=[
-                (CONFIG["hotkeys"]["new"], "new_record", "New", self.action_new_record), 
+                (CONFIG["hotkeys"]["new"], "new_record", "Add", self.action_new_record), 
             ],
         )
         with self.basePage:
@@ -191,14 +160,14 @@ class Page(Static):
                 for account in get_all_accounts_with_balance():
                     with Container(classes="account-container"):
                         yield Label(
-                            f"[bold]{account['name']}[/bold][italic] {account['description'] or ''}[/italic]",
+                            f"[bold]{account.name}[/bold][italic] {account.description or ''}[/italic]",
                             classes="account-name",
                             markup=True
                         )
                         yield Label(
-                            f"${account['balance']}",
+                            f"${account.balance}",
                             classes="account-balance",
-                            id=f"account-{account['id']}-balance"
+                            id=f"account-{account.id}-balance"
                         )
             yield Rule(classes="home-divider", line_style="double")
             yield DataTable(
@@ -212,102 +181,3 @@ class Page(Static):
                     "Please create at least one account and one category to get started.",
                     classes="label-empty"
                 )
-
-
-class RecordForm:
-    def __init__(self):
-        self.form = [
-            {
-                "placeholder": "Label",
-                "title": "Label", 
-                "key": "label",
-                "type": "string",
-            },
-            {
-                "title": "Category",
-                "key": "categoryId",
-                "type": "autocomplete",
-                "options": [],
-                "isRequired": True,
-                "placeholder": "Select Category"
-            },
-            {
-                "placeholder": "0.00",
-                "title": "Amount",
-                "key": "amount",
-                "type": "number",
-                "min": 0,
-                "isRequired": True,
-            },
-            {
-                "title": "Account",
-                "key": "accountId", 
-                "type": "autocomplete",
-                "options": [],
-                "isRequired": True,
-                "placeholder": "Select Account"
-            },
-            {
-                "title": "Type",
-                "key": "isIncome",
-                "type": "boolean",
-                "labels": ["Expense", "Income"],
-                "defaultValue": False,
-            },
-            {
-                "placeholder": "dd (mm) (yy)",
-                "title": "Date",
-                "key": "date",
-                "type": "dateAutoDay",
-                "defaultValue": datetime.now().strftime("%d")
-            }
-        ]
-        self._populate_form_options()
-
-    def _populate_form_options(self):
-        accounts = get_all_accounts_with_balance()   
-        self.form[3]["options"] = [
-            {
-                "text": account["name"],
-                "value": account["id"],
-                "postfix": Text(f"{account['balance']}", style="yellow")
-            }
-            for account in accounts
-        ]
-        if accounts:
-            self.form[3]["defaultValue"] = accounts[0]["id"]
-            self.form[3]["defaultValueText"] = accounts[0]["name"]
-
-        categories = get_all_categories_by_freq()
-        self.form[1]["options"] = [
-            {
-                "text": category.name,
-                "value": category.id,
-                "prefix": Text("●", style=category.color),
-                "postfix": Text(f"↪ {category.parentCategory.name}" if category.parentCategory else "", style=category.parentCategory.color) if category.parentCategory else ""
-            }
-            for category, _ in categories
-        ]
-
-    def get_filled_form(self, record):
-        """Return a copy of the form with values from the record"""
-        filled_form = copy.deepcopy(self.form)
-        for field in filled_form:
-            value = getattr(record, field["key"])
-            if field["key"] == "date":
-                field["defaultValue"] = value.strftime("%d")
-            elif field["key"] == "isIncome":
-                field["defaultValue"] = value
-            elif field["key"] == "categoryId":
-                field["defaultValue"] = record.category.id
-                field["defaultValueText"] = record.category.name
-            elif field["key"] == "accountId":
-                field["defaultValue"] = record.account.id
-                field["defaultValueText"] = record.account.name
-            else:
-                field["defaultValue"] = str(value) if value is not None else ""
-        return filled_form
-
-    def get_form(self):
-        """Return the base form"""
-        return self.form

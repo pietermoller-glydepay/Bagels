@@ -25,7 +25,7 @@ class Page(Static):
     
     def on_unmount(self) -> None:
         self.basePage.removeBinding(CONFIG["hotkeys"]["delete"])
-        self.basePage.removeBinding("ctrl+d")
+        self.basePage.removeBinding(CONFIG["hotkeys"]["categories"]["new_subcategory"])
         self.basePage.removeBinding(CONFIG["hotkeys"]["edit"])
     
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
@@ -41,7 +41,7 @@ class Page(Static):
             table.add_columns(*self.COLUMNS)
         categories = get_all_categories_tree()
         if categories:
-            self.basePage.newBinding("ctrl+d", "new_subcategory", "New Subcategory", self.action_new_subcategory)
+            self.basePage.newBinding(CONFIG["hotkeys"]["categories"]["new_subcategory"], "new_subcategory", "Add Subcategory", self.action_new_subcategory)
             self.basePage.newBinding(CONFIG["hotkeys"]["edit"], "edit_category", "Edit", self.action_edit_category)
             self.basePage.newBinding(CONFIG["hotkeys"]["delete"], "delete_category", "Delete", self.action_delete_category)
             for category, node in categories:
@@ -124,7 +124,7 @@ class Page(Static):
         self.basePage = BasePage(
             pageName="Categories",
             bindings=[
-                (CONFIG["hotkeys"]["new"], "new_category", "New", self.action_new_category), 
+                (CONFIG["hotkeys"]["new"], "new_category", "Add", self.action_new_category), 
             ],
         )
         with self.basePage:

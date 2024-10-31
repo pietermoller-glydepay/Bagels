@@ -12,3 +12,4 @@ class Account(db.Model):
     
     records = db.relationship("Record", back_populates="account", foreign_keys="[Record.accountId]")
     transferFromRecords = db.relationship("Record", back_populates="transferToAccount", foreign_keys="[Record.transferToAccountId]")
+    splits = db.relationship("Split", back_populates="account")

@@ -57,22 +57,9 @@ def create_account(data):
 def get_all_accounts_with_balance():
     with app.app_context():
         accounts = Account.query.all()
-        accounts_with_balance = []
-
         for account in accounts:
-            updated_balance = calculate_account_balance(account.id)
-
-            account_data = {
-                "id": account.id,
-                "name": account.name,
-                "description": account.description,
-                "beginningBalance": account.beginningBalance,
-                "repaymentDate": account.repaymentDate,
-                "balance": updated_balance
-            }
-            accounts_with_balance.append(account_data)
-
-        return accounts_with_balance
+            account.balance = calculate_account_balance(account.id)
+        return accounts
 
 def get_account_balance_by_id(account_id):
     with app.app_context():

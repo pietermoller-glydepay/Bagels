@@ -5,6 +5,7 @@ from models.category import Category
 from models.database.app import get_app
 from models.database.db import db
 from models.record import Record
+from models.split import Split
 
 app = get_app()
 
@@ -15,11 +16,12 @@ def create_record(record_data: dict):
         db.session.commit()
         return record
 
-def get_record_by_id(record_id: int):
+def get_record_by_id(record_id: int, populate_splits: bool = False):
     with app.app_context():
         record = Record.query.options(
             db.joinedload(Record.category),
-            db.joinedload(Record.account)
+            db.joinedload(Record.account),
+            db.joinedload(Record.splits).joinedload(Split.account) if populate_splits else None
         ).get(record_id)
         return record
 

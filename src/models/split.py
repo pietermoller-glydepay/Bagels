@@ -5,7 +5,7 @@ class Split(db.Model):
     __tablename__ = "split"
 
     id = db.Column(db.Integer, primary_key=True, index=True)
-    recordId = db.Column(db.Integer, db.ForeignKey("record.id"), nullable=False)
+    recordId = db.Column(db.Integer, db.ForeignKey("record.id", ondelete="CASCADE"), nullable=False)
     amount = db.Column(db.Float, nullable=False)
     personId = db.Column(db.Integer, db.ForeignKey("person.id"), nullable=False)
     isPaid = db.Column(db.Boolean, nullable=False, default=False)

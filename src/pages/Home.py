@@ -1,5 +1,6 @@
 import copy
 from datetime import datetime
+from time import sleep
 
 from rich.text import Text
 from textual.app import ComposeResult
@@ -17,9 +18,10 @@ from controllers.accounts import (get_account_balance_by_id,
 from controllers.categories import (get_all_categories_by_freq,
                                     get_all_categories_tree,
                                     get_categories_count)
-from controllers.records import (create_record, delete_record,
-                                 get_record_by_id, get_records, update_record)
-from controllers.splits import create_split, delete_splits_by_record_id
+from controllers.records import (create_record, create_record_and_splits,
+                                 delete_record, get_record_by_id, get_records,
+                                 update_record, update_record_and_splits)
+from controllers.splits import create_split
 from utils.format import format_date_to_readable
 from utils.forms import RecordForm
 
@@ -28,6 +30,11 @@ class Page(Static):
     
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        self.filter = {
+            "month_offset": 0,
+            "sort_by": "date",
+            "sort_direction": "desc"
+        }
     
     def on_mount(self) -> None:
         self.record_form = RecordForm()
@@ -46,14 +53,30 @@ class Page(Static):
 
     # ------------- Callbacks ------------ #
     
+    def update_month_label(self) -> None:
+        def get_month_label() -> Label:
+            return self.query_one("#current-month-label")
+
+        label = get_month_label()
+        match self.filter["month_offset"]:
+            case 0:
+                label.update("Current Month")
+            case -1:
+                label.update("Previous Month")
+            case _:
+                label.update(f"{datetime(datetime.now().year, datetime.now().month + self.filter['month_offset'], 1).strftime('%B %Y')}")
+        
+    
     def build_table(self) -> None:
         def get_table() -> DataTable:
             return self.query_one("#records-table")
+        def get_empty_indicator() -> Static:
+            return self.query_one("#empty-indicator")
         table = get_table()
         table.clear()
         if not table.columns:
             table.add_columns(" ", "Date", "Category", "Amount", "Label")
-        records = get_records()
+        records = get_records(**self.filter)
         if records: 
             self.basePage.newBinding(CONFIG["hotkeys"]["delete"], "delete_record", "Delete", self.action_delete_record)
             self.basePage.newBinding(CONFIG["hotkeys"]["edit"], "edit_record", "Edit", self.action_edit_record)
@@ -76,38 +99,50 @@ class Page(Static):
                     key=str(record.id),
                 )
         table.focus()
+        empty_indicator = get_empty_indicator()
+        empty_indicator.display = not records
+        self.update_month_label()
         
-    def update_account_balance(self, account_id: int) -> None:
-        self.query_one(f"#account-{account_id}-balance").update(f"${get_account_balance_by_id(account_id)}")
+    def update_account_balance(self) -> None:
+        for account in get_all_accounts_with_balance():
+            self.query_one(f"#account-{account.id}-balance").update(f"${account.balance}")
+    
+    def action_prev_month(self) -> None:
+        self.filter["month_offset"] -= 1
+        self.build_table()
+    
+    def action_next_month(self) -> None:
+        if self.filter["month_offset"] < 0:
+            self.filter["month_offset"] += 1
+            self.build_table()
     
     def action_new_record(self) -> None:
         def check_result(result: bool) -> None:
             if result:
                 try:
-                    pass
+                    create_record_and_splits(result['record'], result['splits'])
                 except Exception as e:
                     self.app.notify(title="Error", message=f"{e}", severity="error", timeout=10)
                 else:   
                     self.app.notify(title="Success", message=f"Record created", severity="information", timeout=3)
-                    self.update_account_balance(result['accountId'])
+                    self.update_account_balance()
                     self.build_table()
         
-        self.app.push_screen(RecordModal("New Record", self.record_form.get_form()), callback=check_result)
+        self.app.push_screen(RecordModal("New Record", form=self.record_form.get_form()), callback=check_result)
     
     def action_edit_record(self) -> None:
         record = get_record_by_id(self.current_row)
         def check_result(result: bool) -> None:
             if result:
                 try:
-                    pass
-                        
+                    update_record_and_splits(self.current_row, result['record'], result['splits'])
                 except Exception as e:
                     self.app.notify(title="Error", message=f"{e}", severity="error", timeout=10)
                 else:
                     self.app.notify(title="Success", message=f"Record updated", severity="information", timeout=3)
-                    self.update_account_balance(result['accountId'])
+                    self.update_account_balance()
                     if record.isTransfer:
-                        self.update_account_balance(result['transferToAccountId'])
+                        self.update_account_balance()
                     self.build_table()
             else:
                 self.app.notify(title="Discarded", message=f"Record not updated", severity="warning", timeout=3)
@@ -116,15 +151,15 @@ class Page(Static):
             if record.isTransfer:
                 self.app.push_screen(TransferModal(record), callback=check_result)
             else:
-                filled_form = self.record_form.get_filled_form(record.id)
-                self.app.push_screen(RecordModal("Edit Record", filled_form), callback=check_result)
+                filled_form, filled_splits = self.record_form.get_filled_form(record.id)
+                self.app.push_screen(RecordModal("Edit Record", form=filled_form, splitForm=filled_splits), callback=check_result)
 
     def action_delete_record(self) -> None:
         def check_delete(result: bool) -> None:
             if result:
                 delete_record(self.current_row)
                 self.app.notify(title="Success", message=f"Record deleted", severity="information", timeout=3)
-                self.update_account_balance(self.current_row)
+                self.update_account_balance()
                 self.build_table()
         
         self.app.push_screen(ConfirmationModal("Are you sure you want to delete this record?"), check_delete)
@@ -138,8 +173,8 @@ class Page(Static):
                     self.app.notify(title="Error", message=f"{e}", severity="error", timeout=10)
                 else:
                     self.app.notify(title="Success", message=f"Record created", severity="information", timeout=3)
-                    self.update_account_balance(result['accountId'])
-                    self.update_account_balance(result['transferToAccountId'])
+                    self.update_account_balance()
+                    self.update_account_balance()
                     self.build_table()
             else:
                 self.app.notify(title="Discarded", message=f"Record not updated", severity="warning", timeout=3)
@@ -152,7 +187,9 @@ class Page(Static):
         self.basePage = BasePage(
             pageName="Home",
             bindings=[
-                (CONFIG["hotkeys"]["new"], "new_record", "Add", self.action_new_record), 
+                (CONFIG["hotkeys"]["new"], "new_record", "Add", self.action_new_record),
+                ("left", "prev_month", "Previous Month", self.action_prev_month),
+                ("right", "next_month", "Next Month", self.action_next_month)
             ],
         )
         with self.basePage:
@@ -169,13 +206,17 @@ class Page(Static):
                             classes="account-balance",
                             id=f"account-{account.id}-balance"
                         )
-            yield Rule(classes="home-divider", line_style="double")
+            with Container(classes="month-selector"):
+                yield Label("Current Month", id="current-month-label")
+                yield Label("<", classes="arrow-left")
+                yield Label(">", classes="arrow-right")
             yield DataTable(
                 id="records-table", 
                 cursor_type="row", 
                 cursor_foreground_priority=True, 
                 zebra_stripes=True
             )
+            yield Static("No entries", id="empty-indicator")
             if not get_accounts_count() or not get_categories_count():
                 yield Label(
                     "Please create at least one account and one category to get started.",

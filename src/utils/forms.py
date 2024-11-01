@@ -88,21 +88,23 @@ class RecordForm:
                 "title": "Paid",
                 "key": "isPaid",
                 "type": "hidden",
-                "defaultValue": "False"
+                "defaultValue": False
             },
             {
                 "title": "Paid to account",
                 "key": "accountId",
                 "type": "hidden",
                 "options": [],
-                "placeholder": "Select Account"
+                "placeholder": "Select Account",
+                "defaultValue": None
             }
         ]
     
     # ----------------- - ---------------- #
     
-    def __init__(self):
+    def __init__(self, created_person_callback: callable = None):
         self._populate_form_options()
+        self.created_person_callback = created_person_callback
         
     # -------------- Helpers ------------- #
 
@@ -142,8 +144,9 @@ class RecordForm:
     # ------------- Functions ------------ #
     
     def _action_create_person(self, name: str):
-        create_person(name)
-        self._populate_form_options()
+        person = create_person({"name": name})
+        if self.created_person_callback:
+            self.created_person_callback(person)
     
     # ------------- Builders ------------- #
     
@@ -153,45 +156,61 @@ class RecordForm:
             fieldKey = field["key"]
             field["key"] = f"{fieldKey}-{index}"
             if fieldKey == "isPaid":
-                field["defaultValue"] = str(isPaid)
+                field["defaultValue"] = isPaid
             elif fieldKey == "accountId" and isPaid:
                 field["type"] = "autocomplete"
         return split_form
 
-    def get_filled_form(self, recordId):
+    def get_filled_form(self, recordId: int) -> tuple[list, list]:
         """Return a copy of the form with values from the record"""
         filled_form = copy.deepcopy(self.FORM)
         record = get_record_by_id(recordId, populate_splits=True)
+        
         for field in filled_form:
             fieldKey = field["key"]
-            value = getattr(record, fieldKey) # gets the value of the field from the record
-            if fieldKey == "date":
-                field["defaultValue"] = value.strftime("%d")
-            elif fieldKey == "isIncome":
-                field["defaultValue"] = value
-            elif fieldKey == "categoryId":
-                field["defaultValue"] = record.category.id
-                field["defaultValueText"] = record.category.name
-            elif fieldKey == "accountId":
-                field["defaultValue"] = record.account.id
-                field["defaultValueText"] = record.account.name
-            else:
-                field["defaultValue"] = str(value) if value is not None else ""
+            value = getattr(record, fieldKey)
+            
+            match fieldKey:
+                case "date":
+                    # if value is this month, simply set %d, else set %d %m %y
+                    if value.month == datetime.now().month:
+                        field["defaultValue"] = value.strftime("%d")
+                    else:
+                        field["defaultValue"] = value.strftime("%d %m %y")
+                case "isIncome":
+                    field["defaultValue"] = value
+                case "categoryId":
+                    field["defaultValue"] = record.category.id
+                    field["defaultValueText"] = record.category.name
+                case "accountId":
+                    field["defaultValue"] = record.account.id
+                    field["defaultValueText"] = record.account.name
+                case _:
+                    field["defaultValue"] = str(value) if value is not None else ""
+        
+        filled_splits = []
         for index, split in enumerate(record.splits):
             split_form = self.get_split_form(index, split.isPaid)
             for field in split_form:
-                fieldKey = field["key"]
+                fieldKey = field["key"].split("-")[0]
                 value = getattr(split, fieldKey)
-                if fieldKey == "accountId":
-                    field["defaultValue"] = split.account.id
-                    field["defaultValueText"] = split.account.name
-                elif fieldKey == "personId":
-                    field["defaultValue"] = split.person.id
-                    field["defaultValueText"] = split.person.name
-                else:
-                    field["defaultValue"] = str(value) if value is not None else ""
-                filled_form.append(field)
-        return filled_form
+                
+                match fieldKey:
+                    case "accountId":
+                        if split.account:
+                            field["defaultValue"] = split.account.id
+                            field["defaultValueText"] = split.account.name
+                    case "personId":
+                        field["defaultValue"] = split.person.id
+                        field["defaultValueText"] = split.person.name
+                    case "isPaid":
+                        field["defaultValue"] = split.isPaid
+                    case _:
+                        field["defaultValue"] = str(value) if value is not None else ""
+                        
+                filled_splits.append(field)
+                
+        return filled_form, filled_splits
 
     def get_form(self):
         """Return the base form"""

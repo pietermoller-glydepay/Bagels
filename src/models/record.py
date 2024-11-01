@@ -22,4 +22,4 @@ class Record(db.Model):
     account = db.relationship("Account", foreign_keys=[accountId], back_populates="records")
     category = db.relationship("Category", back_populates="records")
     transferToAccount = db.relationship("Account", foreign_keys=[transferToAccountId], back_populates="transferFromRecords")
-    splits = db.relationship("Split", back_populates="record")
+    splits = db.relationship("Split", back_populates="record", cascade="all, delete-orphan")

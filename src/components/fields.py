@@ -30,16 +30,19 @@ class Field(Static):
         )
 
         # Configure input based on field type
-        if self.field_type in ["integer", "number"]:
-            self.input.type = self.field_type
-            self.input.value = field.get("defaultValue", "")
+        match self.field_type:
+            case "hidden":
+                pass
+            case "integer" | "number":
+                self.input.type = self.field_type
+                self.input.value = field.get("defaultValue", "")
+                
+            case "autocomplete":
+                self.input.heldValue = field.get("defaultValue", "")
+                self.input.value = str(field.get("defaultValueText", field.get("defaultValue", "")))
             
-        elif self.field_type == "autocomplete":
-            self.input.heldValue = field.get("defaultValue", "")
-            self.input.value = str(field.get("defaultValueText", field.get("defaultValue", "")))
-            
-        elif self.field_type != "boolean":
-            self.input.value = field.get("defaultValue", "")
+            case type_ if type_ != "boolean":
+                self.input.value = field.get("defaultValue", "")
 
     def on_auto_complete_selected(self, event: AutoComplete.Selected) -> None:
         """Handle autocomplete selection"""
@@ -69,8 +72,8 @@ class Field(Static):
                 dropdown_items = [
                     DropdownItem(
                         item.get("text", item["value"]),
-                        item.get("prefix", item.get("prefix", "")), 
-                        item.get("postfix", item.get("postfix", ""))
+                        item.get("prefix", ""), 
+                        item.get("postfix", "")
                     ) for item in self.field["options"]
                 ]
                 
@@ -79,7 +82,7 @@ class Field(Static):
                     Dropdown(
                         items=dropdown_items,
                         show_on_focus=True,
-                        create_option=True
+                        create_option=callable(self.field.get("create_action"))
                     ),
                     classes="field-autocomplete",
                     create_action=self.field.get("create_action")

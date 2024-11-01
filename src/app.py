@@ -1,16 +1,20 @@
+import getpass
+import os
 from typing import Iterable
 
 from textual.app import App as TextualApp
 from textual.app import ComposeResult, SystemCommand
 from textual.binding import Binding
+from textual.containers import Container
 from textual.css.query import NoMatches
 from textual.screen import Screen
-from textual.widgets import Footer, Header, Tab, Tabs
+from textual.widgets import Footer, Header, Label, Tab, Tabs
 
 # from controllers.categories import create_default_categories
 from controllers.categories import create_default_categories
 from models.database.app import init_db
 from pages import Accounts, Categories, Home, Receivables, Reports, Settings
+from utils.user_host import get_user_host_string
 
 
 class App(TextualApp):
@@ -88,7 +92,10 @@ class App(TextualApp):
 
     # --------------- View --------------- #
     def compose(self) -> ComposeResult:
-        yield Header()
+        with Container(classes="header"):
+            yield Label("↪ Expense Tracker", classes="title")
+            yield Label("0.1.0", classes="version")
+            yield Label(get_user_host_string(), classes="user")
         yield Tabs(*[Tab(f"{page["name"]} [{index+1}]", id=f"t{index + 1}") for index, page in enumerate(self.PAGES)])
         yield Footer()
     

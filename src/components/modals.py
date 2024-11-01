@@ -1,4 +1,5 @@
 from datetime import datetime
+from re import M
 
 from rich.text import Text
 from textual import events
@@ -56,6 +57,9 @@ class InputModal(ModalScreen):
         super().__init__(classes="modal-screen", *args, **kwargs)
         self.title = title
         self.form = form
+    
+    def on_mount(self):
+        self.styles.animate("text_opacity", value=0, duration=0.2)
     
     # --------------- Hooks -------------- #
 
@@ -202,20 +206,26 @@ class TransferModal(ModalScreen):
         )
 
 class RecordModal(InputModal):
-    def __init__(self, title: str, *args, **kwargs):
-        super().__init__(title, *args, **kwargs)
+    def __init__(self, title: str, form: list[dict] = [], splitForm: list[dict] = [], *args, **kwargs):
+        super().__init__(title, form, *args, **kwargs)
         self.record_form = RecordForm()
-        self.splitCount = 0
-        self.splitForm = []
+        self.splitForm = splitForm
+        self.isEditing = len(splitForm) > 0
+        self.splitFormOneLength = len(self.record_form.get_split_form(0, False))
+        self.splitCount = int(len(splitForm) / self.splitFormOneLength)
         self.persons = get_all_persons()
         self.accounts = get_all_accounts_with_balance()
         self.total_amount = 0
-        
+        self.split_total = Label("", id="split-total", classes="hidden" if self.splitCount == 0 else "")
+    
+    def on_mount(self):
+        self._update_split_total()
+    
     # -------------- Helpers ------------- #
     
     def _get_splits_from_result(self, resultForm: dict):
         splits = []
-        for i in range(self.splitCount):
+        for i in range(0, self.splitCount):
             splits.append({
                 "personId": resultForm[f"personId-{i}"],
                 "amount": resultForm[f"amount-{i}"],
@@ -228,62 +238,78 @@ class RecordModal(InputModal):
         my_amount = self.query_one("#field-amount").value
         total = float(my_amount) if my_amount else 0
         if update_new:
-            for i in range(1, self.splitCount + 1):
+            for i in range(0, self.splitCount):
                 amount = self.query_one(f"#field-amount-{i}").value
                 total += float(amount) if amount else 0
         self.split_total.update(f"Total amount: [bold yellow]{total:.2f}[/bold yellow]")
         self.total_amount = total
     
+    def _get_split_widget(self, index: int, fields: list[dict], isPaid: bool):
+        return Container(
+                Fields(fields),
+                Label("Paid", classes="label-paid") if isPaid else Static(),
+                id=f"split-{index}",
+                classes="split"
+            )
+    
+    def _get_init_split_widgets(self):
+        widgets = []
+        for i in range(0, self.splitCount):
+            oneSplitForm = self.splitForm[i * self.splitFormOneLength: (i + 1) * self.splitFormOneLength]
+            # Find the isPaid field in the form fields for this split
+            isPaid = False
+            for field in oneSplitForm:
+                if field.get("id") == f"isPaid-{i}":
+                    isPaid = field.get("value", False)
+                    break
+            widgets.append(self._get_split_widget(i, oneSplitForm, isPaid))
+        return widgets
+    
     # ------------- Callbacks ------------ #
     
     def on_input_changed(self, event: Input.Changed):
-        if event.input.id.startswith("field-amount"):
+        if event.input.id.startswith("field-amount") and self.splitCount > 0:
             self._update_split_total()
-
-    def on_key(self, event: events.Key):
-        if event.key == "down":
-            self.screen.focus_next()
-        elif event.key == "up":
-            self.screen.focus_previous()
-        elif event.key == "enter":
-            self.action_submit()
-        elif event.key == "escape":
-            self.dismiss(None)
-        elif event.key == CONFIG["hotkeys"]["record_modal"]["new_split"]:
-            self.action_add_split(paid=False)
-        elif event.key == CONFIG["hotkeys"]["record_modal"]["new_paid_split"]:
-            self.action_add_split(paid=True)
-        elif event.key == CONFIG["hotkeys"]["record_modal"]["delete_last_split"]:
-            self.action_delete_last_split()
     
-    def action_create_person(self, name: str):
-        create_person({"name": name})
-        self.app.notify("Person created")
-
+    def on_key(self, event: events.Key):
+        match event.key:
+            case "down":
+                self.screen.focus_next()
+            case "up":
+                self.screen.focus_previous()
+            case "enter":
+                self.action_submit()
+            case "escape":
+                self.dismiss(None)
+            case _:
+                if not self.isEditing:
+                    if event.key == CONFIG["hotkeys"]["record_modal"]["new_split"]:
+                        self.action_add_split(paid=False)
+                    elif event.key == CONFIG["hotkeys"]["record_modal"]["new_paid_split"]:
+                        self.action_add_split(paid=True)
+                    elif event.key == CONFIG["hotkeys"]["record_modal"]["delete_last_split"]:
+                        self.action_delete_last_split()
+    
     def action_add_split(self, paid: bool = False):
         splits_container = self.query_one("#splits-container", Container)
-        self.splitCount += 1
         current_split_index = self.splitCount
         new_split_form_fields = self.record_form.get_split_form(current_split_index, paid)
         for field in new_split_form_fields:
             self.splitForm.append(field)
         splits_container.mount(
-            Container(
-                Fields(new_split_form_fields),
-                Label("Paid", classes="label-paid") if paid else Static(),
-                id=f"split-{current_split_index}",
-                classes="split"
-            )
+            self._get_split_widget(current_split_index, new_split_form_fields, paid)
         )
+        # Use call_after_refresh to ensure the mount is complete
+        splits_container.call_after_refresh(lambda: self.query_one(f"#field-personId-{current_split_index}").focus())
+        self.splitCount += 1
         if self.splitCount == 1:
             self.split_total.set_classes("")
             self._update_split_total(update_new=False)
 
     def action_delete_last_split(self):
         if self.splitCount > 0:
-            self.query_one(f"#split-{self.splitCount}").remove()
-            amountToPop = len(self.splitForm) / self.splitCount
-            for i in range(int(amountToPop)):
+            self.query_one(f"#split-{self.splitCount - 1}").remove()
+            for i in range(self.splitFormOneLength):
                 self.splitForm.pop()
             self.splitCount -= 1
             if self.splitCount == 0:
@@ -291,33 +317,35 @@ class RecordModal(InputModal):
                 self.split_total.set_classes("hidden")
 
     def action_submit(self):
-        resultForm, errors, isValid = validateForm(self, self.form + self.splitForm)
-        if isValid:
-            recordResult = resultForm[:len(self.form)]
-            splitResult = resultForm[len(self.form):]
-            splitsResult = self._get_splits_from_result(splitResult)
-            return {
-                "record": recordResult,
-                "splits": splitsResult
-            }
+        resultRecordForm, errors, isValid = validateForm(self, self.form)
+        resultSplitForm, errorsSplit, isValidSplit = validateForm(self, self.splitForm)
+        if isValid and isValidSplit:
+            resultSplits = self._get_splits_from_result(resultSplitForm)
+            self.dismiss({
+                "record": resultRecordForm,
+                "splits": resultSplits
+            })
+            return 
         previousErrors = self.query(".error")
         for error in previousErrors:
             error.remove()
-        for key, value in errors.items():
+        for key, value in {**errors, **errorsSplit}.items():
             field = self.query_one(f"#row-field-{key}")
             field.mount(Label(value, classes="error"))
 
     # -------------- Compose ------------- #
 
     def compose(self) -> ComposeResult:
-        self.split_total = Label("", id="split-total", classes="hidden")
         yield ModalContainer(
             Fields(self.form),
-            Container(id="splits-container"),
+            Container(
+                *self._get_init_split_widgets(),
+                id="splits-container"
+            ),
             self.split_total,
             hotkeys=[
                 {"key": CONFIG["hotkeys"]["record_modal"]["new_split"], "label": "Split amount"},
                 {"key": CONFIG["hotkeys"]["record_modal"]["new_paid_split"], "label": "Split paid"},
                 {"key": CONFIG["hotkeys"]["record_modal"]["delete_last_split"], "label": "Delete split"}
-            ]
+            ] if not self.isEditing else []
         )

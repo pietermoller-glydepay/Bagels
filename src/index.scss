@@ -24,6 +24,25 @@ DataTable > .datatable--cursor {
 }
 
 /* ---------------------------------- */
+/*                 App                */
+/* ---------------------------------- */
+
+.header {
+  layout: horizontal;
+  height: auto;
+  padding: 1 2;
+
+  .version {
+    color: $primary-background-lighten-3;
+    margin-left: 1;
+  }
+
+  .user {
+    dock: right;
+  }
+}
+
+/* ---------------------------------- */
 /*         Confirmation Modal         */
 /* ---------------------------------- */
 
@@ -221,6 +240,30 @@ DataTable > .datatable--cursor {
 .home-divider {
   color: $primary-background-lighten-3;
   margin: 0;
+}
+
+#empty-indicator {
+  width: 1fr;
+  hatch: right $primary-background;
+  text-align: center;
+  padding: 6 0;
+  color: $primary-background-lighten-1;
+}
+
+.month-selector {
+  layout: horizontal;
+  align: center middle;
+  height: auto;
+  border-top: round $primary-background;
+  border-bottom: round $primary-background;
+
+  .arrow-left {
+    dock: left;
+  }
+
+  .arrow-right {
+    dock: right;
+  }
 }
 
 /* ------------ Accounts ------------ */

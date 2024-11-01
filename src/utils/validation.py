@@ -47,16 +47,16 @@ def _validate_date(value: str, field: dict, auto_day: bool = False) -> tuple[dat
         return None, None
 
     try:
-        if auto_day:
+        if auto_day and value.isdigit():
             # Use current month/year if not provided
             this_month = datetime.now().strftime("%m")
             this_year = datetime.now().strftime("%y")
             date = datetime.strptime(f"{value} {this_month} {this_year}", "%d %m %y")
-        else:
-            date = datetime.strptime(value, "%d %m %y")
+            return date, None
+        date = datetime.strptime(value, "%d %m %y")
         return date, None
     except ValueError:
-        format_str = "dd (mm) (yy) format. (optional)" if auto_day else "dd mm yy format"
+        format_str = "dd (mm) (yy) format." if auto_day else "dd mm yy format"
         return None, f"{field['title']} must be in {format_str}"
 
 
@@ -85,7 +85,7 @@ def _validate_autocomplete(value: str, held_value: str, field: dict) -> tuple[bo
     return True, None
 
 
-def validateForm(formComponent: Widget, formData: list[dict]):
+def validateForm(formComponent: Widget, formData: list[dict]) -> tuple[dict, dict, bool]:
     result = {}
     errors = {}
     isValid = True
@@ -93,7 +93,6 @@ def validateForm(formComponent: Widget, formData: list[dict]):
     for field in formData:
         fieldKey = field["key"]
         fieldWidget = formComponent.query_one(f"#field-{fieldKey}")
-        print(f"#field-{fieldKey}")
         fieldValue = fieldWidget.heldValue if hasattr(fieldWidget, "heldValue") else fieldWidget.value
 
         error = None
@@ -123,11 +122,11 @@ def validateForm(formComponent: Widget, formData: list[dict]):
                 is_valid, error = _validate_autocomplete(fieldWidget.value, fieldValue, field)
                 if is_valid and fieldValue:
                     result[fieldKey] = fieldValue
-
+            
             case _:
                 if not fieldValue and field.get("isRequired", False):
                     error = f"{field['title']} is required"
-                elif fieldValue:
+                else:
                     result[fieldKey] = fieldValue
 
         if error:

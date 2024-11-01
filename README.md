@@ -1,72 +1,67 @@
 # Development setup
 
 ```sh
-python3 -m venv ./.venv
-source ./.venv/bin/activate
-python3 -m pip install -r requirements.txt
+uv sync
+uv run textual console -x SYSTEM -x EVENT -x DEBUG -x INFO # for logging
+uv run textual run --dev src/app.py # in another terminal
 ```
 
 # Database schema
 
-```
+```dbml
 // Use DBML to define database structure
 
 enum nature {
-  "want"
-  "need"
-  "must"
+  "Want"
+  "Need"
+  "Must"
 }
 
 Table account {
-  id integer
-  name string
-  beginningBalance string
-  icon string
+  id integer [pk]
+  name string [not null]
+  beginningBalance float [not null]
   description string
-  repaymentDate datetime
+  repaymentDate integer
 }
 
 Table record {
-  id integer
-  label string
-  amount float
-  isAllUnpaidCleared boolean
-  // if all related unpaidRecord is cleared. Null if no unpaid.
+  id integer [pk]
+  label string [not null]
+  amount float [not null]
+  date datetime [not null]
+  accountId integer [ref: > account.id, not null]
+  categoryId integer [ref: > category.id]
+  isIncome boolean [not null, default: false]
+  isTransfer boolean [not null, default: false]
+  transferToAccountId integer [ref: > account.id]
 
-  date datetime
-  accountId Account
-  categoryId Category
-  // remember index to improve performance when implementing
+  note: 'Constraints: amount > 0, (isTransfer = FALSE) OR (isIncome = FALSE)'
 }
 
-Table unpaidRecord {
-  id integer
-  label string
-  date datetime
-  personId Person
-  amount float
-  recordId Record
-  isCleared boolean // if person paid
-  accountId Account
+Table split {
+  id integer [pk]
+  recordId integer [ref: > record.id, not null]
+  amount float [not null]
+  personId integer [ref: > person.id, not null]
+  isPaid boolean [not null, default: false]
+  paidDate datetime
+  accountId integer [ref: > account.id]
 }
 
 Table person {
-  id integer
+  id integer [pk]
   name string
 }
 
 Table category {
-  id integer
-  parentCategoryId integer // null if top level, super cateogry's id
-  name string
-  nature nature
-  color string
+  id integer [pk]
+  parentCategoryId integer [ref: > category.id] // null if top level
+  name string [not null]
+  nature nature [not null]
+  color string [not null]
 }
 
-Ref: category.id > record.categoryId
-Ref: category.parentCategoryId > category.id
-Ref: unpaidRecord.recordId < record.id
-Ref: record.accountId < account.id
-Ref: unpaidRecord.accountId < account.id
-Ref: person.id > unpaidRecord.personId
+// Additional relationships
+Ref: record.transferToAccountId > account.id
 ```

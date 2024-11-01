@@ -10,10 +10,9 @@ from textual.css.query import NoMatches
 from textual.screen import Screen
 from textual.widgets import Footer, Header, Label, Tab, Tabs
 
-# from controllers.categories import create_default_categories
 from controllers.categories import create_default_categories
 from models.database.app import init_db
-from pages import Accounts, Categories, Home, Receivables, Reports, Settings
+from pages import Accounts, Categories, Home, Receivables, Reports
 from utils.user_host import get_user_host_string
 
 
@@ -25,30 +24,26 @@ class App(TextualApp):
     ]
 
     PAGES = [
-    {
-        "name": "Home",
-        "widget": Home.Page(classes="content")
-    },
-    {
-        "name": "Receivables",
-        "widget": Receivables.Page(classes="content")
-    },
-    {
-        "name": "Reports",
-        "widget": Reports.Page(classes="content")
-    },
-    {
-        "name": "Accounts",
-        "widget": Accounts.Page(classes="content")
-    },
-    {
-        "name": "Categories",
-        "widget": Categories.Page(classes="content")
-    },
-    {
-        "name": "Settings",
-        "widget": Settings.Page(classes="content")
-    }
+        {
+            "name": "Home",
+            "class": Home.Page,
+        },
+        {
+            "name": "Receivables",
+            "class": Receivables.Page,
+        },
+        {
+            "name": "Reports",
+            "class": Reports.Page,
+        },
+        {
+            "name": "Accounts",
+            "class": Accounts.Page,
+        },
+        {
+            "name": "Categories",
+            "class": Categories.Page,
+        }
     ]
     
     def get_system_commands(self, screen: Screen) -> Iterable[SystemCommand]:
@@ -80,7 +75,9 @@ class App(TextualApp):
             currentContent.remove()
         except NoMatches:
             pass
-        self.mount(self.PAGES[activeIndex]["widget"])
+        page_class = self.PAGES[activeIndex]["class"]
+        page_instance = page_class(classes="content")
+        self.mount(page_instance)
 
     def action_goToTab(self, tab_number: int) -> None:
         """Go to the specified tab."""

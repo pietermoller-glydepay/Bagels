@@ -9,6 +9,7 @@ from textual.reactive import reactive
 from textual.widgets import Checkbox, DataTable, Label, Rule, Static
 
 from components.base import BasePage
+from components.indicators import EmptyIndicator
 from components.modals import (ConfirmationModal, InputModal, RecordModal,
                                TransferModal)
 from constants.config import CONFIG
@@ -35,25 +36,22 @@ class Page(Static):
             "sort_by": "date",
             "sort_direction": "desc"
         }
+        self.record_form = RecordForm()
+        self.isReady = get_accounts_count() and get_categories_count()
     
     def on_mount(self) -> None:
-        self.record_form = RecordForm()
-        self.build_table()
+        self._build_table()
         if get_accounts_count() > 1:
             self.basePage.newBinding("ctrl+t", "new_transfer", "Transfer", self.action_new_transfer)
-    
-    def on_unmount(self) -> None:
-        self.basePage.removeBinding(CONFIG["hotkeys"]["delete"])
-        self.basePage.removeBinding(CONFIG["hotkeys"]["edit"])
-        self.basePage.removeBinding("ctrl+t")
     
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         if event.row_key:
             self.current_row = event.row_key.value
-
-    # ------------- Callbacks ------------ #
+            
     
-    def update_month_label(self) -> None:
+    # -------------- Helpers ------------- #
+
+    def _update_month_label(self) -> None:
         def get_month_label() -> Label:
             return self.query_one("#current-month-label")
 
@@ -67,7 +65,7 @@ class Page(Static):
                 label.update(f"{datetime(datetime.now().year, datetime.now().month + self.filter['month_offset'], 1).strftime('%B %Y')}")
         
     
-    def build_table(self) -> None:
+    def _build_table(self) -> None:
         def get_table() -> DataTable:
             return self.query_one("#records-table")
         def get_empty_indicator() -> Static:
@@ -98,23 +96,33 @@ class Page(Static):
                     record.label,
                     key=str(record.id),
                 )
-        table.focus()
-        empty_indicator = get_empty_indicator()
+            table.focus()
+        else:
+            empty_indicator = get_empty_indicator()
+            self.current_row = None
         empty_indicator.display = not records
-        self.update_month_label()
+        self._update_month_label()
         
-    def update_account_balance(self) -> None:
+    def _update_account_balance(self) -> None:
         for account in get_all_accounts_with_balance():
             self.query_one(f"#account-{account.id}-balance").update(f"${account.balance}")
     
+    def _notify_not_ready(self) -> None:
+        self.app.notify(title="Error", message="Please create at least one account and one category to get started.", severity="error", timeout=2)
+    
+    # ------------- Callbacks ------------ #
+        
+    
     def action_prev_month(self) -> None:
         self.filter["month_offset"] -= 1
-        self.build_table()
+        self._build_table()
     
     def action_next_month(self) -> None:
         if self.filter["month_offset"] < 0:
             self.filter["month_offset"] += 1
-            self.build_table()
+            self._build_table()
+        else:
+            self.app.notify(title="Error", message="You are already on the current month.", severity="error", timeout=2)
     
     def action_new_record(self) -> None:
         def check_result(result: bool) -> None:
@@ -125,12 +133,18 @@ class Page(Static):
                     self.app.notify(title="Error", message=f"{e}", severity="error", timeout=10)
                 else:   
                     self.app.notify(title="Success", message=f"Record created", severity="information", timeout=3)
-                    self.update_account_balance()
-                    self.build_table()
+                    self._update_account_balance()
+                    self._build_table()
         
-        self.app.push_screen(RecordModal("New Record", form=self.record_form.get_form()), callback=check_result)
+        if self.isReady:
+            self.app.push_screen(RecordModal("New Record", form=self.record_form.get_form()), callback=check_result)
+        else:
+            self._notify_not_ready()
     
     def action_edit_record(self) -> None:
+        if not self.isReady:
+            self._notify_not_ready()
+            return 
         record = get_record_by_id(self.current_row)
         def check_result(result: bool) -> None:
             if result:
@@ -140,10 +154,10 @@ class Page(Static):
                     self.app.notify(title="Error", message=f"{e}", severity="error", timeout=10)
                 else:
                     self.app.notify(title="Success", message=f"Record updated", severity="information", timeout=3)
-                    self.update_account_balance()
+                    self._update_account_balance()
                     if record.isTransfer:
-                        self.update_account_balance()
-                    self.build_table()
+                        self._update_account_balance()
+                    self._build_table()
             else:
                 self.app.notify(title="Discarded", message=f"Record not updated", severity="warning", timeout=3)
         
@@ -159,9 +173,11 @@ class Page(Static):
             if result:
                 delete_record(self.current_row)
                 self.app.notify(title="Success", message=f"Record deleted", severity="information", timeout=3)
-                self.update_account_balance()
-                self.build_table()
-        
+                self._update_account_balance()
+                self._build_table()
+        if not self.isReady:
+            self._notify_not_ready()
+            return
         self.app.push_screen(ConfirmationModal("Are you sure you want to delete this record?"), check_delete)
     
     def action_new_transfer(self) -> None:
@@ -173,13 +189,15 @@ class Page(Static):
                     self.app.notify(title="Error", message=f"{e}", severity="error", timeout=10)
                 else:
                     self.app.notify(title="Success", message=f"Record created", severity="information", timeout=3)
-                    self.update_account_balance()
-                    self.update_account_balance()
-                    self.build_table()
+                    self._update_account_balance()
+                    self._update_account_balance()
+                    self._build_table()
             else:
                 self.app.notify(title="Discarded", message=f"Record not updated", severity="warning", timeout=3)
-                    
-        self.app.push_screen(TransferModal(), callback=check_result)
+        if get_accounts_count() > 1:
+            self.app.push_screen(TransferModal(), callback=check_result)
+        else:
+            self.app.notify(title="Error", message="Please have at least two accounts to create a transfer.", severity="error", timeout=2)
 
     # --------------- View --------------- #
     
@@ -188,8 +206,11 @@ class Page(Static):
             pageName="Home",
             bindings=[
                 (CONFIG["hotkeys"]["new"], "new_record", "Add", self.action_new_record),
+                (CONFIG["hotkeys"]["delete"], "delete_record", "Delete", self.action_delete_record),
+                (CONFIG["hotkeys"]["edit"], "edit_record", "Edit", self.action_edit_record),
+                (CONFIG["hotkeys"]["home"]["new_transfer"], "new_transfer", "Transfer", self.action_new_transfer),
                 ("left", "prev_month", "Previous Month", self.action_prev_month),
-                ("right", "next_month", "Next Month", self.action_next_month)
+                ("right", "next_month", "Next Month", self.action_next_month),
             ],
         )
         with self.basePage:
@@ -216,8 +237,8 @@ class Page(Static):
                 cursor_foreground_priority=True, 
                 zebra_stripes=True
             )
-            yield Static("No entries", id="empty-indicator")
-            if not get_accounts_count() or not get_categories_count():
+            yield EmptyIndicator("No entries")
+            if not self.isReady:
                 yield Label(
                     "Please create at least one account and one category to get started.",
                     classes="label-empty"

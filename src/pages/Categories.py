@@ -6,6 +6,7 @@ from textual.binding import Binding
 from textual.widgets import DataTable, Label, Select, Static
 
 from components.base import BasePage
+from components.indicators import EmptyIndicator
 from components.modals import ConfirmationModal, InputModal
 from constants.config import CONFIG
 from controllers.categories import (create_category, create_default_categories,
@@ -21,34 +22,38 @@ class Page(Static):
     # --------------- Hooks -------------- #
     
     def on_mount(self) -> None:
-        self.build_table()
-    
-    def on_unmount(self) -> None:
-        self.basePage.removeBinding(CONFIG["hotkeys"]["delete"])
-        self.basePage.removeBinding(CONFIG["hotkeys"]["categories"]["new_subcategory"])
-        self.basePage.removeBinding(CONFIG["hotkeys"]["edit"])
+        self._build_table()
     
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         if event.row_key:
             self.current_row = event.row_key.value
         
-    # ------------- Callbacks ------------ #
+    # -------------- Helpers ------------- #
     
-    def build_table(self) -> None:
-        table = self.query_one("#categories-table")
+    def _build_table(self) -> None:
+        def get_table() -> DataTable:
+            return self.query_one("#categories-table")
+        def get_empty_indicator() -> Static:
+            return self.query_one("#empty-indicator")
+        table = get_table()
         table.clear()
         if not table.columns:
             table.add_columns(*self.COLUMNS)
         categories = get_all_categories_tree()
         if categories:
-            self.basePage.newBinding(CONFIG["hotkeys"]["categories"]["new_subcategory"], "new_subcategory", "Add Subcategory", self.action_new_subcategory)
-            self.basePage.newBinding(CONFIG["hotkeys"]["edit"], "edit_category", "Edit", self.action_edit_category)
-            self.basePage.newBinding(CONFIG["hotkeys"]["delete"], "delete_category", "Delete", self.action_delete_category)
             for category, node in categories:
                 table.add_row(node, category.name, category.nature.value, key=category.id)
+            table.zebra_stripes = True
+            table.focus()
+        else:
+            empty_indicator = get_empty_indicator()
+            self.current_row = None
+        empty_indicator.display = not categories
+    
+    def _notify_no_categories(self) -> None:
+        self.app.notify(title="Error", message="Category must be selected for this action.", severity="error", timeout=2)
         
-        table.zebra_stripes = True
-        table.focus()
+    # ------------- Callbacks ------------ #
     
     def action_new_category(self) -> None:
         def check_result(result: bool) -> None:
@@ -59,11 +64,15 @@ class Page(Static):
                     self.app.notify(title="Error", message=f"{e}", severity="error", timeout=10)
                 else:
                     self.app.notify(title="Success", message=f"Category created", severity="information", timeout=3)
-                    self.build_table()
+                    self._build_table()
         
         self.app.push_screen(InputModal("New Category", CATEGORY_FORM), callback=check_result)
     
     def action_new_subcategory(self) -> None:
+        if not self.current_row:
+            self._notify_no_categories()
+            return
+
         def check_result(result: bool) -> None:
             if result:
                 try:
@@ -72,7 +81,8 @@ class Page(Static):
                     self.app.notify(title="Error", message=f"{e}", severity="error", timeout=10)
                 else:
                     self.app.notify(title="Success", message=f"Subcategory created", severity="information", timeout=3)
-                    self.build_table()
+                    self._build_table()
+
         subcategory_form = copy.deepcopy(CATEGORY_FORM)
         subcategory_form.append({
             "key": "parentCategoryId",
@@ -83,17 +93,25 @@ class Page(Static):
         self.app.push_screen(InputModal(f"New Subcategory of {parent_category.name}", subcategory_form), callback=check_result)
 
     def action_delete_category(self) -> None:
+        if not self.current_row:
+            self._notify_no_categories()
+            return
+
         def check_delete(result: bool) -> None:
             if result:
                 try:
                     delete_category(self.current_row)
                 except Exception as e:
                     self.app.notify(title="Error", message=f"{e}", severity="error", timeout=10)
-                self.build_table()
+                self._build_table()
         
         self.app.push_screen(ConfirmationModal("Are you sure you want to delete this record?"), check_delete)
         
     def action_edit_category(self) -> None:
+        if not self.current_row:
+            self._notify_no_categories()
+            return
+
         def check_result(result: bool) -> None:
             if result:
                 try:
@@ -102,7 +120,7 @@ class Page(Static):
                     self.app.notify(title="Error", message=f"{e}", severity="error", timeout=10)
                 else:
                     self.app.notify(title="Success", message=f"Category {result['name']} updated", severity="information", timeout=3)
-                    self.build_table()
+                    self._build_table()
         
         category = get_category_by_id(self.current_row)
         filled_category_form = copy.deepcopy(CATEGORY_FORM)
@@ -124,13 +142,15 @@ class Page(Static):
         self.basePage = BasePage(
             pageName="Categories",
             bindings=[
-                (CONFIG["hotkeys"]["new"], "new_category", "Add", self.action_new_category), 
+                (CONFIG["hotkeys"]["new"], "new_category", "Add", self.action_new_category),
+                (CONFIG["hotkeys"]["categories"]["new_subcategory"], "new_subcategory", "Add Subcategory", self.action_new_subcategory),
+                (CONFIG["hotkeys"]["edit"], "edit_category", "Edit", self.action_edit_category),
+                (CONFIG["hotkeys"]["delete"], "delete_category", "Delete", self.action_delete_category),
             ],
         )
         with self.basePage:
             yield DataTable(id="categories-table", cursor_type="row", cursor_foreground_priority=True)
-            if not get_all_categories_tree():
-                yield Label("No categories. Use [bold yellow][^n][/bold yellow] to create one.", classes="label-empty")
+            yield EmptyIndicator("No categories")
 
 CATEGORY_FORM = [
     {

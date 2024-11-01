@@ -2,6 +2,8 @@ hotkeys:
   new: "ctrl+a"
   delete: "backspace"
   edit: "space"
+  home:
+    new_transfer: "ctrl+t"
   record_modal:
     new_split: "ctrl+a"
     new_paid_split: "ctrl+s"

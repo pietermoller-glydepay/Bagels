@@ -9,6 +9,7 @@ class Split(db.Model):
     amount = db.Column(db.Float, nullable=False)
     personId = db.Column(db.Integer, db.ForeignKey("person.id"), nullable=False)
     isPaid = db.Column(db.Boolean, nullable=False, default=False)
+    paidDate = db.Column(db.DateTime, nullable=True)
     accountId = db.Column(db.Integer, db.ForeignKey("account.id"), nullable=True)
     
     record = db.relationship("Record", foreign_keys=[recordId], back_populates="splits")

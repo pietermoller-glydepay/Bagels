@@ -41,7 +41,7 @@ def _validate_number(value: str, field: dict, is_float: bool = False) -> tuple[b
 
 def _validate_date(value: str, field: dict, auto_day: bool = False) -> tuple[datetime | None, str | None]:
     """Validate a date field and return (parsed_date, error_message)"""
-    if not value:
+    if not value or value == "":
         if field.get("isRequired", False):
             return None, f"{field['title']} is required"
         return None, None
@@ -124,6 +124,7 @@ def validateForm(formComponent: Widget, formData: list[dict]) -> tuple[dict, dic
                     result[fieldKey] = fieldValue
             
             case _:
+                print(f"The field {field['title']} has value `{fieldValue}`")
                 if not fieldValue and field.get("isRequired", False):
                     error = f"{field['title']} is required"
                 else:

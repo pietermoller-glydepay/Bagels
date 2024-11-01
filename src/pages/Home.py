@@ -6,13 +6,14 @@ from rich.text import Text
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal
 from textual.reactive import reactive
-from textual.widgets import Checkbox, DataTable, Label, Rule, Static
+from textual.widgets import Label, Static
 
 from components.base import BasePage
+from components.datatable import DataTable
 from components.indicators import EmptyIndicator
 from components.modals import (ConfirmationModal, InputModal, RecordModal,
                                TransferModal)
-from constants.config import CONFIG
+from config import CONFIG
 from controllers.accounts import (get_account_balance_by_id,
                                   get_accounts_count, get_all_accounts,
                                   get_all_accounts_with_balance)
@@ -20,8 +21,10 @@ from controllers.categories import (get_all_categories_by_freq,
                                     get_all_categories_tree,
                                     get_categories_count)
 from controllers.records import (create_record, create_record_and_splits,
-                                 delete_record, get_record_by_id, get_records,
-                                 update_record, update_record_and_splits)
+                                 delete_record, get_record_by_id,
+                                 get_record_total_split_amount, get_records,
+                                 is_record_all_splits_paid, update_record,
+                                 update_record_and_splits)
 from controllers.splits import create_split
 from utils.format import format_date_to_readable
 from utils.forms import RecordForm
@@ -38,6 +41,7 @@ class Page(Static):
         }
         self.record_form = RecordForm()
         self.isReady = get_accounts_count() and get_categories_count()
+        self.show_splits = True
     
     def on_mount(self) -> None:
         self._build_table()
@@ -66,21 +70,27 @@ class Page(Static):
         
     
     def _build_table(self) -> None:
-        def get_table() -> DataTable:
-            return self.query_one("#records-table")
-        def get_empty_indicator() -> Static:
-            return self.query_one("#empty-indicator")
-        table = get_table()
+        table: DataTable = self.query_one("#records-table")
+        empty_indicator: Static = self.query_one("#empty-indicator")
         table.clear()
         if not table.columns:
-            table.add_columns(" ", "Date", "Category", "Amount", "Label")
+            table.add_columns(" ", "Date", "Category", "Amount", "Label", "Account")
         records = get_records(**self.filter)
         if records: 
-            self.basePage.newBinding(CONFIG["hotkeys"]["delete"], "delete_record", "Delete", self.action_delete_record)
-            self.basePage.newBinding(CONFIG["hotkeys"]["edit"], "edit_record", "Edit", self.action_edit_record)
             for record in records:
-                flow_icon = "[green]+[/green]" if record.isIncome else "[red]-[/red]"
-                type_icon = " "
+                # Cash flow indicator for amount
+                flow_icon_positive = "[green]+[/green]"
+                flow_icon_negative = "[red]-[/red]"
+                flow_icon = flow_icon_positive if record.isIncome else flow_icon_negative
+                # Split indicator at the left of the row
+                if record.splits:
+                    if is_record_all_splits_paid(record.id):
+                        left_icon = "[green]●[/green]"
+                    else:
+                        left_icon = "[red]●[/red]"
+                else:
+                    left_icon = " "
+                # Category string
                 if record.isTransfer:
                     category_string = record.account.name + " → " + record.transferToAccount.name
                     amount_string = record.amount
@@ -88,17 +98,55 @@ class Page(Static):
                     color_tag = record.category.color.lower()
                     category_string = f"[{color_tag}]●[/{color_tag}] {record.category.name}"
                     amount_string = f"{flow_icon} {record.amount}"
+                # Label string
+                if record.label:
+                    label_string = record.label
+                else:
+                    label_string = "-"
+                # Add row to table
                 table.add_row(
-                    type_icon,
+                    left_icon,
                     format_date_to_readable(record.date),
                     category_string,
                     amount_string,
-                    record.label,
+                    label_string,
+                    record.account.name,
                     key=str(record.id),
                 )
+                # ----- Handle displaying splits ----- #
+                if record.splits and self.show_splits:
+                    total_split_count = len(record.splits)
+                    amount_self = record.amount - get_record_total_split_amount(record.id)
+                    split_flow_icon = flow_icon_negative if record.isIncome else flow_icon_positive
+                    for index, split in enumerate(record.splits):
+                        if index == total_split_count - 1:
+                            left_icon = "└"
+                        else:
+                            left_icon = "├"
+                        if split.isPaid:
+                            paid_status = f"[green]●[/green] {format_date_to_readable(split.paidDate)}"
+                            left_icon = f"[green]{left_icon}[/green]"
+                        else:
+                            paid_status = "[red]●[/red] Unpaid"
+                            left_icon = f"[red]{left_icon}[/red]"
+                        table.add_row(
+                            left_icon, # icon row
+                            paid_status, # date row
+                            f"✦ {split.person.name}", # category row
+                            f"{split_flow_icon} {split.amount}", # amount row
+                            "-", # label row
+                            split.account.name if split.account else "-" # account row
+                        )
+                    table.add_row(
+                        "", # icon row
+                        "", # date row
+                        "", # category row
+                        f"= {amount_self}", # amount row
+                        "", # label row
+                        "" # account row
+                    )
             table.focus()
         else:
-            empty_indicator = get_empty_indicator()
             self.current_row = None
         empty_indicator.display = not records
         self._update_month_label()
@@ -112,6 +160,9 @@ class Page(Static):
     
     # ------------- Callbacks ------------ #
         
+    def action_toggle_splits(self) -> None:
+        self.show_splits = not self.show_splits
+        self._build_table()
     
     def action_prev_month(self) -> None:
         self.filter["month_offset"] -= 1
@@ -123,6 +174,7 @@ class Page(Static):
             self._build_table()
         else:
             self.app.notify(title="Error", message="You are already on the current month.", severity="error", timeout=2)
+            self.app.bell()
     
     def action_new_record(self) -> None:
         def check_result(result: bool) -> None:
@@ -166,7 +218,7 @@ class Page(Static):
                 self.app.push_screen(TransferModal(record), callback=check_result)
             else:
                 filled_form, filled_splits = self.record_form.get_filled_form(record.id)
-                self.app.push_screen(RecordModal("Edit Record", form=filled_form, splitForm=filled_splits), callback=check_result)
+                self.app.push_screen(RecordModal("Edit Record", form=filled_form, splitForm=filled_splits, isEditing=True), callback=check_result)
 
     def action_delete_record(self) -> None:
         def check_delete(result: bool) -> None:
@@ -205,10 +257,11 @@ class Page(Static):
         self.basePage = BasePage(
             pageName="Home",
             bindings=[
-                (CONFIG["hotkeys"]["new"], "new_record", "Add", self.action_new_record),
-                (CONFIG["hotkeys"]["delete"], "delete_record", "Delete", self.action_delete_record),
-                (CONFIG["hotkeys"]["edit"], "edit_record", "Edit", self.action_edit_record),
-                (CONFIG["hotkeys"]["home"]["new_transfer"], "new_transfer", "Transfer", self.action_new_transfer),
+                (CONFIG.hotkeys.new, "new_record", "Add", self.action_new_record),
+                (CONFIG.hotkeys.delete, "delete_record", "Delete", self.action_delete_record),
+                (CONFIG.hotkeys.edit, "edit_record", "Edit", self.action_edit_record),
+                (CONFIG.hotkeys.home.new_transfer, "new_transfer", "Transfer", self.action_new_transfer),
+                (CONFIG.hotkeys.home.toggle_splits, "toggle_splits", "Toggle Splits", self.action_toggle_splits),
                 ("left", "prev_month", "Previous Month", self.action_prev_month),
                 ("right", "next_month", "Next Month", self.action_next_month),
             ],
@@ -229,8 +282,8 @@ class Page(Static):
                         )
             with Container(classes="month-selector"):
                 yield Label("Current Month", id="current-month-label")
-                yield Label("<", classes="arrow-left")
-                yield Label(">", classes="arrow-right")
+                yield Label("<<<", classes="arrow-left")
+                yield Label(">>>", classes="arrow-right")
             yield DataTable(
                 id="records-table", 
                 cursor_type="row", 

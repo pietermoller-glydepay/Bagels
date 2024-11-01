@@ -50,7 +50,7 @@ class App(TextualApp):
             "class": Categories.Page,
         }
     ]
-    
+
     theme: Reactive[str] = reactive("galaxy", init=False)
     """The currently selected theme. Changing this reactive should
     trigger a complete refresh via the `watch_theme` method."""
@@ -61,6 +61,9 @@ class App(TextualApp):
         available_themes |= BUILTIN_THEMES
         self.themes = available_themes
         super().__init__()
+    
+    def on_mount(self) -> None:
+        self.theme_change_signal = Signal[Theme](self, "theme-changed")
     
     def get_css_variables(self) -> dict[str, str]:
         if self.theme:
@@ -94,34 +97,41 @@ class App(TextualApp):
             self.refresh_bindings()
     
     # --------------- Hooks -------------- #
-    
-    def on_mount(self) -> None:
-        self.theme_change_signal = Signal[Theme](self, "theme-changed")
         
     def watch_theme(self, theme: str | None) -> None:
         self.refresh_css(animate=False)
         self.screen._update_styles()
         if theme:
             theme_object = self.themes[theme]
-            if syntax := getattr(theme_object, "syntax", None):
-                if isinstance(syntax, str):
-                    valid_themes = {
-                        theme.name for theme in TextAreaTheme.builtin_themes()
-                    }
-                    valid_themes.add("posting")
-                    if syntax not in valid_themes:
-                        # Default to the posting theme for text areas
-                        # if the specified theme is invalid.
-                        theme_object.syntax = "posting"
-                        self.notify(
-                            f"Theme {theme!r} has an invalid value for 'syntax': {syntax!r}. Defaulting to 'posting'.",
-                            title="Invalid theme",
-                            severity="warning",
-                            timeout=7,
-                        )
+            # if syntax := getattr(theme_object, "syntax", None):
+            #     if isinstance(syntax, str):
+            #         valid_themes = {
+            #             theme.name for theme in TextAreaTheme.builtin_themes()
+            #         }
+            #         valid_themes.add("posting")
+            #         if syntax not in valid_themes:
+            #             # Default to the posting theme for text areas
+            #             # if the specified theme is invalid.
+            #             theme_object.syntax = "posting"
+            #             self.notify(
+            #                 f"Theme {theme!r} has an invalid value for 'syntax': {syntax!r}. Defaulting to 'posting'.",
+            #                 title="Invalid theme",
+            #                 severity="warning",
+            #                 timeout=7,
+            #             )
 
             self.theme_change_signal.publish(theme_object)
-        
+    
+    @on(CommandPalette.Opened)
+    def palette_opened(self) -> None:
+        # If the theme preview is disabled, don't record the theme being used
+        # before the palette is opened.
+        # if not self.settings.command_palette.theme_preview:
+        #     return
+
+        # Record the theme being used before the palette is opened.
+        self._original_theme = self.theme
+    
     @on(CommandPalette.OptionHighlighted)
     def palette_option_highlighted(
         self, event: CommandPalette.OptionHighlighted
@@ -178,6 +188,9 @@ class App(TextualApp):
 
     def action_quit(self) -> None:
         self.exit()
+    
+    def action_create_default_categories(self) -> None:
+        create_default_categories()
 
     # --------------- View --------------- #
     def compose(self) -> ComposeResult:

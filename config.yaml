@@ -1,12 +1,13 @@
 hotkeys:
-  new: "ctrl+a"
-  delete: "backspace"
-  edit: "space"
+  new: "a"
+  delete: "d"
+  edit: "e"
   home:
-    new_transfer: "ctrl+t"
+    new_transfer: "t"
+    toggle_splits: "s"
   record_modal:
     new_split: "ctrl+a"
     new_paid_split: "ctrl+s"
     delete_last_split: "ctrl+d"
   categories:
-    new_subcategory: "ctrl+s"
+    new_subcategory: "s"

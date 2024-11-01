@@ -1,6 +1,8 @@
+from pathlib import Path
+
+import yaml
 from rich.text import Text
 
-from constants.categories import DEFAULT_CATEGORIES
 from models.category import Category, Nature
 from models.database.app import get_app
 from models.database.db import db
@@ -84,20 +86,25 @@ def delete_category(category_id):
         return False
 
 def create_default_categories():
+    # Get the path to the YAML file
+    yaml_path = Path(__file__).parent.parent / "templates" / "default_categories.yaml"
+    
+    with open(yaml_path, 'r') as file:
+        default_categories = yaml.safe_load(file)
 
     with app.app_context():
-        for category in DEFAULT_CATEGORIES:
+        for category in default_categories:
             parent = create_category({
                 "name": category["name"],
-                "nature": category["nature"],
-                "color": category["color"],
+                "nature": getattr(Nature, category["nature"]),
+                "color": category["color"], 
                 "parentCategoryId": None
             })
 
             for subcategory in category["subcategories"]:
                 create_category({
                     "name": subcategory["name"],
-                    "nature": subcategory["nature"],
+                    "nature": getattr(Nature, subcategory["nature"]),
                     "color": category["color"],
                     "parentCategoryId": parent.id
                 })

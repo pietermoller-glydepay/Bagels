@@ -6,7 +6,7 @@ from rich.text import Text
 from controllers.accounts import get_all_accounts_with_balance
 from controllers.categories import get_all_categories_by_freq
 from controllers.persons import create_person, get_all_persons
-from controllers.records import get_record_by_id
+from controllers.records import get_record_by_id, get_record_total_split_amount
 
 
 class RecordForm:
@@ -97,6 +97,12 @@ class RecordForm:
                 "options": [],
                 "placeholder": "Select Account",
                 "defaultValue": None
+            },
+            {
+                "title": "Paid Date",
+                "key": "paidDate",
+                "type": "hidden",
+                "defaultValue": None
             }
         ]
     
@@ -159,6 +165,9 @@ class RecordForm:
                 field["defaultValue"] = isPaid
             elif fieldKey == "accountId" and isPaid:
                 field["type"] = "autocomplete"
+            elif fieldKey == "paidDate" and isPaid:
+                field["type"] = "dateAutoDay"
+                field["defaultValue"] = datetime.now().strftime("%d")
         return split_form
 
     def get_filled_form(self, recordId: int) -> tuple[list, list]:
@@ -171,6 +180,8 @@ class RecordForm:
             value = getattr(record, fieldKey)
             
             match fieldKey:
+                case "amount":
+                    field["defaultValue"] = str(value - get_record_total_split_amount(recordId))
                 case "date":
                     # if value is this month, simply set %d, else set %d %m %y
                     if value.month == datetime.now().month:
@@ -196,6 +207,12 @@ class RecordForm:
                 value = getattr(split, fieldKey)
                 
                 match fieldKey:
+                    case "paidDate":
+                        if value:
+                            if value.month == datetime.now().month:
+                                field["defaultValue"] = value.strftime("%d")
+                            else:
+                                field["defaultValue"] = value.strftime("%d %m %y")
                     case "accountId":
                         if split.account:
                             field["defaultValue"] = split.account.id

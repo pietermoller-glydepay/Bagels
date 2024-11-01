@@ -2,13 +2,13 @@ import copy
 
 from rich.text import Text
 from textual.app import ComposeResult
-from textual.binding import Binding
-from textual.widgets import DataTable, Label, Select, Static
+from textual.widgets import Static
 
 from components.base import BasePage
+from components.datatable import DataTable
 from components.indicators import EmptyIndicator
 from components.modals import ConfirmationModal, InputModal
-from constants.config import CONFIG
+from config import CONFIG
 from controllers.categories import (create_category, create_default_categories,
                                     delete_category, get_all_categories_tree,
                                     get_category_by_id, update_category)
@@ -36,6 +36,7 @@ class Page(Static):
         def get_empty_indicator() -> Static:
             return self.query_one("#empty-indicator")
         table = get_table()
+        empty_indicator = get_empty_indicator()
         table.clear()
         if not table.columns:
             table.add_columns(*self.COLUMNS)
@@ -46,7 +47,6 @@ class Page(Static):
             table.zebra_stripes = True
             table.focus()
         else:
-            empty_indicator = get_empty_indicator()
             self.current_row = None
         empty_indicator.display = not categories
     
@@ -142,10 +142,10 @@ class Page(Static):
         self.basePage = BasePage(
             pageName="Categories",
             bindings=[
-                (CONFIG["hotkeys"]["new"], "new_category", "Add", self.action_new_category),
-                (CONFIG["hotkeys"]["categories"]["new_subcategory"], "new_subcategory", "Add Subcategory", self.action_new_subcategory),
-                (CONFIG["hotkeys"]["edit"], "edit_category", "Edit", self.action_edit_category),
-                (CONFIG["hotkeys"]["delete"], "delete_category", "Delete", self.action_delete_category),
+                (CONFIG.hotkeys.new, "new_category", "Add", self.action_new_category),
+                (CONFIG.hotkeys.categories.new_subcategory, "new_subcategory", "Add Subcategory", self.action_new_subcategory),
+                (CONFIG.hotkeys.edit, "edit_category", "Edit", self.action_edit_category),
+                (CONFIG.hotkeys.delete, "delete_category", "Delete", self.action_delete_category),
             ],
         )
         with self.basePage:

@@ -13,11 +13,12 @@ class AppProvider(Provider):
     def commands(
         self,
     ) -> tuple[tuple[str, IgnoreReturnCallbackType, str, bool], ...]:
-        app = self.posting
+        app = self.app
 
         commands_to_show: list[tuple[str, IgnoreReturnCallbackType, str, bool]] = [
             *self.get_theme_commands(),
-            ("app: quit", app.action_quit, "Quit Posting", True),
+            ("app: quit", app.action_quit, "Quit App", True),
+            ("app: create default categories", app.action_create_default_categories, "Create default categories defined in templates/default_categories.yaml", True),
         ]
 
         return tuple(commands_to_show)
@@ -58,19 +59,19 @@ class AppProvider(Provider):
     def get_theme_commands(
         self,
     ) -> tuple[tuple[str, IgnoreReturnCallbackType, str, bool], ...]:
-        posting = self.posting
-        return tuple(self.get_theme_command(theme) for theme in posting.themes)
+        app = self.app
+        return tuple(self.get_theme_command(theme) for theme in app.themes)
 
     def get_theme_command(
         self, theme_name: str
     ) -> tuple[str, IgnoreReturnCallbackType, str, bool]:
         return (
             f"theme: {theme_name}",
-            partial(self.posting.command_theme, theme_name),
+            partial(self.app.command_theme, theme_name),
             f"Set the theme to {theme_name}",
             False,
         )
 
     @property
-    def posting(self) -> "App":
+    def app(self) -> "App":
         return cast("App", self.screen.app)

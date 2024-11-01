@@ -259,10 +259,12 @@ DataTable > .datatable--cursor {
 
   .arrow-left {
     dock: left;
+    color: $primary-background-lighten-3;
   }
 
   .arrow-right {
     dock: right;
+    color: $primary-background-lighten-3;
   }
 }
 

@@ -46,12 +46,21 @@ def get_record_by_id(record_id: int, populate_splits: bool = False):
         record = query.get(record_id)
         return record
 
+def get_record_total_split_amount(record_id: int):
+    with app.app_context():
+        splits = get_splits_by_record_id(record_id)
+        return sum(split.amount for split in splits)
+
 def get_records(start_time: datetime = None, end_time: datetime = None, month_offset: int = 0, sort_by: str = 'date', sort_direction: str = 'desc'):
     with app.app_context():
         query = Record.query.options(
             db.joinedload(Record.category),
             db.joinedload(Record.account),
-            db.joinedload(Record.transferToAccount)
+            db.joinedload(Record.transferToAccount),
+            db.joinedload(Record.splits).options(
+                db.joinedload(Split.account),
+                db.joinedload(Split.person)
+            )
         )
 
         if start_time or end_time:
@@ -84,6 +93,11 @@ def get_records(start_time: datetime = None, end_time: datetime = None, month_of
 
         records = query.all()
         return records
+
+def is_record_all_splits_paid(record_id: int):
+    with app.app_context():
+        splits = get_splits_by_record_id(record_id)
+        return all(split.isPaid for split in splits)
 
 def update_record(record_id: int, updated_data: dict):
     with app.app_context():

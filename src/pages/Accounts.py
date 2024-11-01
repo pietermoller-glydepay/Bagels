@@ -2,12 +2,13 @@ import copy
 
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.widgets import DataTable, Label, Static
+from textual.widgets import Static
 
 from components.base import BasePage
+from components.datatable import DataTable
 from components.indicators import EmptyIndicator
 from components.modals import ConfirmationModal, InputModal
-from constants.config import CONFIG
+from config import CONFIG
 from controllers.accounts import (create_account, delete_account,
                                   get_account_by_id, get_all_accounts,
                                   update_account)
@@ -100,9 +101,9 @@ class Page(Static):
         self.basePage = BasePage(
             pageName="Accounts",
             bindings=[
-                (CONFIG["hotkeys"]["new"], "new_account", "Add", self.action_new_account), 
-                (CONFIG["hotkeys"]["delete"], "delete_account", "Delete", self.action_delete_account), 
-                (CONFIG["hotkeys"]["edit"], "edit_account", "Edit", self.action_edit_account), 
+                (CONFIG.hotkeys.new, "new_account", "Add", self.action_new_account), 
+                (CONFIG.hotkeys.delete, "delete_account", "Delete", self.action_delete_account), 
+                (CONFIG.hotkeys.edit, "edit_account", "Edit", self.action_edit_account), 
             ],
         )
         with self.basePage:

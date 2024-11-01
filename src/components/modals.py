@@ -12,7 +12,7 @@ from textual.widgets import (Footer, Header, Input, Label, ListItem, ListView,
                              Rule, Static)
 
 from components.fields import Fields
-from constants.config import CONFIG
+from config import CONFIG
 from controllers.accounts import get_all_accounts_with_balance
 from controllers.persons import create_person, get_all_persons
 from models.split import Split
@@ -58,8 +58,8 @@ class InputModal(ModalScreen):
         self.title = title
         self.form = form
     
-    def on_mount(self):
-        self.styles.animate("text_opacity", value=0, duration=0.2)
+    # def on_mount(self):
+    #     self.styles.animate("text_opacity", value=0, duration=0.4)
     
     # --------------- Hooks -------------- #
 
@@ -206,20 +206,22 @@ class TransferModal(ModalScreen):
         )
 
 class RecordModal(InputModal):
-    def __init__(self, title: str, form: list[dict] = [], splitForm: list[dict] = [], *args, **kwargs):
+    def __init__(self, title: str, form: list[dict] = [], splitForm: list[dict] = [], isEditing: bool = False, *args, **kwargs):
         super().__init__(title, form, *args, **kwargs)
         self.record_form = RecordForm()
         self.splitForm = splitForm
-        self.isEditing = len(splitForm) > 0
+        self.isEditing = isEditing
         self.splitFormOneLength = len(self.record_form.get_split_form(0, False))
         self.splitCount = int(len(splitForm) / self.splitFormOneLength)
         self.persons = get_all_persons()
         self.accounts = get_all_accounts_with_balance()
         self.total_amount = 0
-        self.split_total = Label("", id="split-total", classes="hidden" if self.splitCount == 0 else "")
+        self.split_total = Label("", id="split-total")
     
     def on_mount(self):
         self._update_split_total()
+        if self.splitCount > 0:
+            self._update_split_total_visibility(True)
     
     # -------------- Helpers ------------- #
     
@@ -230,7 +232,8 @@ class RecordModal(InputModal):
                 "personId": resultForm[f"personId-{i}"],
                 "amount": resultForm[f"amount-{i}"],
                 "isPaid": resultForm[f"isPaid-{i}"],
-                "accountId": resultForm[f"accountId-{i}"]
+                "accountId": resultForm[f"accountId-{i}"],
+                "paidDate": resultForm[f"paidDate-{i}"]
             })
         return splits
 
@@ -265,6 +268,12 @@ class RecordModal(InputModal):
             widgets.append(self._get_split_widget(i, oneSplitForm, isPaid))
         return widgets
     
+    def _update_split_total_visibility(self, mount: bool):
+        if mount:
+            self.query_one(".container").mount(self.split_total)
+        else:
+            self.split_total.remove()
+    
     # ------------- Callbacks ------------ #
     
     def on_input_changed(self, event: Input.Changed):
@@ -283,11 +292,11 @@ class RecordModal(InputModal):
                 self.dismiss(None)
             case _:
                 if not self.isEditing:
-                    if event.key == CONFIG["hotkeys"]["record_modal"]["new_split"]:
+                    if event.key == CONFIG.hotkeys.record_modal.new_split:
                         self.action_add_split(paid=False)
-                    elif event.key == CONFIG["hotkeys"]["record_modal"]["new_paid_split"]:
+                    elif event.key == CONFIG.hotkeys.record_modal.new_paid_split:
                         self.action_add_split(paid=True)
-                    elif event.key == CONFIG["hotkeys"]["record_modal"]["delete_last_split"]:
+                    elif event.key == CONFIG.hotkeys.record_modal.delete_last_split:
                         self.action_delete_last_split()
     
     def action_add_split(self, paid: bool = False):
@@ -303,7 +312,7 @@ class RecordModal(InputModal):
         splits_container.call_after_refresh(lambda: self.query_one(f"#field-personId-{current_split_index}").focus())
         self.splitCount += 1
         if self.splitCount == 1:
-            self.split_total.set_classes("")
+            self._update_split_total_visibility(True)
             self._update_split_total(update_new=False)
 
     def action_delete_last_split(self):
@@ -313,10 +322,13 @@ class RecordModal(InputModal):
                 self.splitForm.pop()
             self.splitCount -= 1
             if self.splitCount == 0:
-                self.split_total.update("")
-                self.split_total.set_classes("hidden")
+                self._update_split_total_visibility(False)
 
     def action_submit(self):
+        # We set the amount field to the total amount for the form to read the value
+        input: Input = self.query_one("#field-amount")
+        input.__setattr__("heldValue", str(self.total_amount))
+        
         resultRecordForm, errors, isValid = validateForm(self, self.form)
         resultSplitForm, errorsSplit, isValidSplit = validateForm(self, self.splitForm)
         if isValid and isValidSplit:
@@ -327,6 +339,8 @@ class RecordModal(InputModal):
             })
             return 
         previousErrors = self.query(".error")
+        # Remove the custom value we set for the field if not valid
+        input.__setattr__("heldValue", None)
         for error in previousErrors:
             error.remove()
         for key, value in {**errors, **errorsSplit}.items():
@@ -342,10 +356,9 @@ class RecordModal(InputModal):
                 *self._get_init_split_widgets(),
                 id="splits-container"
             ),
-            self.split_total,
             hotkeys=[
-                {"key": CONFIG["hotkeys"]["record_modal"]["new_split"], "label": "Split amount"},
-                {"key": CONFIG["hotkeys"]["record_modal"]["new_paid_split"], "label": "Split paid"},
-                {"key": CONFIG["hotkeys"]["record_modal"]["delete_last_split"], "label": "Delete split"}
+                {"key": CONFIG.hotkeys.record_modal.new_split, "label": "Split amount"},
+                {"key": CONFIG.hotkeys.record_modal.new_paid_split, "label": "Split paid"},
+                {"key": CONFIG.hotkeys.record_modal.delete_last_split, "label": "Delete split"}
             ] if not self.isEditing else []
         )

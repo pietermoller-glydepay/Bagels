@@ -143,7 +143,8 @@ class Page(Static):
                         "", # category row
                         f"= {amount_self}", # amount row
                         "", # label row
-                        "" # account row
+                        "", # account row
+                        style_name="net"
                     )
             table.focus()
         else:
@@ -219,6 +220,12 @@ class Page(Static):
             else:
                 filled_form, filled_splits = self.record_form.get_filled_form(record.id)
                 self.app.push_screen(RecordModal("Edit Record", form=filled_form, splitForm=filled_splits, isEditing=True), callback=check_result)
+        else:
+            # might be a split
+            if False:
+                pass
+            else: # utility row
+                self.app.notify(title="Utility row", message="Nothing to edit.", severity="warning", timeout=2)
 
     def action_delete_record(self) -> None:
         def check_delete(result: bool) -> None:
@@ -288,7 +295,8 @@ class Page(Static):
                 id="records-table", 
                 cursor_type="row", 
                 cursor_foreground_priority=True, 
-                zebra_stripes=True
+                zebra_stripes=True,
+                additional_classes=["datatable--net-row"]   
             )
             yield EmptyIndicator("No entries")
             if not self.isReady:

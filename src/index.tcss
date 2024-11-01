@@ -23,6 +23,10 @@ DataTable > .datatable--cursor {
   background: $secondary 20%;
 }
 
+DataTable > .datatable--net-row {
+  color: $primary-background-lighten-3;
+}
+
 /* ---------------------------------- */
 /*                 App                */
 /* ---------------------------------- */

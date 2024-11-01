@@ -247,6 +247,7 @@ class Row:
     height: int
     label: Text | None = None
     auto_height: bool = False
+    style_name: str | None = None
 
 
 class RowRenderables(NamedTuple):
@@ -660,6 +661,7 @@ class DataTable(ScrollView, Generic[CellType], can_focus=True):
         id: str | None = None,
         classes: str | None = None,
         disabled: bool = False,
+        additional_classes: set[str] = set(),
     ) -> None:
         """Initializes a widget to display tabular data.
 
@@ -690,6 +692,7 @@ class DataTable(ScrollView, Generic[CellType], can_focus=True):
             id: The ID of the widget in the DOM.
             classes: The CSS classes for the widget.
             disabled: Whether the widget is disabled or not.
+            additional_classes: Additional CSS classes to apply to the widget.
         """
 
         super().__init__(name=name, id=id, classes=classes, disabled=disabled)
@@ -779,6 +782,8 @@ class DataTable(ScrollView, Generic[CellType], can_focus=True):
         """The type of cursor of the `DataTable`."""
         self.cell_padding = cell_padding
         """Horizontal padding between cells, applied on each side of each cell."""
+        self.additional_classes = additional_classes
+        self.COMPONENT_CLASSES.update(additional_classes)
 
     @property
     def hover_row(self) -> int:
@@ -1624,6 +1629,7 @@ class DataTable(ScrollView, Generic[CellType], can_focus=True):
         height: int | None = 1,
         key: str | None = None,
         label: TextType | None = None,
+        style_name: str | None = None,
     ) -> RowKey:
         """Add a row at the bottom of the DataTable.
 
@@ -1634,6 +1640,7 @@ class DataTable(ScrollView, Generic[CellType], can_focus=True):
             key: A key which uniquely identifies this row. If None, it will be generated
                 for you and returned.
             label: The label for the row. Will be displayed to the left if supplied.
+            style_name: The name of the style to apply to the row.
 
         Returns:
             Unique identifier for this row. Can be used to retrieve this row regardless
@@ -1669,6 +1676,7 @@ class DataTable(ScrollView, Generic[CellType], can_focus=True):
             height or 0,
             label,
             height is None,
+            style_name,
         )
         self._new_rows.add(row_key)
         self._require_update_dimensions = True
@@ -2438,19 +2446,26 @@ class DataTable(ScrollView, Generic[CellType], can_focus=True):
         Returns:
             The appropriate style.
         """
-
         if row_index == -1:
             row_style = self.get_component_styles("datatable--header").rich_style
         elif row_index < self.fixed_rows:
             row_style = self.get_component_styles("datatable--fixed").rich_style
         else:
-            if self.zebra_stripes:
-                component_row_style = (
-                    "datatable--odd-row" if row_index % 2 else "datatable--even-row"
-                )
-                row_style = self.get_component_styles(component_row_style).rich_style
-            else:
+            # Get the row metadata
+            try:
+                row = self.ordered_rows[row_index]
+                if row.style_name is not None:
+                    # Apply custom style if specified
+                    row_style = self.get_component_styles(f"datatable--{row.style_name}-row").rich_style
+                elif self.zebra_stripes:
+                    # Fall back to zebra stripes
+                    component_row_style = "datatable--odd-row" if row_index % 2 else "datatable--even-row"
+                    row_style = self.get_component_styles(component_row_style).rich_style
+                else:
+                    row_style = base_style
+            except IndexError:
                 row_style = base_style
+                
         return row_style
 
     def _on_mouse_move(self, event: events.MouseMove):

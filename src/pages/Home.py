@@ -12,6 +12,7 @@ from components.base import BasePage
 from components.button import Button
 from components.datatable import DataTable
 from components.indicators import EmptyIndicator
+from components.insights import Insights
 from components.modals import (ConfirmationModal, InputModal, RecordModal,
                                TransferModal)
 from config import CONFIG
@@ -377,28 +378,31 @@ class Page(Static):
             ],
         )
         with self.basePage:
-            with Horizontal(classes="home-accounts-list"):
-                for account in get_all_accounts_with_balance():
-                    with Container(classes="account-container"):
-                        yield Label(
-                            f"[bold]{account.name}[/bold][italic] {account.description or ''}[/italic]",
-                            classes="account-name",
-                            markup=True
-                        )
-                        yield Label(
-                            f"${account.balance}",
-                            classes="account-balance",
-                            id=f"account-{account.id}-balance"
-                        )
-            recordsContainer = Container(id="records-container")
+            accountsContainer = Container(id="accounts-container", classes="module-container")
+            accountsContainer.border_subtitle = "Accounts"
+            with accountsContainer:
+                with Horizontal(classes="home-accounts-list"):
+                    for account in get_all_accounts_with_balance():
+                        with Container(classes="account-container"):
+                            yield Label(
+                                f"[bold]{account.name}[/bold][italic] {account.description or ''}[/italic]",
+                                classes="account-name",
+                                markup=True
+                            )
+                            yield Label(
+                                f"${account.balance}",
+                                classes="account-balance",
+                                id=f"account-{account.id}-balance"
+                            )
+            recordsContainer = Container(id="records-container", classes="module-container")
             recordsContainer.border_subtitle = "Records"
             with recordsContainer:
                 with Container(classes="selectors"):
                     displayContainer = Container(classes="display-selector")
                     displayContainer.border_title = "Display by:"
                     with displayContainer:
-                        yield Button("[u]D[/u]ate", id="display-date")
-                        yield Button("[u]P[/u]erson", id="display-person")
+                        yield Button(f"([u]{CONFIG.hotkeys.home.display_by_date}[/u]) Date", id="display-date")
+                        yield Button(f"([u]{CONFIG.hotkeys.home.display_by_person}[/u]) Person", id="display-person")
                     filterContainer = Container(classes="month-selector")
                     filterContainer.border_title = "Filter by:"
                     with filterContainer:
@@ -418,3 +422,5 @@ class Page(Static):
                         "Please create at least one account and one category to get started.",
                         classes="label-empty"
                     )
+            if self.isReady:
+                yield Insights()

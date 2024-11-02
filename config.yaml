@@ -5,8 +5,8 @@ hotkeys:
   home:
     new_transfer: "t"
     toggle_splits: "s"
-    display_by_date: "d"
-    display_by_person: "p"
+    display_by_date: "q"
+    display_by_person: "w"
   record_modal:
     new_split: "ctrl+a"
     new_paid_split: "ctrl+s"

@@ -9,6 +9,7 @@ from components.datatable import DataTable
 from components.indicators import EmptyIndicator
 from components.modals import ConfirmationModal, InputModal
 from config import CONFIG
+from constants import CONSOLE_ASCII_CODES
 from controllers.categories import (create_category, create_default_categories,
                                     delete_category, get_all_categories_tree,
                                     get_category_by_id, update_category)
@@ -190,37 +191,10 @@ CATEGORY_FORM = [
         "type": "autocomplete",
         "options": [
             {
-                "value": "Red",
-                "prefix": Text("●", style="red")
-            },
-            {
-                "value": "Orange",
-                "prefix": Text("●", style="orange")
-            },
-            {
-                "value": "Yellow",
-                "prefix": Text("●", style="yellow")
-            },
-            {
-                "value": "Green",
-                "prefix": Text("●", style="green")
-            },
-            {
-                "value": "Blue",
-                "prefix": Text("●", style="blue")
-            },
-            {
-                "value": "Purple",
-                "prefix": Text("●", style="purple")
-            },
-            {
-                "value": "Grey",
-                "prefix": Text("●", style="grey")
-            },
-            {
-                "value": "White",
-                "prefix": Text("●", style="white")
+                "value": color,
+                "prefix": Text("●", style=color)
             }
+            for color in CONSOLE_ASCII_CODES
         ],
         "isRequired": True,
         "placeholder": "Select Color"

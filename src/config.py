@@ -40,7 +40,9 @@ class Symbols(BaseModel):
 class Config(YamlBaseSettings):
     hotkeys: Hotkeys
     symbols: Symbols
-    model_config = SettingsConfigDict(yaml_file="config.yaml")
+    model_config = SettingsConfigDict(
+        yaml_file="config.yaml",
+    )
 
 
 CONFIG = Config()

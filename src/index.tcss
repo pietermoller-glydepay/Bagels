@@ -257,7 +257,7 @@ DataTable > .datatable--group-header-row {
   color: $primary-background-lighten-1;
 }
 
-#records-container {
+.module-container {
   height: auto;
   border: round $primary;
   padding: 0 1 0 1;

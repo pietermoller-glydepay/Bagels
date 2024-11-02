@@ -1,13 +1,11 @@
-import copy
+from models.forms import RecordFormModel, SplitFormModel, FieldOption
+from typing import List, Tuple, Optional
 from datetime import datetime
-
-from rich.text import Text
-
 from controllers.accounts import get_all_accounts_with_balance
-from controllers.categories import get_all_categories_by_freq
-from controllers.persons import create_person, get_all_persons
+from controllers.categories import get_all_categories_by_freq, get_all_categories_tree
 from controllers.records import get_record_by_id, get_record_total_split_amount
-
+from rich.text import Text
+from controllers.persons import get_all_persons
 
 class RecordForm:
     _instance = None
@@ -17,218 +15,128 @@ class RecordForm:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    # ------------ Blueprints ------------ #
-
-    FORM = [
-        {
-            "placeholder": "Label",
-            "title": "Label", 
-            "key": "label",
-            "type": "string",
-        },
-        {
-            "title": "Category",
-            "key": "categoryId",
-            "type": "autocomplete",
-            "options": [],
-            "isRequired": True,
-            "placeholder": "Select Category"
-        },
-        {
-            "placeholder": "0.00",
-            "title": "Amount",
-            "key": "amount",
-            "type": "number",
-            "min": 0,
-            "isRequired": True,
-        },
-        {
-            "title": "Account",
-            "key": "accountId", 
-            "type": "autocomplete",
-            "options": [],
-            "isRequired": True,
-            "placeholder": "Select Account"
-        },
-        {
-            "title": "Type",
-            "key": "isIncome",
-            "type": "boolean",
-            "labels": ["Expense", "Income"],
-            "defaultValue": False,
-        },
-        {
-            "placeholder": "dd (mm) (yy)",
-            "title": "Date",
-            "key": "date",
-            "type": "dateAutoDay",
-            "defaultValue": datetime.now().strftime("%d")
-        }
-    ]
-    
-    SPLIT_FORM = [
-            {   
-                "title": "Person",
-                "key": "personId", 
-                "type": "autocomplete",
-                "options":[],
-                "create_action": None,
-                "isRequired": True,
-                "placeholder": "Select Person"
-            },
-            {
-                "title": "Amount",
-                "key": "amount",
-                "type": "number", 
-                "min": 0,
-                "isRequired": True,
-                "placeholder": "0.00"
-            },
-            {
-                "title": "Paid",
-                "key": "isPaid",
-                "type": "hidden",
-                "defaultValue": False
-            },
-            {
-                "title": "Paid to account",
-                "key": "accountId",
-                "type": "hidden",
-                "options": [],
-                "placeholder": "Select Account",
-                "defaultValue": None
-            },
-            {
-                "title": "Paid Date",
-                "key": "paidDate",
-                "type": "hidden",
-                "defaultValue": None
-            }
-        ]
-    
-    # ----------------- - ---------------- #
-    
-    def __init__(self, created_person_callback: callable = None):
-        self._populate_form_options()
+    def __init__(self, created_person_callback: Optional[callable] = None):
+        self.form_model = RecordFormModel()
+        self.split_form_model = SplitFormModel()
         self.created_person_callback = created_person_callback
-        
-    # -------------- Helpers ------------- #
+        self._populate_form_options()
 
-    def _populate_form_options(self):
-        accounts = get_all_accounts_with_balance()   
-        self.FORM[3]["options"] = [
-            {
-                "text": account.name,
-                "value": account.id,
-                "postfix": Text(f"{account.balance}", style="yellow")
-            }
+    def _populate_form_options(self) -> None:
+        # Populate account options
+        accounts = get_all_accounts_with_balance()
+        account_options = [
+            FieldOption(
+                text=account.name,
+                value=account.id,
+                postfix=Text(f"{account.balance}", style="yellow")
+            ) for account in accounts
+        ]
+        
+        self.form_model.accountId.options = account_options
+        if accounts:
+            self.form_model.accountId.defaultValue = accounts[0].id
+            self.form_model.accountId.defaultValueText = accounts[0].name
+
+        # Populate category options
+        categories = get_all_categories_by_freq()
+        self.form_model.categoryId.options = [
+            FieldOption(
+                text=category.name,
+                value=category.id,
+                prefix=Text("●", style=category.color),
+                postfix=Text(f"↪ {category.parentCategory.name}" if category.parentCategory else "", 
+                           style=category.parentCategory.color) if category.parentCategory else None
+            ) for category, _ in categories
+        ]
+
+        # Populate person options
+        people = get_all_persons()
+        self.split_form_model.personId.options = [
+            FieldOption(text=person.name, value=person.id)
+            for person in people
+        ]
+        self.split_form_model.personId.create_action = self._action_create_person
+        
+        # Set account options for split form
+        self.split_form_model.accountId.options = [
+            FieldOption(text=account.name, value=account.id)
             for account in accounts
         ]
-        if accounts:
-            self.FORM[3]["defaultValue"] = accounts[0].id
-            self.FORM[3]["defaultValueText"] = accounts[0].name
+    
+    def _action_create_person(self) -> None:
+        """Create a new person"""
+        self.created_person_callback()
 
-        categories = get_all_categories_by_freq()
-        self.FORM[1]["options"] = [
-            {
-                "text": category.name,
-                "value": category.id,
-                "prefix": Text("●", style=category.color),
-                "postfix": Text(f"↪ {category.parentCategory.name}" if category.parentCategory else "", style=category.parentCategory.color) if category.parentCategory else ""
-            }
-            for category, _ in categories
-        ]
-        people = get_all_persons()
-        self.SPLIT_FORM[0]["options"] = [
-            {"text": person.name, "value": person.id} for person in people
-        ]
-        self.SPLIT_FORM[0]["create_action"] = self._action_create_person
-        self.SPLIT_FORM[3]["options"] = [
-            {"text": account.name, "value": account.id} for account in accounts
-        ]
+    def get_split_form(self, index: int, isPaid: bool = False) -> List[dict]:
+        """Get a copy of the split form with indexed keys"""
+        split_form = self.split_form_model.model_dump()
+        result = []
         
-    # ------------- Functions ------------ #
-    
-    def _action_create_person(self, name: str):
-        person = create_person({"name": name})
-        if self.created_person_callback:
-            self.created_person_callback(person)
-    
-    # ------------- Builders ------------- #
-    
-    def get_split_form(self, index: int, isPaid: bool = False):
-        split_form = copy.deepcopy(self.SPLIT_FORM)
-        for field in split_form:
-            fieldKey = field["key"]
-            field["key"] = f"{fieldKey}-{index}"
-            if fieldKey == "isPaid":
-                field["defaultValue"] = isPaid
-            elif fieldKey == "accountId" and isPaid:
-                field["type"] = "autocomplete"
-            elif fieldKey == "paidDate" and isPaid:
-                field["type"] = "dateAutoDay"
-                field["defaultValue"] = datetime.now().strftime("%d")
-        return split_form
-
-    def get_filled_form(self, recordId: int) -> tuple[list, list]:
-        """Return a copy of the form with values from the record"""
-        filled_form = copy.deepcopy(self.FORM)
-        record = get_record_by_id(recordId, populate_splits=True)
-        
-        for field in filled_form:
-            fieldKey = field["key"]
-            value = getattr(record, fieldKey)
+        for key, field in split_form.items():
+            field_copy = field.copy()
+            field_copy["key"] = f"{key}-{index}"
             
-            match fieldKey:
-                case "amount":
-                    field["defaultValue"] = str(value - get_record_total_split_amount(recordId))
-                case "date":
-                    # if value is this month, simply set %d, else set %d %m %y
-                    if value.month == datetime.now().month:
-                        field["defaultValue"] = value.strftime("%d")
-                    else:
-                        field["defaultValue"] = value.strftime("%d %m %y")
-                case "isIncome":
-                    field["defaultValue"] = value
-                case "categoryId":
-                    field["defaultValue"] = record.category.id
-                    field["defaultValueText"] = record.category.name
-                case "accountId":
-                    field["defaultValue"] = record.account.id
-                    field["defaultValueText"] = record.account.name
-                case _:
-                    field["defaultValue"] = str(value) if value is not None else ""
-        
-        filled_splits = []
-        for index, split in enumerate(record.splits):
-            split_form = self.get_split_form(index, split.isPaid)
-            for field in split_form:
-                fieldKey = field["key"].split("-")[0]
-                value = getattr(split, fieldKey)
+            if key == "isPaid":
+                field_copy["defaultValue"] = isPaid
+            elif key == "accountId" and isPaid:
+                field_copy["type"] = "autocomplete"
+            elif key == "paidDate" and isPaid:
+                field_copy["type"] = "dateAutoDay"
+                field_copy["defaultValue"] = datetime.now().strftime("%d")
                 
-                match fieldKey:
-                    case "paidDate":
-                        if value:
-                            if value.month == datetime.now().month:
-                                field["defaultValue"] = value.strftime("%d")
-                            else:
-                                field["defaultValue"] = value.strftime("%d %m %y")
-                    case "accountId":
-                        if split.account:
-                            field["defaultValue"] = split.account.id
-                            field["defaultValueText"] = split.account.name
-                    case "personId":
-                        field["defaultValue"] = split.person.id
-                        field["defaultValueText"] = split.person.name
-                    case "isPaid":
-                        field["defaultValue"] = split.isPaid
-                    case _:
-                        field["defaultValue"] = str(value) if value is not None else ""
-                        
-                filled_splits.append(field)
-                
-        return filled_form, filled_splits
+            result.append(field_copy)
+            
+        return result
 
-    def get_form(self):
-        """Return the base form"""
-        return self.FORM
+    def get_filled_form(self, recordId: int) -> Tuple[List[dict], List[dict]]:
+        """Get forms filled with record data"""
+        record = get_record_by_id(recordId, populate_splits=True)
+        form_data = self.form_model.model_dump()
+        
+        # Fill main form
+        for key, field in form_data.items():
+            value = getattr(record, key)
+            
+            if key == "amount":
+                field["defaultValue"] = str(value - get_record_total_split_amount(recordId))
+            elif key == "date":
+                field["defaultValue"] = (
+                    value.strftime("%d") 
+                    if value.month == datetime.now().month 
+                    else value.strftime("%d %m %y")
+                )
+            elif key in ("categoryId", "accountId"):
+                related_obj = getattr(record, key.replace("Id", ""))
+                field["defaultValue"] = related_obj.id
+                field["defaultValueText"] = related_obj.name
+            else:
+                field["defaultValue"] = str(value) if value is not None else ""
+
+        # Fill splits form
+        splits_form = []
+        for index, split in enumerate(record.splits):
+            split_fields = self.get_split_form(index, split.isPaid)
+            for field in split_fields:
+                key = field["key"].split("-")[0]
+                value = getattr(split, key)
+                
+                if key == "paidDate" and value:
+                    field["defaultValue"] = (
+                        value.strftime("%d")
+                        if value.month == datetime.now().month
+                        else value.strftime("%d %m %y")
+                    )
+                elif key in ("accountId", "personId"):
+                    if related_obj := getattr(split, key.replace("Id", "")):
+                        field["defaultValue"] = related_obj.id
+                        field["defaultValueText"] = related_obj.name
+                else:
+                    field["defaultValue"] = str(value) if value is not None else ""
+                    
+                splits_form.append(field)
+                
+        return list(form_data.values()), splits_form
+
+    def get_form(self) -> List[dict]:
+        """Get the base form"""
+        return list(self.form_model.model_dump().values())

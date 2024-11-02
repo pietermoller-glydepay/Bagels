@@ -43,6 +43,7 @@ class Field(Static):
             
             case type_ if type_ != "boolean":
                 self.input.value = field.get("defaultValue", "")
+        
 
     def on_auto_complete_selected(self, event: AutoComplete.Selected) -> None:
         """Handle autocomplete selection"""

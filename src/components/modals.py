@@ -244,8 +244,9 @@ class RecordModal(InputModal):
             for i in range(0, self.splitCount):
                 amount = self.query_one(f"#field-amount-{i}").value
                 total += float(amount) if amount else 0
-        self.split_total.update(f"Total amount: [bold yellow]{total:.2f}[/bold yellow]")
         self.total_amount = total
+        if self.splitCount > 0:
+            self.split_total.update(f"Total amount: [bold yellow]{total:.2f}[/bold yellow]")
     
     def _get_split_widget(self, index: int, fields: list[dict], isPaid: bool):
         return Container(
@@ -277,7 +278,7 @@ class RecordModal(InputModal):
     # ------------- Callbacks ------------ #
     
     def on_input_changed(self, event: Input.Changed):
-        if event.input.id.startswith("field-amount") and self.splitCount > 0:
+        if event.input.id.startswith("field-amount"):
             self._update_split_total()
     
     def on_key(self, event: events.Key):

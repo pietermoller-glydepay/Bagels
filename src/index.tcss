@@ -19,12 +19,15 @@ Rule {
   padding: 0 1;
 }
 
-DataTable > .datatable--cursor {
-  background: $secondary 20%;
-}
-
 DataTable > .datatable--net-row {
   color: $primary-background-lighten-3;
+  text-style: italic;
+}
+
+DataTable > .datatable--group-header-row {
+  color: $primary-background-darken-3;
+  background: $secondary-lighten-3;
+  text-style: underline bold;
 }
 
 /* ---------------------------------- */
@@ -254,23 +257,49 @@ DataTable > .datatable--net-row {
   color: $primary-background-lighten-1;
 }
 
-.month-selector {
-  layout: horizontal;
-  align: center middle;
+#records-container {
   height: auto;
-  border-top: round $primary-background;
-  border-bottom: round $primary-background;
+  border: round $primary;
+  padding: 0 1 0 1;
+}
 
-  .arrow-left {
-    dock: left;
-    color: $primary-background-lighten-3;
+.selectors {
+  height: auto;
+  layout: horizontal;
+  
+  & > Container {
+    layout: horizontal;
+    align: center middle;
+    height: auto;
+    border: round $secondary;
   }
 
-  .arrow-right {
-    dock: right;
-    color: $primary-background-lighten-3;
+  .display-selector {
+    height: auto;
+
+    & > Button {
+      padding: 0 1;
+    }
+
+    .selected {
+      color: $accent;
+      text-style: underline bold;
+    }
+  }
+
+  .month-selector {
+    #prev-month {
+      dock: left;
+      color: $primary-background-lighten-3;
+    }
+  
+    #next-month {
+      dock: right;
+      color: $primary-background-lighten-3;
+    }
   }
 }
+
 
 /* ------------ Accounts ------------ */
 

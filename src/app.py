@@ -34,10 +34,6 @@ class App(TextualApp):
             "class": Home.Page,
         },
         {
-            "name": "Receivables",
-            "class": Receivables.Page,
-        },
-        {
             "name": "Reports",
             "class": Reports.Page,
         },
@@ -171,15 +167,16 @@ class App(TextualApp):
     # --------------- Callbacks ------------ #
     
     def on_tabs_tab_activated(self, event: Tabs.TabActivated) -> None:
-        activeIndex = int(event.tab.id.removeprefix("t")) - 1
-        try:
-            currentContent = self.query_one(".content")
-            currentContent.remove()
-        except NoMatches:
-            pass
-        page_class = self.PAGES[activeIndex]["class"]
-        page_instance = page_class(classes="content")
-        self.mount(page_instance)
+        if event.tab.id.startswith("t"):
+            activeIndex = int(event.tab.id.removeprefix("t")) - 1
+            try:
+                currentContent = self.query_one(".content")
+                currentContent.remove()
+            except NoMatches:
+                pass
+            page_class = self.PAGES[activeIndex]["class"]
+            page_instance = page_class(classes="content")
+            self.mount(page_instance)
 
     def action_goToTab(self, tab_number: int) -> None:
         """Go to the specified tab."""

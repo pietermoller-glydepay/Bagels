@@ -1,12 +1,5 @@
-from textual.app import ComposeResult
-from textual.widgets import Label, Static
-from components.base import BasePage   
+from textual_plotext import PlotextPlot
 
-class Page(Static):
-    # --------------- View --------------- #
-    def compose(self) -> ComposeResult:
-        with BasePage(
-            pageName="Reports",
-            bindings=[],
-        ):
-            yield Label("Reports")
+
+class Page(PlotextPlot):
+    pass

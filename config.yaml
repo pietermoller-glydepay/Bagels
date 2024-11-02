@@ -5,9 +5,19 @@ hotkeys:
   home:
     new_transfer: "t"
     toggle_splits: "s"
+    display_by_date: "d"
+    display_by_person: "p"
   record_modal:
     new_split: "ctrl+a"
     new_paid_split: "ctrl+s"
     delete_last_split: "ctrl+d"
   categories:
     new_subcategory: "s"
+symbols:
+  line_char: "│"
+  finish_line_char: "╰"
+  split_paid: "✓"
+  split_unpaid: "⨯"
+  category_color: "●"
+  amount_positive: "+"
+  amount_negative: "-"

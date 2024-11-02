@@ -124,7 +124,6 @@ def validateForm(formComponent: Widget, formData: list[dict]) -> tuple[dict, dic
                     result[fieldKey] = fieldValue
             
             case _:
-                print(f"The field {field['title']} has value `{fieldValue}`")
                 if not fieldValue and field.get("isRequired", False):
                     error = f"{field['title']} is required"
                 else:

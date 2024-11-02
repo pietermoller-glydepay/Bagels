@@ -2,8 +2,6 @@ from datetime import datetime
 
 from textual.widget import Widget
 
-from models.forms import FormField, FieldType
-
 
 def _validate_number(value: str, field: dict, is_float: bool = False) -> tuple[bool, str | None]:
     """Validate a number field and return (is_valid, error_message)"""
@@ -88,7 +86,6 @@ def _validate_autocomplete(value: str, held_value: str, field: dict) -> tuple[bo
 
 
 def validateForm(formComponent: Widget, formData: list[dict]) -> tuple[dict, dict, bool]:
-    """Validate form data against Pydantic models"""
     result = {}
     errors = {}
     isValid = True
@@ -98,46 +95,43 @@ def validateForm(formComponent: Widget, formData: list[dict]) -> tuple[dict, dic
         fieldWidget = formComponent.query_one(f"#field-{fieldKey}")
         fieldValue = fieldWidget.heldValue if hasattr(fieldWidget, "heldValue") else fieldWidget.value
 
-        try:
-            # Create a temporary FormField model for validation
-            field_model = FormField(**field)
+        error = None
+
+        match field["type"]:
+            case "integer":
+                is_valid, error = _validate_number(fieldValue, field)
+                if is_valid and fieldValue:
+                    result[fieldKey] = int(fieldValue)
+
+            case "number":
+                is_valid, error = _validate_number(fieldValue, field, is_float=True)
+                if is_valid and fieldValue:
+                    result[fieldKey] = float(fieldValue)
+
+            case "date":
+                date, error = _validate_date(fieldValue, field)
+                if date:
+                    result[fieldKey] = date
+
+            case "dateAutoDay":
+                date, error = _validate_date(fieldValue, field, auto_day=True)
+                if date:
+                    result[fieldKey] = date
+
+            case "autocomplete":
+                is_valid, error = _validate_autocomplete(fieldWidget.value, fieldValue, field)
+                if is_valid and fieldValue:
+                    result[fieldKey] = fieldValue
             
-            # Validate based on field type
-            match field_model.type:
-                case FieldType.INTEGER:
-                    if fieldValue:
-                        result[fieldKey] = int(fieldValue)
-                    elif field_model.isRequired:
-                        raise ValueError(f"{field_model.title} is required")
-
-                case FieldType.NUMBER:
-                    if fieldValue:
-                        result[fieldKey] = float(fieldValue)
-                    elif field_model.isRequired:
-                        raise ValueError(f"{field_model.title} is required")
-
-                case FieldType.DATE | FieldType.DATE_AUTO_DAY:
-                    if date := _validate_date(fieldValue, field_model)[0]:
-                        result[fieldKey] = date
-                    elif field_model.isRequired:
-                        raise ValueError(f"{field_model.title} is required")
-
-                case FieldType.AUTOCOMPLETE:
-                    is_valid, error = _validate_autocomplete(fieldWidget.value, fieldValue, field)
-                    if not is_valid:
-                        raise ValueError(error or f"{field_model.title} is invalid")
-                    if fieldValue:
-                        result[fieldKey] = fieldValue
-                    elif field_model.isRequired:
-                        raise ValueError(f"{field_model.title} must be selected")
-
-                case _:
-                    if not fieldValue and field_model.isRequired:
-                        raise ValueError(f"{field_model.title} is required")
+            case _:
+                print(f"The field {field['title']} has value `{fieldValue}`")
+                if not fieldValue and field.get("isRequired", False):
+                    error = f"{field['title']} is required"
+                else:
                     result[fieldKey] = fieldValue
 
-        except ValueError as e:
-            errors[fieldKey] = str(e)
+        if error:
+            errors[fieldKey] = error
             isValid = False
 
     return result, errors, isValid

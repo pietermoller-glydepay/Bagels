@@ -61,25 +61,47 @@ def get_category_by_id(category_id):
     with app.app_context():
         return Category.query.get(category_id)  
 
-def get_all_categories_records(offset: int = 0, offset_type: str = "month", record_limit: int = 3, isExpense: bool = True):
-    # get all the categories sorted by the total net amount of expense / income of records in that category
-    # populate categories.records with the last record_limit records
-    # categories should have the net amount and the percentage of net / total amount
+def get_all_categories_records(offset: int = 0, offset_type: str = "month", record_limit: int = 3, isExpense: bool = True, subcategories: bool = False):
+    # Get all the categories sorted by the total net amount of expense/income of records in that category
+    # Populate categories.records with the last record_limit records
+    # Categories should have the net amount and the percentage of net/total amount
     with app.app_context():
         # Get start and end dates for the period
         start_of_period, end_of_period = get_start_end_of_period(offset, offset_type)
-        
-        # Query to get categories with their total amounts
-        categories = db.session.query(
-            Category,
-            db.func.sum(Record.amount).label('net_amount')
-        ).join(Category.records)\
-         .filter(Record.date >= start_of_period)\
-         .filter(Record.date < end_of_period)\
-         .filter(Record.isIncome == (not isExpense))\
-         .group_by(Category.id)\
-         .order_by(db.desc('net_amount'))\
-         .all()
+
+        if subcategories:
+            categories = db.session.query(
+                Category,
+                db.func.sum(Record.amount).label('net_amount')
+            ).join(Category.records)\
+             .filter(Record.date >= start_of_period)\
+             .filter(Record.date < end_of_period)\
+             .filter(Record.isIncome == (not isExpense))\
+             .group_by(Category.id)\
+             .order_by(db.desc('net_amount'))\
+             .all()
+        else:
+            categories = db.session.query(
+                Category,
+                db.func.sum(Record.amount).label('net_amount')
+            ).join(Category.records)\
+             .filter(Record.date >= start_of_period)\
+             .filter(Record.date < end_of_period)\
+             .filter(Record.isIncome == (not isExpense))\
+             .group_by(Category.id)\
+             .order_by(db.desc('net_amount'))\
+             .all()
+
+            # Aggregate subcategories into their parent categories
+            category_dict = {}
+            for category, net_amount in categories:
+                parent_id = category.parentCategoryId if category.parentCategoryId else category.id
+                parent_category = category.parentCategory if category.parentCategory else category
+                if parent_id not in category_dict:
+                    category_dict[parent_id] = [parent_category, 0]
+                category_dict[parent_id][1] += net_amount or 0
+
+            categories = list(category_dict.values())
 
         # Calculate total amount across all categories
         total_amount = sum(abs(cat[1] or 0) for cat in categories)
@@ -103,6 +125,9 @@ def get_all_categories_records(offset: int = 0, offset_type: str = "month", reco
             category.percentage = int((abs(net_amount or 0) / total_amount * 100)) if total_amount > 0 else 0
 
             result.append(category)
+
+        # Sort the result by percentage
+        result.sort(key=lambda cat: cat.percentage, reverse=True)
 
         return result
 

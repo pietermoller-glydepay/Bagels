@@ -1,6 +1,11 @@
 from datetime import datetime, timedelta
 
 
+def _get_start_end_of_year(offset: int = 0):
+    now = datetime.now()
+    target_year = now.year + offset
+    return datetime(target_year, 1, 1), datetime(target_year, 12, 31)
+
 def _get_start_end_of_month(offset: int = 0):
     now = datetime.now()
     # Calculate target month and year
@@ -35,9 +40,12 @@ def _get_start_end_of_day(offset: int = 0):
     return start_of_day, end_of_day
 
 def get_start_end_of_period(offset: int = 0, offset_type: str = "month"):
-    if offset_type == "month":
-        return _get_start_end_of_month(offset)
-    elif offset_type == "week":
-        return _get_start_end_of_week(offset)
-    elif offset_type == "day":
-        return _get_start_end_of_day(offset)
+    match offset_type:
+        case "year":
+            return _get_start_end_of_year(offset)
+        case "month":
+            return _get_start_end_of_month(offset)
+        case "week":
+            return _get_start_end_of_week(offset)
+        case "day":
+            return _get_start_end_of_day(offset)

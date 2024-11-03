@@ -14,7 +14,7 @@ from textual.widgets.text_area import TextAreaTheme
 
 from controllers.categories import create_default_categories
 from models.database.app import init_db
-from pages import Accounts, Categories, Home, Receivables, Reports
+from pages import Accounts, Categories, Home
 from provider import AppProvider
 from themes import BUILTIN_THEMES, Theme
 from utils.user_host import get_user_host_string
@@ -32,10 +32,6 @@ class App(TextualApp):
         {
             "name": "Home",
             "class": Home.Page,
-        },
-        {
-            "name": "Reports",
-            "class": Reports.Page,
         },
         {
             "name": "Accounts",

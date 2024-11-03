@@ -259,8 +259,12 @@ DataTable > .datatable--group-header-row {
 
 .module-container {
   height: auto;
-  border: round $primary;
+  border: round $panel-lighten-2;
   padding: 0 1 0 1;
+
+  &:focus {
+    border: round $accent;
+  }
 }
 
 .selectors {
@@ -300,6 +304,31 @@ DataTable > .datatable--group-header-row {
   }
 }
 
+#insights-container {
+  .figures-container {
+    height: auto;
+    margin-bottom: 1;
+
+    .container {
+      height: auto;
+
+      .title {
+        color: $primary-background-lighten-3;
+      }
+
+      .amount {
+        text-style: bold;
+      }
+    }
+    
+    .average {
+      Label {
+        text-align: right;
+        width: 1fr;
+      }
+    }
+  }
+}
 
 /* ------------ Accounts ------------ */
 

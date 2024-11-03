@@ -4,6 +4,7 @@ from models.account import Account
 from models.database.app import get_app
 from models.database.db import db
 from models.record import Record
+from models.split import Split
 
 app = get_app()
 
@@ -34,12 +35,28 @@ def calculate_account_balance(account_id):
         Record.accountId == account_id,
         Record.isTransfer.is_(True)
     ).scalar() or 0
+    
+    total_split_received = db.session.query(func.sum(Split.amount)).join(Record).filter(
+        Split.accountId == account_id,
+        Record.isIncome.is_(False)
+    ).scalar() or 0
+    
+    total_split_sent = db.session.query(func.sum(Split.amount)).join(Record).filter(
+        Split.accountId == account_id,
+        Record.isIncome.is_(True)
+    ).scalar() or 0
 
     account = Account.query.get(account_id)
     if account is None:
         return None
 
-    return account.beginningBalance + total_income - total_expense + total_transfer_received - total_transfer_sent
+    return account.beginningBalance \
+        + total_income \
+        - total_expense \
+        + total_transfer_received \
+        - total_transfer_sent \
+        + total_split_received \
+        - total_split_sent
     
 # --------------- CRUD --------------- #
 

@@ -1,14 +1,10 @@
-from datetime import datetime, timedelta
-
 from textual.app import ComposeResult
-from textual.containers import Container, Horizontal
 from textual.widgets import Label, Static
 
 from components.base import BasePage
 from components.modules.insights import Insights
 from components.modules.records import Records
-from controllers.accounts import (get_accounts_count,
-                                  get_all_accounts_with_balance)
+from controllers.accounts import get_accounts_count
 from controllers.categories import get_categories_count
 from utils.format import format_period_to_readable
 from utils.forms import RecordForm

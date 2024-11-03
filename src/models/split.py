@@ -1,8 +1,13 @@
+from datetime import datetime
+
 from .database.db import db
 
 
 class Split(db.Model):
     __tablename__ = "split"
+    
+    createdAt = db.Column(db.DateTime, nullable=False, default=datetime.now)
+    updatedAt = db.Column(db.DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
 
     id = db.Column(db.Integer, primary_key=True, index=True)
     recordId = db.Column(db.Integer, db.ForeignKey("record.id", ondelete="CASCADE"), nullable=False)

@@ -193,10 +193,13 @@ class App(TextualApp):
             yield Label(get_user_host_string(), classes="user")
         yield Tabs(*[Tab(f"{page["name"]} [{index+1}]", id=f"t{index + 1}") for index, page in enumerate(self.PAGES)])
         yield Footer()
-    
 
 if __name__ == "__main__":
-    init_db() # fix issue with home screen accessing accounts before db initialized
+    try:
+        init_db()
+    except Exception as e:
+        print(f"Failed to initialize database: {e}")
+        sys.exit(1)
     app = App()
     app.run()
 

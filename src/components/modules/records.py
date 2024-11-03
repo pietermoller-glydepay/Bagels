@@ -40,12 +40,12 @@ class Records(Static):
     can_focus = True
     show_splits = True
     displayMode = reactive(DisplayMode.DATE)
-    record_form = RecordForm()
     
     def __init__(self, parent: Static, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs, id="records-container", classes="module-container")
         # super().border_subtitle="Records"
         self.page_parent = parent
+        self.record_form = RecordForm()
     
     def on_mount(self) -> None:
         self.rebuild()

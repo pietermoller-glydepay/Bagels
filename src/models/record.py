@@ -1,8 +1,13 @@
+from datetime import datetime
+
 from .database.db import db
 
 
 class Record(db.Model):
     __tablename__ = "record"
+    
+    createdAt = db.Column(db.DateTime, nullable=False, default=datetime.now)
+    updatedAt = db.Column(db.DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
 
     id = db.Column(db.Integer, primary_key=True, index=True)
     label = db.Column(db.String, nullable=False)

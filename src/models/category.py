@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import Enum
 
 from .database.db import db
@@ -13,6 +14,9 @@ class Nature(Enum):
 
 class Category(db.Model):
     __tablename__ = "category"
+    
+    createdAt = db.Column(db.DateTime, nullable=False, default=datetime.now)
+    updatedAt = db.Column(db.DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
 
     id = db.Column(db.Integer, primary_key=True, index=True)
     parentCategoryId = db.Column(db.Integer, db.ForeignKey("category.id"), nullable=True)

@@ -7,6 +7,7 @@ from models.database.db import db
 from models.person import Person
 from models.record import Record
 from models.split import Split
+from utils.query import get_start_end_of_period
 
 app = get_app()
 
@@ -43,28 +44,10 @@ def delete_person(person_id):
             return True
         return False
 
-def get_persons_with_splits(month_offset=0):
-    """Get all persons with their splits for the specified month"""
+def get_persons_with_splits(offset: int = 0, offset_type: str = "month"):
+    """Get all persons with their splits for the specified period"""
     with app.app_context():
-        today = datetime.now()
-        year = today.year
-        month = today.month + month_offset
-        
-        # Adjust year if month goes out of bounds
-        while month < 1:
-            month += 12
-            year -= 1
-        while month > 12:
-            month -= 12
-            year += 1
-            
-        # Get start and end dates for the month
-        start_date = datetime(year, month, 1)
-        if month == 12:
-            end_date = datetime(year + 1, 1, 1)
-        else:
-            end_date = datetime(year, month + 1, 1)
-
+        start_of_period, end_of_period = get_start_end_of_period(offset, offset_type)       
         return Person.query.options(
             db.joinedload(Person.splits)
             .joinedload(Split.record)
@@ -73,7 +56,7 @@ def get_persons_with_splits(month_offset=0):
             .joinedload(Split.account),
         ).join(Person.splits).join(Split.record).filter(
             and_(
-                Record.date >= start_date,
-                Record.date < end_date
+                Record.date >= start_of_period,
+                Record.date < end_of_period
             )
         ).order_by(Record.date.asc()).distinct().all()

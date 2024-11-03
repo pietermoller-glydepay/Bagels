@@ -16,19 +16,14 @@ from components.insights import Insights
 from components.modals import (ConfirmationModal, InputModal, RecordModal,
                                TransferModal)
 from config import CONFIG
-from controllers.accounts import (get_account_balance_by_id,
-                                  get_accounts_count, get_all_accounts,
+from controllers.accounts import (get_accounts_count,
                                   get_all_accounts_with_balance)
-from controllers.categories import (get_all_categories_by_freq,
-                                    get_all_categories_tree,
-                                    get_categories_count)
+from controllers.categories import get_categories_count
 from controllers.persons import get_persons_with_splits
 from controllers.records import (create_record, create_record_and_splits,
                                  delete_record, get_record_by_id,
                                  get_record_total_split_amount, get_records,
-                                 is_record_all_splits_paid, update_record,
                                  update_record_and_splits)
-from controllers.splits import create_split
 from utils.format import format_date_to_readable
 from utils.forms import RecordForm
 
@@ -44,9 +39,8 @@ class Page(Static):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.filter = {
-            "month_offset": 0,
-            "sort_by": "date",
-            "sort_direction": "desc"
+            "offset": 0,
+            "offset_type": "month",
         }
         self.record_form = RecordForm()
         self.isReady = get_accounts_count() and get_categories_count()
@@ -58,14 +52,18 @@ class Page(Static):
             self.basePage.newBinding("ctrl+t", "new_transfer", "Transfer", self.action_new_transfer)
     
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
-        if event.row_key:
+        current_row_index = event.cursor_row
+        if event.row_key.value:
             self.current_row = event.row_key.value
+        else:
+            self.table.move_cursor(row=current_row_index + 1)
+            
     
     # ---------- Table builders ---------- #
     #region Table
         
     def _build_table(self) -> None:
-        table: DataTable = self.query_one("#records-table")
+        table = self.table
         empty_indicator: EmptyIndicator = self.query_one("#empty-indicator")
         self._initialize_table(table)
         records = get_records(**self.filter)
@@ -183,7 +181,7 @@ class Page(Static):
             return f"[grey]{CONFIG.symbols.split_unpaid}[/grey]"
 
     def _build_person_view(self, table: DataTable, _) -> None:
-        persons = get_persons_with_splits(self.filter["month_offset"])
+        persons = get_persons_with_splits(**self.filter)
         
         # Display each person and their splits
         for person in persons:
@@ -226,13 +224,13 @@ class Page(Static):
             return self.query_one("#current-month-label")
 
         label = get_month_label()
-        match self.filter["month_offset"]:
+        match self.filter["offset"]:
             case 0:
                 label.update("Current Month")
             case -1:
                 label.update("Previous Month")
             case _:
-                label.update(f"{datetime(datetime.now().year, datetime.now().month + self.filter['month_offset'], 1).strftime('%B %Y')}")
+                label.update(f"{datetime(datetime.now().year, datetime.now().month + self.filter['offset'], 1).strftime('%B %Y')}")
 
     #region Callbacks
     # ------------- Callbacks ------------ #    
@@ -246,15 +244,14 @@ class Page(Static):
         self._build_table()
     
     def action_prev_month(self) -> None:
-        self.filter["month_offset"] -= 1
+        self.filter["offset"] -= 1
         self._build_table()
     
     def action_next_month(self) -> None:
-        if self.filter["month_offset"] < 0:
-            self.filter["month_offset"] += 1
+        if self.filter["offset"] < 0:
+            self.filter["offset"] += 1
             self._build_table()
         else:
-            self.app.notify(title="Error", message="You are already on the current month.", severity="error", timeout=2)
             self.app.bell()
     
     def action_new_record(self) -> None:
@@ -409,13 +406,14 @@ class Page(Static):
                         yield Button("<<<", id="prev-month")
                         yield Label("Current Month", id="current-month-label")
                         yield Button(">>>", id="next-month")
-                yield DataTable(
+                self.table =  DataTable(
                     id="records-table", 
                     cursor_type="row", 
                     cursor_foreground_priority=True, 
                     zebra_stripes=True,
                     additional_classes=["datatable--net-row", "datatable--group-header-row"]   
                 )
+                yield self.table
                 yield EmptyIndicator("No entries")
                 if not self.isReady:
                     yield Label(

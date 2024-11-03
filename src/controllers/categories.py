@@ -6,21 +6,15 @@ from rich.text import Text
 from models.category import Category, Nature
 from models.database.app import get_app
 from models.database.db import db
+from models.record import Record
+from utils.query import get_start_end_of_period
 
 app = get_app()
         
+#region Get
 def get_categories_count():
     with app.app_context():
         return Category.query.count()
-
-def create_category(data):
-    with app.app_context():
-        new_category = Category(**data)
-        db.session.add(new_category)
-        db.session.commit()
-        db.session.refresh(new_category)
-        db.session.expunge(new_category)
-        return new_category
 
 def get_all_categories_tree(): # special function to get the categories in a tree format
     with app.app_context():
@@ -67,6 +61,62 @@ def get_category_by_id(category_id):
     with app.app_context():
         return Category.query.get(category_id)  
 
+def get_all_categories_records(offset: int = 0, offset_type: str = "month", record_limit: int = 3, isExpense: bool = True):
+    # get all the categories sorted by the total net amount of expense / income of records in that category
+    # populate categories.records with the last record_limit records
+    # categories should have the net amount and the percentage of net / total amount
+    with app.app_context():
+        # Get start and end dates for the period
+        start_of_period, end_of_period = get_start_end_of_period(offset, offset_type)
+        
+        # Query to get categories with their total amounts
+        categories = db.session.query(
+            Category,
+            db.func.sum(Record.amount).label('net_amount')
+        ).join(Category.records)\
+         .filter(Record.date >= start_of_period)\
+         .filter(Record.date < end_of_period)\
+         .filter(Record.isIncome == (not isExpense))\
+         .group_by(Category.id)\
+         .order_by(db.desc('net_amount'))\
+         .all()
+
+        # Calculate total amount across all categories
+        total_amount = sum(abs(cat[1] or 0) for cat in categories)
+
+        # Format results and fetch recent records
+        result = []
+        for category, net_amount in categories:
+            # Get recent records for this category
+            recent_records = Record.query\
+                .filter(Record.categoryId == category.id)\
+                .filter(Record.date >= start_of_period)\
+                .filter(Record.date < end_of_period)\
+                .filter(Record.isIncome == (not isExpense))\
+                .order_by(Record.date.desc())\
+                .limit(record_limit)\
+                .all()
+
+            # Add computed fields
+            category.records = recent_records
+            category.net_amount = abs(net_amount or 0)
+            category.percentage = int((abs(net_amount or 0) / total_amount * 100)) if total_amount > 0 else 0
+
+            result.append(category)
+
+        return result
+
+#region Create
+def create_category(data):
+    with app.app_context():
+        new_category = Category(**data)
+        db.session.add(new_category)
+        db.session.commit()
+        db.session.refresh(new_category)
+        db.session.expunge(new_category)
+        return new_category
+
+#region Update
 def update_category(category_id, data):
     with app.app_context():
         category = Category.query.get(category_id)
@@ -76,6 +126,7 @@ def update_category(category_id, data):
             db.session.commit()
         return category
 
+#region Delete
 def delete_category(category_id):
     with app.app_context():
         category = Category.query.get(category_id)
@@ -85,6 +136,7 @@ def delete_category(category_id):
             return True
         return False
 
+#region Default
 def create_default_categories():
     # Get the path to the YAML file
     yaml_path = Path(__file__).parent.parent / "templates" / "default_categories.yaml"

@@ -9,7 +9,7 @@ from components.datatable import DataTable
 from components.indicators import EmptyIndicator
 from components.modals import ConfirmationModal, InputModal
 from config import CONFIG
-from constants import CONSOLE_ASCII_CODES
+from constants import COLORS
 from controllers.categories import (create_category, create_default_categories,
                                     delete_category, get_all_categories_tree,
                                     get_category_by_id, update_category)
@@ -194,7 +194,7 @@ CATEGORY_FORM = [
                 "value": color,
                 "prefix": Text("●", style=color)
             }
-            for color in CONSOLE_ASCII_CODES
+            for color in COLORS
         ],
         "isRequired": True,
         "placeholder": "Select Color"

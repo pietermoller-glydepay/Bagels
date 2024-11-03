@@ -2707,7 +2707,12 @@ class DataTable(ScrollView, Generic[CellType], can_focus=True):
         self._set_hover_cursor(False)
         cursor_type = self.cursor_type
         if self.show_cursor and (cursor_type == "cell" or cursor_type == "row"):
-            self.cursor_coordinate = self.cursor_coordinate.up()
+            row, column = self.cursor_coordinate
+            if row == 0:
+                # If at top, wrap to bottom
+                self.cursor_coordinate = Coordinate(self.row_count - 1, column)
+            else:
+                self.cursor_coordinate = self.cursor_coordinate.up()
         else:
             # If the cursor doesn't move up (e.g. column cursor can't go up),
             # then ensure that we instead scroll the DataTable.
@@ -2717,7 +2722,12 @@ class DataTable(ScrollView, Generic[CellType], can_focus=True):
         self._set_hover_cursor(False)
         cursor_type = self.cursor_type
         if self.show_cursor and (cursor_type == "cell" or cursor_type == "row"):
-            self.cursor_coordinate = self.cursor_coordinate.down()
+            row, column = self.cursor_coordinate
+            if row == self.row_count - 1:
+                # If at bottom, wrap to top
+                self.cursor_coordinate = Coordinate(0, column)
+            else:
+                self.cursor_coordinate = self.cursor_coordinate.down()
         else:
             super().action_scroll_down()
 

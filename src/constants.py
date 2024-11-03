@@ -1,4 +1,4 @@
-CONSOLE_ASCII_CODES = [
+COLORS = [
     "black",
     "red",
     "green",

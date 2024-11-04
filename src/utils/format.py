@@ -23,7 +23,8 @@ def format_date_to_readable(date):
 def format_period_to_readable(filter: dict) -> str:
     offset = filter["offset"]
     offset_type = filter["offset_type"]
-
+    if offset_type == "day":
+        return format_date_to_readable(datetime.now() + timedelta(days=offset))
     match offset:
         case 0:
             return f"This {offset_type.title()}"

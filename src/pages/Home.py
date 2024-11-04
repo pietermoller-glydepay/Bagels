@@ -1,13 +1,19 @@
+from datetime import datetime
+
 from textual.app import ComposeResult
+from textual.reactive import Reactive
 from textual.widgets import Label, Static
 
 from components.base import BasePage
+from components.modules.accounts import Accounts
+from components.modules.datemode import DateMode
+from components.modules.incomemode import IncomeMode
 from components.modules.insights import Insights
 from components.modules.records import Records
-from controllers.accounts import get_accounts_count
+from config import CONFIG
+from controllers.accounts import get_accounts_count, get_all_accounts
 from controllers.categories import get_categories_count
 from utils.format import format_period_to_readable
-from utils.forms import RecordForm
 
 
 #region Page
@@ -20,12 +26,32 @@ class Page(Static):
     BINDINGS = [
         ("left", "prev_month", "Previous Month"),
         ("right", "next_month", "Next Month"),
-        (".", "cycle_offset_type", "Cycle filter type"),
+        (CONFIG.hotkeys.home.cycle_offset_type, "cycle_offset_type", "Filter"),
+        (CONFIG.hotkeys.home.toggle_income_mode, "toggle_income_mode", "Income/Expense"),
+        (CONFIG.hotkeys.home.select_prev_account, "select_prev_account", "Select previous account"),
+        (CONFIG.hotkeys.home.select_next_account, "select_next_account", "Select next account"),
     ]
     
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs, id="home-page")
         self.isReady = get_accounts_count() and get_categories_count()
+        accounts = get_all_accounts()
+        self.mode = {
+            "isIncome": False,
+            "date": datetime.now(),
+            "accountId": {
+                "defaultValue": None,
+                "defaultValueText": "Select account"
+            }
+        }
+        if accounts:
+            self.mode["accountId"]["defaultValue"] = accounts[0].id
+            self.mode["accountId"]["defaultValueText"] = accounts[0].name
+        self.accounts_indices = {
+            "index": 0,
+            "count": len(accounts)
+        }
+        self.accounts = accounts
         
     
     # -------------- Helpers ------------- #
@@ -33,6 +59,9 @@ class Page(Static):
     def rebuild(self) -> None:
         self.record_module.rebuild()
         self.insights_module.rebuild()
+        self.accounts_module.rebuild()
+        self.income_mode_module.rebuild()
+        self.date_mode_module.rebuild()
     
     def update_filter_label(self, label: Label) -> None:
         string = format_period_to_readable(self.filter)
@@ -71,6 +100,25 @@ class Page(Static):
         # Refresh table
         self.rebuild()
     
+    def action_toggle_income_mode(self) -> None:
+        self.mode["isIncome"] = not self.mode["isIncome"]
+        self.income_mode_module.rebuild()
+        self.insights_module.rebuild()
+    
+    def _select_account(self, dir: int) -> None:
+        new_index = (self.accounts_indices["index"] + dir) % self.accounts_indices["count"]
+        self.accounts_indices["index"] = new_index
+        self.mode["accountId"]["defaultValue"] = self.accounts[new_index].id
+        self.mode["accountId"]["defaultValueText"] = self.accounts[new_index].name
+        print(self.accounts[new_index].name)
+        self.accounts_module.rebuild()
+
+    def action_select_prev_account(self) -> None:
+        self._select_account(-1)
+    
+    def action_select_next_account(self) -> None:
+        self._select_account(1)
+    
     #region View
     # --------------- View --------------- #
     
@@ -78,42 +126,25 @@ class Page(Static):
         self.basePage = BasePage(
             pageName="Home",
             bindings =[]
-            # bindings=[
-            #     (CONFIG.hotkeys.new, "new_record", "Add", self.action_new_record),
-            #     (CONFIG.hotkeys.delete, "delete_record", "Delete", self.action_delete_record),
-            #     (CONFIG.hotkeys.edit, "edit_record", "Edit", self.action_edit_record),
-            #     (CONFIG.hotkeys.home.new_transfer, "new_transfer", "Transfer", self.action_new_transfer),
-            #     (CONFIG.hotkeys.home.toggle_splits, "toggle_splits", "Toggle Splits", self.action_toggle_splits),
-            #     (CONFIG.hotkeys.home.display_by_person, "display_by_person", "Display by Person", self.action_display_by_person),
-            #     (CONFIG.hotkeys.home.display_by_date, "display_by_date", "Display by Date", self.action_display_by_date),
-            #     ("left", "prev_month", "Previous Month", self.action_prev_month),
-            #     ("right", "next_month", "Next Month", self.action_next_month),
-            # ],
         )
         with self.basePage:
-            # accountsContainer = Container(id="accounts-container", classes="module-container")
-            # accountsContainer.border_subtitle = "Accounts"
-            # with accountsContainer:
-            #     with Horizontal(classes="home-accounts-list"):
-            #         for account in get_all_accounts_with_balance():
-            #             with Container(classes="account-container"):
-            #                 yield Label(
-            #                     f"[bold]{account.name}[/bold][italic] {account.description or ''}[/italic]",
-            #                     classes="account-name",
-            #                     markup=True
-            #                 )
-            #                 yield Label(
-            #                     f"${account.balance}",
-            #                     classes="account-balance",
-            #                     id=f"account-{account.id}-balance"
-            #                 )
             if not self.isReady:
                 yield Label(
                     "Please create at least one account and one category to get started.",
                     classes="label-empty"
                 )
-            if self.isReady:
+            else:
+                self.date_mode_module = DateMode(parent=self)
+                self.income_mode_module = IncomeMode(parent=self)
+                self.accounts_module = Accounts(parent=self)
                 self.record_module = Records(parent=self)
                 self.insights_module = Insights(parent=self)
+                # with Container(classes=f"home-modules-container {self.app.layout}"):
+                
+                with Static(id="home-top-container"):
+                    yield self.accounts_module
+                    with Static(id="home-mode-container"):
+                        yield self.income_mode_module
+                        yield self.date_mode_module
                 yield self.record_module
                 yield self.insights_module

@@ -249,13 +249,13 @@ class RecordModal(InputModal):
             self.split_total.update(f"Total amount: [bold yellow]{total:.2f}[/bold yellow]")
     
     def _get_split_widget(self, index: int, fields: list[dict], isPaid: bool):
-        return Container(
+        widget = Container(
                 Fields(fields),
-                Label("Paid", classes="label-paid") if isPaid else Static(),
                 id=f"split-{index}",
                 classes="split"
             )
-    
+        widget.border_title = "> Paid split <" if isPaid else "> Split <"
+        return widget
     def _get_init_split_widgets(self):
         widgets = []
         for i in range(0, self.splitCount):
@@ -274,6 +274,14 @@ class RecordModal(InputModal):
             self.query_one(".container").mount(self.split_total)
         else:
             self.split_total.remove()
+        
+    def _update_errors(self, errors: dict):
+        previousErrors = self.query(".error")
+        for error in previousErrors:
+            error.remove()
+        for key, value in errors.items():
+            field = self.query_one(f"#row-field-{key}")
+            field.mount(Label(value, classes="error"))
     
     # ------------- Callbacks ------------ #
     
@@ -339,14 +347,9 @@ class RecordModal(InputModal):
                 "splits": resultSplits
             })
             return 
-        previousErrors = self.query(".error")
+        self._update_errors({**errors, **errorsSplit})
         # Remove the custom value we set for the field if not valid
         input.__setattr__("heldValue", None)
-        for error in previousErrors:
-            error.remove()
-        for key, value in {**errors, **errorsSplit}.items():
-            field = self.query_one(f"#row-field-{key}")
-            field.mount(Label(value, classes="error"))
 
     # -------------- Compose ------------- #
 

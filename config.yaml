@@ -7,6 +7,10 @@ hotkeys:
     toggle_splits: "s"
     display_by_date: "q"
     display_by_person: "w"
+    cycle_offset_type: "."
+    toggle_income_mode: "/"
+    select_prev_account: "["
+    select_next_account: "]"
   record_modal:
     new_split: "ctrl+a"
     new_paid_split: "ctrl+s"

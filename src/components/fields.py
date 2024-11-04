@@ -65,8 +65,8 @@ class Field(Static):
             return
 
         # Visible fields get a container with label and input
-        with Container(classes="row", id=f"row-field-{self.field['key']}"):
-            yield Label(f"{self.field['title']}", classes="row-label")
+        with Container(classes="field-row", id=f"row-field-{self.field['key']}"):
+            yield Label(f"{self.field['title']}", classes="label")
 
             if self.field_type == "autocomplete":
                 # Build dropdown items list

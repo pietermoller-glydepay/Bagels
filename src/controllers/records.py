@@ -50,7 +50,7 @@ def get_record_total_split_amount(record_id: int):
         splits = get_splits_by_record_id(record_id)
         return sum(split.amount for split in splits)
 
-def get_records(offset: int = 0, offset_type: str = "month", sort_by: str = 'date', sort_direction: str = 'desc'):
+def get_records(offset: int = 0, offset_type: str = "month", sort_by: str = 'createdAt', sort_direction: str = 'desc'):
     with app.app_context():
         query = Record.query.options(
             db.joinedload(Record.category),

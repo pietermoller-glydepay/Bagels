@@ -2,12 +2,22 @@
 /*                Base                */
 /* ---------------------------------- */
 
-Input {
-  background: black 0%;
-  border: none;
-  height: 1;
-  margin-left: 0;
-  padding-left: 0;
+* {
+  scrollbar-color: $accent 30%;
+  scrollbar-color-hover: $accent 80%;
+  scrollbar-color-active: $accent;
+  scrollbar-background: $surface-darken-1;
+  scrollbar-background-hover: $surface-darken-1;
+  scrollbar-background-active: $surface-darken-1;
+  scrollbar-size-vertical: 1;
+
+  &:focus {
+    scrollbar-color: $accent 55%;
+  }
+}
+
+Screen {
+  background: $background;
 }
 
 Rule {
@@ -30,6 +40,34 @@ DataTable > .datatable--group-header-row {
   text-style: underline bold;
 }
 
+Input {
+  padding: 0 1;
+  height: 1;
+  background: $surface;
+  border: none;
+  &.-invalid {
+    padding-left: 0;
+    border-left: outer $error;
+  }
+
+  &:focus {
+    background: $surface-lighten-1;
+    padding-left: 0;
+    border-left: outer $surface-lighten-2;
+    &.-invalid {
+      border-left: outer $error;
+    }
+
+    & .input--cursor {
+      color: $text;
+      background: $accent;
+      text-style: not reverse;
+    }
+
+  }
+}
+
+
 /* ---------------------------------- */
 /*                 App                */
 /* ---------------------------------- */
@@ -50,6 +88,61 @@ DataTable > .datatable--group-header-row {
 }
 
 /* ---------------------------------- */
+/*             Input field            */
+/* ---------------------------------- */
+
+.field-row {
+  height: 3;
+
+  .label {
+    color: $accent;
+  }
+
+  Input {
+  }
+
+  Label.error {
+    color: $error;
+    dock: right;
+    layer: error;
+    border-right: outer $error;
+    background: $error 20%;
+    padding-left: 1;
+  }
+
+  # .switch-group {
+  #   layout: horizontal;
+  #   layer: input;
+  #   offset-x: 20;
+  # }
+
+  # Switch {
+  #   width: auto;
+  #   border: none;
+  #   padding: 0;
+  #   margin: 0 2;
+
+  #   .switch--slider {
+  #     color: $accent;
+  #     background: $background-lighten-2;
+  #   }
+
+  #   &:focus > .switch--slider {
+  #     color: $secondary;
+  #     background: $secondary 10%;
+  #   }
+
+  #   .-on > .switch--slider {
+  #     color: $accent;
+  #   }
+  # }
+
+  .field-autocomplete {
+    margin-left: 0;
+  }
+}
+
+/* ---------------------------------- */
 /*         Confirmation Modal         */
 /* ---------------------------------- */
 
@@ -60,7 +153,7 @@ DataTable > .datatable--group-header-row {
 
 .dialog {
   padding: 0 1;
-  width: 80%;
+  width: 60%;
   height: 5;
   border: round $accent;
   background: $surface;
@@ -79,23 +172,22 @@ DataTable > .datatable--group-header-row {
 
 .modal-screen {
   align: center top;
-  background: $background 40%;
+  background: $background 60%;
 
   .wrapper {
     margin: 2;
     width: 1fr;
-    max-width: 80;
+    max-width: 50;
     height: auto;
-    background: $surface;
 
     Header {
-      background: $primary-background-lighten-1;
+      background: $surface-lighten-2;
     }
 
     .footer {
       width: 1fr;
       height: 1;
-      background: $primary-background-lighten-1;
+      background: $surface-lighten-2;
       padding-left: 1;
       padding-right: 1;
       layout: horizontal;
@@ -108,8 +200,8 @@ DataTable > .datatable--group-header-row {
     .container {
       padding: 1 2;
       height: auto;
-      border-left: outer $primary-background-lighten-1;
-      border-right: outer $primary-background-lighten-1;
+      border-left: outer $surface-lighten-2;
+      border-right: outer $surface-lighten-2;
 
       #split-total {
         border-top: double $primary-background;
@@ -121,13 +213,10 @@ DataTable > .datatable--group-header-row {
         height: auto;
 
         .split {
-          border-top: ascii $primary-background;
+          border-top: round $surface-lighten-3;
           height: auto;
+          padding-top: 1;
 
-          .label-paid {
-            color: $secondary;
-            dock: right;
-          }
         }
       }
     }
@@ -177,77 +266,10 @@ DataTable > .datatable--group-header-row {
 }
 
 /* ---------------------------------- */
-/*             Input field            */
-/* ---------------------------------- */
-
-.row {
-  height: 1;
-  layout: horizontal;
-  layers: input error label;
-
-  .row-label {
-    color: $accent;
-    dock: left;
-    layer: label;
-  }
-
-  Input {
-    offset-x: 20;
-    layer: input;
-  }
-
-  Label.error {
-    color: red;
-    dock: right;
-    layer: error;
-  }
-
-  .switch-group {
-    layout: horizontal;
-    layer: input;
-    offset-x: 20;
-  }
-
-  Switch {
-    width: auto;
-    border: none;
-    padding: 0;
-    margin: 0 2;
-
-    .switch--slider {
-      color: $accent;
-      background: $background-lighten-2;
-    }
-
-    &:focus > .switch--slider {
-      color: $secondary;
-      background: $secondary 10%;
-    }
-
-    .-on > .switch--slider {
-      color: $accent;
-    }
-  }
-
-  .field-autocomplete {
-    margin-left: 0;
-    layer: input;
-  }
-}
-
-/* ---------------------------------- */
 /*              Home page             */
 /* ---------------------------------- */
 
-.home-accounts-list {
-  height: 4;
-  width: 1fr;
-}
-
-.home-divider {
-  color: $primary-background-lighten-3;
-  margin: 0;
-}
+/* --------------- top -------------- */
 
 #empty-indicator {
   width: 1fr;
@@ -257,15 +279,136 @@ DataTable > .datatable--group-header-row {
   color: $primary-background-lighten-1;
 }
 
-.module-container {
+#home-top-container {
+  layout: horizontal;
+  width: 1fr;
   height: auto;
+
+  #accounts-container {
+    width: 1fr;
+    height: 100%;
+
+    .account-container {
+      height: auto;
+      align-vertical: middle;
+      padding: 0 1 1 1;
+      border-top: tall $surface;
+      
+      &.selected {
+        border-left: outer $surface-lighten-2;
+        padding: 1 1 1 1;
+        border-top: none;
+        background: $surface;
+        text-style: bold;
+      }
+      
+      .balance {
+        dock: right;
+        color: $secondary;
+      }
+    }
+  }
+
+  #home-mode-container {
+    width: 30;
+    
+    #incomemode-container {
+      layout: horizontal;
+      width: 1fr;
+
+      Label {
+        width: 1fr;
+        text-align: center;
+        color: $accent 50%;
+      }
+      
+      .selected {
+        color: $accent;
+        text-style: bold;
+        background: $surface;
+      }
+    }
+    #datemode-container {
+      width: 1fr;
+      height: 9;
+
+      .month-selector {
+        height: 2;
+        layout: horizontal;
+
+        #prev-month {
+          dock: left;
+          color: $primary-background-lighten-3;
+        }
+        .current-filter-label {
+          dock: left;
+          align: center middle;
+        }
+        #next-month {
+          dock: right;
+          color: $primary-background-lighten-3;
+        }
+      }
+      .calendar {
+        height: 5;
+        width: 20;
+        offset-x: 3;
+
+        .calendar-row {
+          height: 1;
+
+          Label {
+            width: 3;
+          }
+          .not_current {
+            color: $panel-lighten-1;
+          }
+        }
+
+        .this_week {
+          background: $accent 10%;
+        }
+
+
+        .today {
+          color: $accent;
+          text-style: bold underline;
+          background: $accent 10%;
+        }
+        
+        .this_month {
+          background: $accent 10%;
+        }
+      }
+    }
+  }
+}
+
+.home-modules-container {
+  height: auto;
+
+  &.v {
+    layout: vertical;
+  }
+
+  &.h {
+    layout: horizontal;
+    width: 1fr;
+  }
+}
+
+.module-container {
+  width: 1fr;
   border: round $panel-lighten-2;
-  padding: 0 1 0 1;
+  padding-left: 1;  
+  padding-right: 1;
 
   &:focus {
     border: round $accent;
   }
 }
+
+/* ------------- Records ------------ */
 
 .selectors {
   height: auto;
@@ -288,18 +431,6 @@ DataTable > .datatable--group-header-row {
     .selected {
       color: $accent;
       text-style: underline bold;
-    }
-  }
-
-  .month-selector {
-    #prev-month {
-      dock: left;
-      color: $primary-background-lighten-3;
-    }
-  
-    #next-month {
-      dock: right;
-      color: $primary-background-lighten-3;
     }
   }
 }
@@ -330,18 +461,6 @@ DataTable > .datatable--group-header-row {
   }
 }
 
-/* ------------ Accounts ------------ */
-
-Container.account-container {
-  height: 1fr;
-  border: round $primary-background-lighten-3;
-  align-vertical: middle;
-  padding-left: 1;
-}
-
-.account-balance {
-  color: $secondary;
-}
 
 /* ---------------------------------- */
 /*               Utility              */

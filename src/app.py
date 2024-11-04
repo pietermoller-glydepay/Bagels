@@ -7,6 +7,7 @@ from textual.binding import Binding
 from textual.command import CommandPalette
 from textual.containers import Container
 from textual.css.query import NoMatches
+from textual.geometry import Size
 from textual.reactive import Reactive, reactive
 from textual.signal import Signal
 from textual.widgets import Footer, Header, Label, Tab, Tabs
@@ -46,6 +47,7 @@ class App(TextualApp):
     theme: Reactive[str] = reactive("galaxy", init=False)
     """The currently selected theme. Changing this reactive should
     trigger a complete refresh via the `watch_theme` method."""
+    layout: str = "h"
     
     def __init__(self):
         # Initialize available themes with a default
@@ -53,10 +55,16 @@ class App(TextualApp):
         available_themes |= BUILTIN_THEMES
         self.themes = available_themes
         super().__init__()
+        
+        
     
     def on_mount(self) -> None:
         self.theme_change_signal = Signal[Theme](self, "theme-changed")
-    
+        console_size: Size = self.console.size
+        aspect_ratio = (console_size.width / 2) / console_size.height
+        if aspect_ratio < 1:
+            self.layout = "v"
+        
     def get_css_variables(self) -> dict[str, str]:
         if self.theme:
             theme = self.themes.get(self.theme)
@@ -195,11 +203,7 @@ class App(TextualApp):
         yield Footer()
 
 if __name__ == "__main__":
-    try:
-        init_db()
-    except Exception as e:
-        print(f"Failed to initialize database: {e}")
-        sys.exit(1)
+    init_db() 
     app = App()
     app.run()
 

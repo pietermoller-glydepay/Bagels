@@ -80,7 +80,6 @@ class Records(Static):
             
         table.focus()
         empty_indicator.display = not table.rows
-        self.page_parent.update_filter_label(self.query_one(".current-filter-label"))
 
     def _initialize_table(self, table: DataTable) -> None:
         table.clear()
@@ -237,10 +236,6 @@ class Records(Static):
     #region Helpers
     # -------------- Helpers ------------- #
         
-    def _update_account_balance(self) -> None:
-        pass
-        # for account in get_all_accounts_with_balance():
-        #     self.query_one(f"#account-{account.id}-balance").update(f"${account.balance}")
 
     #region Callbacks
     # ------------- Callbacks ------------ #    
@@ -262,10 +257,9 @@ class Records(Static):
                     self.app.notify(title="Error", message=f"{e}", severity="error", timeout=10)
                 else:   
                     self.app.notify(title="Success", message=f"Record created", severity="information", timeout=3)
-                    self._update_account_balance()
                     self.page_parent.rebuild()
         
-        self.app.push_screen(RecordModal("New Record", form=self.record_form.get_form()), callback=check_result)
+        self.app.push_screen(RecordModal("New Record", form=self.record_form.get_form(self.page_parent.mode)), callback=check_result)
     
     def action_edit_record(self) -> None:
         record = get_record_by_id(self.current_row)
@@ -277,9 +271,6 @@ class Records(Static):
                     self.app.notify(title="Error", message=f"{e}", severity="error", timeout=10)
                 else:
                     self.app.notify(title="Success", message=f"Record updated", severity="information", timeout=3)
-                    self._update_account_balance()
-                    if record.isTransfer:
-                        self._update_account_balance()
                     self.page_parent.rebuild()
             else:
                 self.app.notify(title="Discarded", message=f"Record not updated", severity="warning", timeout=3)
@@ -302,7 +293,6 @@ class Records(Static):
             if result:
                 delete_record(self.current_row)
                 self.app.notify(title="Success", message=f"Record deleted", severity="information", timeout=3)
-                self._update_account_balance()
                 self.page_parent.rebuild()
         self.app.push_screen(ConfirmationModal("Are you sure you want to delete this record?"), check_delete)
     
@@ -315,8 +305,6 @@ class Records(Static):
                     self.app.notify(title="Error", message=f"{e}", severity="error", timeout=10)
                 else:
                     self.app.notify(title="Success", message=f"Record created", severity="information", timeout=3)
-                    self._update_account_balance()
-                    self._update_account_balance()
                     self.page_parent.rebuild()
             else:
                 self.app.notify(title="Discarded", message=f"Record not updated", severity="warning", timeout=3)
@@ -356,12 +344,6 @@ class Records(Static):
             with displayContainer:
                 yield Button(f"([u]{CONFIG.hotkeys.home.display_by_date}[/u]) Date", id="display-date")
                 yield Button(f"([u]{CONFIG.hotkeys.home.display_by_person}[/u]) Person", id="display-person")
-            filterContainer = Container(classes="month-selector")
-            filterContainer.border_title = "Filter by:"
-            with filterContainer:
-                yield Button("<<<", id="prev-month")
-                yield Label("Current Month", classes="current-filter-label")
-                yield Button(">>>", id="next-month")
         self.table =  DataTable(
             id="records-table", 
             cursor_type="row", 

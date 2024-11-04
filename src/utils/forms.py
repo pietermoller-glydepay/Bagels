@@ -25,6 +25,7 @@ class RecordForm:
             "title": "Label", 
             "key": "label",
             "type": "string",
+            "isRequired": True,
         },
         {
             "title": "Category",
@@ -229,6 +230,16 @@ class RecordForm:
                 
         return filled_form, filled_splits
 
-    def get_form(self):
-        """Return the base form"""
-        return self.FORM
+    def get_form(self, hidden_fields: dict = {}):
+        """Return the base form with default values"""
+        form = copy.deepcopy(self.FORM)
+        for field in form:
+            key = field["key"]
+            if key in hidden_fields:
+                field["type"] = "hidden"
+                if isinstance(hidden_fields[key], dict):
+                    field["defaultValue"] = hidden_fields[key]["defaultValue"]
+                    field["defaultValueText"] = hidden_fields[key]["defaultValueText"]
+                else:
+                    field["defaultValue"] = hidden_fields[key]
+        return form

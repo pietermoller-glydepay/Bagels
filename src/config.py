@@ -8,6 +8,10 @@ class HomeHotkeys(BaseModel):
     toggle_splits: str 
     display_by_date: str
     display_by_person: str
+    cycle_offset_type: str
+    toggle_income_mode: str
+    select_prev_account: str
+    select_next_account: str
 
 
 class RecordModalHotkeys(BaseModel):

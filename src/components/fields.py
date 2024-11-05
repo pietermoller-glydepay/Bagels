@@ -91,12 +91,12 @@ class Field(Static):
 
             elif self.field_type == "boolean":
                 with Container(classes="switch-group"):
-                    yield Label(f"[italic]{self.field['labels'][0]}[/italic]")
+                    yield Label(str(self.field["labels"][0]), classes="left")
                     yield Switch(
                         id=f"field-{self.field['key']}", 
                         value=self.field.get("defaultValue", False)
                     )
-                    yield Label(f"[italic]{self.field['labels'][1]}[/italic]")
+                    yield Label(str(self.field["labels"][1]), classes="right")
 
             else:
                 yield self.input

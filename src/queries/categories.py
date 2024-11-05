@@ -7,7 +7,7 @@ from models.category import Category, Nature
 from models.database.app import get_app
 from models.database.db import db
 from models.record import Record
-from utils.query import get_start_end_of_period
+from queries.utils import get_start_end_of_period
 
 app = get_app()
         

@@ -5,14 +5,14 @@ from textual.containers import Container, Horizontal
 from textual.widgets import Label, Static
 
 from components.button import Button
+from config import CONFIG
 
 
 class DateMode(Static):
-    can_focus = True
-    
     def __init__(self, parent: Static, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs, id="datemode-container", classes="module-container")
-        super().__setattr__("border_title", "Date")
+        super().__setattr__("border_title", "Period")
+        super().__setattr__("border_subtitle", f"← {CONFIG.hotkeys.home.cycle_offset_type} →")
         self.page_parent = parent
         self.first_day_of_week = 6 # 0 = Monday, 6 = Sunday
     

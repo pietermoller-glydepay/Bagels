@@ -10,10 +10,10 @@ from components.indicators import EmptyIndicator
 from components.modals import ConfirmationModal, InputModal
 from config import CONFIG
 from constants import COLORS
-from controllers.categories import (create_category, create_default_categories,
-                                    delete_category, get_all_categories_tree,
-                                    get_category_by_id, update_category)
 from models.category import Nature
+from queries.categories import (create_category, create_default_categories,
+                                delete_category, get_all_categories_tree,
+                                get_category_by_id, update_category)
 
 
 class Page(Static):

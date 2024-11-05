@@ -1,6 +1,6 @@
 from rich.console import Group
 from rich.text import Text
-from textual import on
+from textual import events, on
 from textual.app import App as TextualApp
 from textual.app import ComposeResult, SystemCommand
 from textual.binding import Binding
@@ -13,10 +13,10 @@ from textual.signal import Signal
 from textual.widgets import Footer, Header, Label, Tab, Tabs
 from textual.widgets.text_area import TextAreaTheme
 
-from controllers.categories import create_default_categories
 from models.database.app import init_db
 from pages import Accounts, Categories, Home
 from provider import AppProvider
+from queries.categories import create_default_categories
 from themes import BUILTIN_THEMES, Theme
 from utils.user_host import get_user_host_string
 
@@ -34,10 +34,10 @@ class App(TextualApp):
             "name": "Home",
             "class": Home.Page,
         },
-        {
-            "name": "Accounts",
-            "class": Accounts.Page,
-        },
+        # {
+        #     "name": "Accounts",
+        #     "class": Accounts.Page,
+        # },
         {
             "name": "Categories",
             "class": Categories.Page,
@@ -47,24 +47,22 @@ class App(TextualApp):
     theme: Reactive[str] = reactive("galaxy", init=False)
     """The currently selected theme. Changing this reactive should
     trigger a complete refresh via the `watch_theme` method."""
-    layout: str = "h"
+    layout: Reactive[str] = reactive("h")
     
+    
+    #region init
     def __init__(self):
         # Initialize available themes with a default
         available_themes: dict[str, Theme] = {"galaxy": BUILTIN_THEMES["galaxy"]}
         available_themes |= BUILTIN_THEMES
         self.themes = available_themes
         super().__init__()
-        
-        
+    
     
     def on_mount(self) -> None:
         self.theme_change_signal = Signal[Theme](self, "theme-changed")
-        console_size: Size = self.console.size
-        aspect_ratio = (console_size.width / 2) / console_size.height
-        if aspect_ratio < 1:
-            self.layout = "v"
-        
+    
+    # used by the textual app to get the theme variables
     def get_css_variables(self) -> dict[str, str]:
         if self.theme:
             theme = self.themes.get(self.theme)
@@ -82,6 +80,7 @@ class App(TextualApp):
             f"Theme is now [b]{theme!r}[/].", title="Theme updated", timeout=2.5
         )
     
+    #region bindings
     # ---------- Bindings helper ---------- #
     
     def newBinding(self, binding: Binding) -> None:
@@ -96,54 +95,24 @@ class App(TextualApp):
         if binding:
             self.refresh_bindings()
     
-    # --------------- Hooks -------------- #
-        
+    #region theme 
+    # --------------- theme -------------- #
     def watch_theme(self, theme: str | None) -> None:
         self.refresh_css(animate=False)
         self.screen._update_styles()
         if theme:
             theme_object = self.themes[theme]
-            # if syntax := getattr(theme_object, "syntax", None):
-            #     if isinstance(syntax, str):
-            #         valid_themes = {
-            #             theme.name for theme in TextAreaTheme.builtin_themes()
-            #         }
-            #         valid_themes.add("posting")
-            #         if syntax not in valid_themes:
-            #             # Default to the posting theme for text areas
-            #             # if the specified theme is invalid.
-            #             theme_object.syntax = "posting"
-            #             self.notify(
-            #                 f"Theme {theme!r} has an invalid value for 'syntax': {syntax!r}. Defaulting to 'posting'.",
-            #                 title="Invalid theme",
-            #                 severity="warning",
-            #                 timeout=7,
-            #             )
-
             self.theme_change_signal.publish(theme_object)
     
     @on(CommandPalette.Opened)
     def palette_opened(self) -> None:
-        # If the theme preview is disabled, don't record the theme being used
-        # before the palette is opened.
-        # if not self.settings.command_palette.theme_preview:
-        #     return
-
-        # Record the theme being used before the palette is opened.
         self._original_theme = self.theme
     
     @on(CommandPalette.OptionHighlighted)
     def palette_option_highlighted(
         self, event: CommandPalette.OptionHighlighted
     ) -> None:
-        # If the theme preview is disabled, don't update the theme when an option
-        # is highlighted.
-        # if not self.settings.command_palette.theme_preview:
-        #     return
-
         prompt: Group = event.highlighted_event.option.prompt
-        # TODO: This is making quite a lot of assumptions. Fragile, but the only
-        # way I can think of doing it given the current Textual APIs.
         command_name = prompt.renderables[0]
         if isinstance(command_name, Text):
             command_name = command_name.plain
@@ -168,7 +137,8 @@ class App(TextualApp):
         if not event.option_selected:
             self.theme = self._original_theme
 
-    # --------------- Callbacks ------------ #
+    #region hooks
+    # --------------- hooks -------------- #
     
     def on_tabs_tab_activated(self, event: Tabs.TabActivated) -> None:
         if event.tab.id.startswith("t"):
@@ -181,6 +151,17 @@ class App(TextualApp):
             page_class = self.PAGES[activeIndex]["class"]
             page_instance = page_class(classes="content")
             self.mount(page_instance)
+    
+    def on_resize(self, event: events.Resize) -> None:
+        console_size: Size = self.console.size
+        aspect_ratio = (console_size.width / 2) / console_size.height
+        if aspect_ratio < 1:
+            self.layout = "v"
+        else:
+            self.layout = "h"
+    
+    #region callbacks
+    # --------------- Callbacks ------------ #
 
     def action_goToTab(self, tab_number: int) -> None:
         """Go to the specified tab."""
@@ -192,7 +173,8 @@ class App(TextualApp):
     
     def action_create_default_categories(self) -> None:
         create_default_categories()
-
+    
+    #region view
     # --------------- View --------------- #
     def compose(self) -> ComposeResult:
         with Container(classes="header"):

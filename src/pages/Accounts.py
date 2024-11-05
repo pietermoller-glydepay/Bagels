@@ -9,9 +9,9 @@ from components.datatable import DataTable
 from components.indicators import EmptyIndicator
 from components.modals import ConfirmationModal, InputModal
 from config import CONFIG
-from controllers.accounts import (create_account, delete_account,
-                                  get_account_by_id, get_all_accounts,
-                                  update_account)
+from queries.accounts import (create_account, delete_account,
+                              get_account_by_id, get_all_accounts,
+                              update_account)
 
 
 class Page(Static):

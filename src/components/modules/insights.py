@@ -6,7 +6,9 @@ from textual.color import Color
 from textual.containers import Container, Horizontal, Vertical
 from textual.widgets import Label, Static
 
-from controllers.categories import get_all_categories_records
+from config import CONFIG
+from queries.categories import get_all_categories_records
+from queries.utils import get_period_average, get_period_net
 
 
 class PercentageBarItem(BaseModel):
@@ -107,11 +109,18 @@ class PeriodBarchart(Static):
 
 #region Insights
 class Insights(Static):
+    
+    BINDINGS = [
+        (CONFIG.hotkeys.home.insights.toggle_use_account, "toggle_use_account", "Toggle use account")
+    ]
+    
     can_focus = True
     
     def __init__(self, parent: Static, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs, id="insights-container", classes="module-container")
+        super().__setattr__("border_title", "Insights")
         self.page_parent = parent
+        self.use_account = False # insights of specific account if True
     
     def on_mount(self) -> None:
         self.rebuild()
@@ -122,10 +131,36 @@ class Insights(Static):
     def rebuild(self) -> None:
         items = self.get_percentage_bar_items()
         self.percentage_bar.set_items(items)
-        self.page_parent.update_filter_label(self.query_one(".current-filter-label"))
+        
+        current_filter_label = self.query_one(".current-filter-label")
+        period_net_label = self.query_one(".period-net")
+        period_average_label = self.query_one(".period-average")
+        average_label = self.query_one(".average-label")
+        
+        mode_isIncome = self.page_parent.mode["isIncome"]
+        label = "Income" if mode_isIncome else "Expense"
+        
+        current_filter_label.update(f"{label} of {self.page_parent.get_filter_label()}")
+        average_label.update(f"{label} per day")
+        if self.use_account:
+            params = {
+                **self.page_parent.filter,
+                "accountId": self.page_parent.mode["accountId"]["defaultValue"],
+                "isIncome": mode_isIncome
+            }
+        else:
+            params = {
+                **self.page_parent.filter,
+                "isIncome": mode_isIncome
+            }
+        
+        period_net = get_period_net(**params)
+        period_average = get_period_average(period_net, **self.page_parent.filter)
+        period_net_label.update(str(period_net))
+        period_average_label.update(str(period_average))
 
     def get_percentage_bar_items(self, limit: int = 5) -> list[PercentageBarItem]:
-        category_records = get_all_categories_records(**self.page_parent.filter)
+        category_records = get_all_categories_records(**self.page_parent.filter, isExpense=not self.page_parent.mode["isIncome"])
         
         # Sort categories by percentage in descending order
         items = []
@@ -159,6 +194,12 @@ class Insights(Static):
     def get_period_barchart_items(self) -> list[PercentageBarItem]:
         items = []
         return items
+
+    #region Callbacks
+    # ------------- callbacks ------------ #
+    def action_toggle_use_account(self) -> None:
+        self.use_account = not self.use_account
+        self.rebuild()
         
     #region View
     # --------------- View --------------- #
@@ -166,11 +207,11 @@ class Insights(Static):
     def compose(self) -> ComposeResult:
         with Horizontal(classes="figures-container"):
             with Container(classes="net container"):
-                yield Label(classes="current-filter-label title")
-                yield Label("$0.00", classes="period-net amount")
+                yield Label(classes="current-filter-label title") # dynamic
+                yield Label("Loading...", classes="period-net amount") # dynamic
             with Container(classes="average container"):
-                yield Label("Expense per day", classes="title")
-                yield Label("$0.00", classes="period-average amount")
+                yield Label("<> per day", classes="average-label title") # dynamic
+                yield Label("Loading...", classes="period-average amount") # dynamic
             
         self.percentage_bar = PercentageBar()
         self.period_barchart = PeriodBarchart()

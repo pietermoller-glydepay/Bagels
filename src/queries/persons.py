@@ -7,7 +7,7 @@ from models.database.db import db
 from models.person import Person
 from models.record import Record
 from models.split import Split
-from utils.query import get_start_end_of_period
+from queries.utils import get_start_end_of_period
 
 app = get_app()
 

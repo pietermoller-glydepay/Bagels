@@ -1,10 +1,9 @@
-from controllers.splits import (create_split, get_splits_by_record_id,
-                                update_split)
 from models.database.app import get_app
 from models.database.db import db
 from models.record import Record
 from models.split import Split
-from utils.query import get_start_end_of_period
+from queries.splits import create_split, get_splits_by_record_id, update_split
+from queries.utils import get_start_end_of_period
 
 app = get_app()
 #region Create

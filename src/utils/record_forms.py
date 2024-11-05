@@ -3,10 +3,10 @@ from datetime import datetime
 
 from rich.text import Text
 
-from controllers.accounts import get_all_accounts_with_balance
-from controllers.categories import get_all_categories_by_freq
-from controllers.persons import create_person, get_all_persons
-from controllers.records import get_record_by_id, get_record_total_split_amount
+from queries.accounts import get_all_accounts_with_balance
+from queries.categories import get_all_categories_by_freq
+from queries.persons import create_person, get_all_persons
+from queries.records import get_record_by_id, get_record_total_split_amount
 
 
 class RecordForm:
@@ -229,7 +229,7 @@ class RecordForm:
                 filled_splits.append(field)
                 
         return filled_form, filled_splits
-
+    
     def get_form(self, hidden_fields: dict = {}):
         """Return the base form with default values"""
         form = copy.deepcopy(self.FORM)

@@ -15,6 +15,10 @@ def get_splits_by_record_id(record_id):
     with app.app_context():
         return Split.query.filter_by(recordId=record_id).all()
 
+def get_split_by_id(split_id):
+    with app.app_context():
+        return Split.query.get(split_id)
+
 def update_split(split_id, updated_data):
     with app.app_context():
         split = Split.query.get(split_id)

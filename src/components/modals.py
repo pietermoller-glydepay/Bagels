@@ -13,20 +13,23 @@ from textual.widgets import (Footer, Header, Input, Label, ListItem, ListView,
 
 from components.fields import Fields
 from config import CONFIG
-from controllers.accounts import get_all_accounts_with_balance
-from controllers.persons import create_person, get_all_persons
 from models.split import Split
-from utils.forms import RecordForm
+from queries.accounts import get_all_accounts_with_balance
+from queries.persons import create_person, get_all_persons
+from utils.record_forms import RecordForm
 from utils.validation import validateForm
 
 
+#region Confirma
 class ConfirmationModal(ModalScreen):
     def __init__(self, message: str, *args, **kwargs):
         super().__init__(id="confirmation-modal-screen", *args, **kwargs)
         self.message = message
 
     def compose(self) -> ComposeResult:
-        with Container(classes="dialog"):
+        dialog = Container(classes="dialog")
+        dialog.border_title = "Alert"
+        with dialog:
             yield Label(self.message)
 
     def on_key(self, event: events.Key):
@@ -35,10 +38,11 @@ class ConfirmationModal(ModalScreen):
         elif event.key == "escape":
             self.dismiss(False)
 
+#region Container
 class ModalContainer(Widget):
     # usage: ModalContainer(w1, w2, w3..... hotkeys=[])
-    def __init__(self, *content, hotkeys: list[dict] = []):
-        super().__init__(classes="wrapper")
+    def __init__(self, *content, hotkeys: list[dict] = [], custom_classes: str = "wrapper max-width-50"):
+        super().__init__(classes=custom_classes)
         self.content = content
         self.hotkeys = hotkeys
 
@@ -52,14 +56,12 @@ class ModalContainer(Widget):
                 key_display = self.app.get_key_display(Binding(hotkey["key"], ""))
                 yield Label(f"[bold yellow]{key_display}[/bold yellow] {hotkey['label']}")
 
+#region Base
 class InputModal(ModalScreen):
     def __init__(self, title: str, form: list[dict], *args, **kwargs):
         super().__init__(classes="modal-screen", *args, **kwargs)
         self.title = title
         self.form = form
-    
-    # def on_mount(self):
-    #     self.styles.animate("text_opacity", value=0, duration=0.4)
     
     # --------------- Hooks -------------- #
 
@@ -92,6 +94,24 @@ class InputModal(ModalScreen):
     def compose(self) -> ComposeResult:
         yield ModalContainer(Fields(self.form))
 
+#region Transfer
+
+class Accounts(ListView):
+    def __init__(self, accounts, initial_index: int = 0, type: str = "", *args, **kwargs):
+        super().__init__(
+            *[ListItem(
+                    Label(str(account.name), classes="name"), 
+                    Label(str(account.balance), classes="balance"), 
+                    classes="item", 
+                    id=f"account-{account.id}"
+                ) for account in accounts],
+            id=f"{type}-accounts", 
+            classes="accounts", 
+            initial_index=initial_index, 
+            *args, 
+            **kwargs
+        )
+    
 class TransferModal(ModalScreen):
     def __init__(self, record=None, *args, **kwargs):
         super().__init__(classes="modal-screen", *args, **kwargs)
@@ -130,6 +150,13 @@ class TransferModal(ModalScreen):
             self.title = "New transfer"
         self.atAccountList = False
     
+    def on_descendant_focus(self, event: events.DescendantFocus):
+        id = event.widget.id
+        if id.endswith("-accounts"):
+            self.atAccountList = True
+        else:
+            self.atAccountList = False
+    
     def on_key(self, event: events.Key):
         if self.atAccountList:
             if event.key == "right":
@@ -152,13 +179,16 @@ class TransferModal(ModalScreen):
             self.fromAccount = accountId
         elif event.list_view.id == "to-accounts":
             self.toAccount = accountId
-            
+    
     def action_submit(self):
         resultForm, errors, isValid = validateForm(self, self.form)
+        transfer_error_label = self.query_one("#transfer-error")
         if self.fromAccount == self.toAccount:
-            self.query_one("#transfer-error").update("From and to accounts cannot be the same")
+            transfer_error_label.update("From and to accounts cannot be the same")
+            transfer_error_label.add_class("active")
         else:
-            self.query_one("#transfer-error").update("")
+            transfer_error_label.update("")
+            transfer_error_label.remove_class("active")
             if isValid:
                 resultForm["accountId"] = self.fromAccount
                 resultForm["transferToAccountId"] = self.toAccount
@@ -177,34 +207,26 @@ class TransferModal(ModalScreen):
             Container(
                 Fields(self.form),
                 Container(
-                    ListView(
-                            *[ListItem(
-                                Label(f"{account.name} (Bal: [yellow]{account.balance}[/yellow])", classes="account-name"),
-                                    classes="item",
-                                    id=f"account-{account.balance}"
-                                ) for account in self.accounts]
-                            , id="from-accounts", 
-                            classes="accounts",
-                            initial_index=self.fromAccount - 1
-                        ),
-                    Label("[italic]-- to ->[/italic]", classes="arrow"),
-                    ListView(
-                        *[ListItem(
-                                Label(f"{account.name} (Bal: [yellow]{account.balance}[/yellow])", classes="account-name"),
-                                classes="item",
-                                id=f"account-{account.balance}"
-                            ) for account in self.accounts]
-                            , id="to-accounts",
-                            classes="accounts",
-                        initial_index=self.toAccount - 1
+                    Accounts(
+                        self.accounts, 
+                        initial_index=self.fromAccount - 1, 
+                        type="from"
                     ),
-                    id="accounts-container"
+                    Label(">>>", classes="arrow"),
+                    Accounts(
+                        self.accounts, 
+                        initial_index=self.toAccount - 1, 
+                        type="to"
+                    ),
+                    classes="transfer-accounts-container"
                 ),
                 Label(id="transfer-error"),
                 id="transfer-modal"
-            )
+            ),
+            custom_classes="wrapper"
         )
 
+#region Record
 class RecordModal(InputModal):
     def __init__(self, title: str, form: list[dict] = [], splitForm: list[dict] = [], isEditing: bool = False, *args, **kwargs):
         super().__init__(title, form, *args, **kwargs)

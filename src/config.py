@@ -3,6 +3,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic_settings_yaml import YamlBaseSettings
 
 
+class InsightsHotkeys(BaseModel):
+    toggle_use_account: str
+
 class HomeHotkeys(BaseModel):
     new_transfer: str 
     toggle_splits: str 
@@ -12,7 +15,7 @@ class HomeHotkeys(BaseModel):
     toggle_income_mode: str
     select_prev_account: str
     select_next_account: str
-
+    insights: InsightsHotkeys
 
 class RecordModalHotkeys(BaseModel):
     new_split: str  

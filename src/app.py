@@ -29,21 +29,6 @@ class App(TextualApp):
     ]
     COMMANDS = {AppProvider}
 
-    PAGES = [
-        {
-            "name": "Home",
-            "class": Home.Page,
-        },
-        # {
-        #     "name": "Accounts",
-        #     "class": Accounts.Page,
-        # },
-        {
-            "name": "Categories",
-            "class": Categories.Page,
-        }
-    ]
-
     theme: Reactive[str] = reactive("galaxy", init=False)
     """The currently selected theme. Changing this reactive should
     trigger a complete refresh via the `watch_theme` method."""
@@ -181,7 +166,7 @@ class App(TextualApp):
             yield Label("↪ Expense Tracker", classes="title")
             yield Label("0.1.0", classes="version")
             yield Label(get_user_host_string(), classes="user")
-        yield Tabs(*[Tab(f"{page["name"]} [{index+1}]", id=f"t{index + 1}") for index, page in enumerate(self.PAGES)])
+        yield Home.Page(classes="content")
         yield Footer()
 
 if __name__ == "__main__":

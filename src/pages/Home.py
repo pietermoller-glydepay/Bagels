@@ -129,28 +129,23 @@ class Page(Static):
     # --------------- View --------------- #
     
     def compose(self) -> ComposeResult:
-        self.basePage = BasePage(
-            pageName="Home",
-            bindings =[]
-        )
-        with self.basePage:
-            if not self.isReady:
-                yield Label(
-                    "Please create at least one account and one category to get started.",
-                    classes="label-empty"
-                )
-            else:
-                self.date_mode_module = DateMode(parent=self)
-                self.income_mode_module = IncomeMode(parent=self)
-                self.accounts_module = AccountMode(parent=self)
-                self.record_module = Records(parent=self)
-                self.insights_module = Insights(parent=self)
-                with Static(classes=f"home-modules-container v"):
-                    with Static(classes="left"):
-                        with Static(id="home-top-container"):
-                            yield self.accounts_module
-                            with Static(id="home-mode-container"):
-                                yield self.income_mode_module
-                                yield self.date_mode_module
-                        yield self.insights_module
-                    yield self.record_module
+        if not self.isReady:
+            yield Label(
+                "Please create at least one account and one category to get started.",
+                classes="label-empty"
+            )
+        else:
+            self.date_mode_module = DateMode(parent=self)
+            self.income_mode_module = IncomeMode(parent=self)
+            self.accounts_module = AccountMode(parent=self)
+            self.record_module = Records(parent=self)
+            self.insights_module = Insights(parent=self)
+            with Static(classes=f"home-modules-container v"):
+                with Static(classes="left"):
+                    with Static(id="home-top-container"):
+                        yield self.accounts_module
+                        with Static(id="home-mode-container"):
+                            yield self.income_mode_module
+                            yield self.date_mode_module
+                    yield self.insights_module
+                yield self.record_module

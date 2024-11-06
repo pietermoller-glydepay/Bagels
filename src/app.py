@@ -25,7 +25,7 @@ class App(TextualApp):
     
     CSS_PATH = "index.tcss"
     BINDINGS = [
-        ("ctrl+q", "quit", "Quit")
+        ("ctrl+q", "quit", "Quit"),
     ]
     COMMANDS = {AppProvider}
 

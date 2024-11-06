@@ -26,8 +26,8 @@ class IncomeMode(Static):
         expense_label.classes = "selected" if not current_is_income else ""
         income_label.classes = "selected" if current_is_income else ""
     
-    # def on_button_pressed(self, event: Button.Pressed) -> None:
-    #     self.page_parent.action_toggle_income_mode()
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        self.page_parent.action_toggle_income_mode()
             
     #region View
     # --------------- View --------------- #

@@ -116,12 +116,12 @@ class DateMode(Static):
                             label.add_class("today")
         self.page_parent.update_filter_label(self.query_one(".current-filter-label"))
 
-    # def on_button_pressed(self, event: Button.Pressed) -> None:
-    #     if event.button.id == "prev-month":
-    #         self.page_parent.action_prev_offset_type()
-    #     elif event.button.id == "next-month":
-    #         self.page_parent.action_next_offset_type()
-    #     self.rebuild()
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "prev-month":
+            self.page_parent.action_prev_offset_type()
+        elif event.button.id == "next-month":
+            self.page_parent.action_next_offset_type()
+        self.rebuild()
     
     #region View
     # --------------- View --------------- #

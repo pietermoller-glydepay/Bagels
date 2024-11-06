@@ -1,4 +1,8 @@
-# Development setup
+# Tues - TUI Expense Tracker
+
+Powerful expense tracker that lives in your terminal. WIP!
+
+## Development setup
 
 Install uv:
 
@@ -14,7 +18,7 @@ uv run textual console -x SYSTEM -x EVENT -x DEBUG -x INFO # for logging
 uv run textual run --dev src/app.py # in another terminal
 ```
 
-# Database schema
+### Database schema
 
 ```dbml
 // Use DBML to define database structure

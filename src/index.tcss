@@ -548,3 +548,45 @@ Button {
   padding-top: 2;
   text-align: center;
 }
+
+/* ---------------------------------- */
+/*               Jumper               */
+/* ---------------------------------- */
+
+
+
+.textual-jump-label {
+  layer: textual-jump;
+  dock: top;
+  # background: $accent-lighten-2;
+  text-style: bold;
+  color: $text;
+  border: round $accent;
+  padding: 0 1;
+}
+
+#textual-jump-info {
+  margin-bottom: 1;
+  dock: bottom;
+  height: 1;
+  width: 1fr;
+  background: $accent;
+  color: $text;
+  hatch: right $accent-darken-2;
+  
+  & Label {
+    width: auto;
+    padding: 0 1;
+  }
+}
+
+#textual-jump-dismiss {
+  dock: bottom;
+  height: 1;
+  background: transparent;
+  color: $text-muted 42%;
+}
+
+JumpOverlay {
+  background: $background 50%;
+}

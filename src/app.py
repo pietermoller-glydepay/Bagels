@@ -1,6 +1,6 @@
 from rich.console import Group
 from rich.text import Text
-from textual import events, on
+from textual import events, log, on
 from textual.app import App as TextualApp
 from textual.app import ComposeResult, SystemCommand
 from textual.binding import Binding
@@ -10,9 +10,11 @@ from textual.css.query import NoMatches
 from textual.geometry import Size
 from textual.reactive import Reactive, reactive
 from textual.signal import Signal
+from textual.widget import Widget
 from textual.widgets import Footer, Header, Label, Tab, Tabs
-from textual.widgets.text_area import TextAreaTheme
 
+from components.jump_overlay import JumpOverlay
+from components.jumper import Jumper
 from home import Home
 from models.database.app import init_db
 from provider import AppProvider
@@ -26,6 +28,7 @@ class App(TextualApp):
     CSS_PATH = "index.tcss"
     BINDINGS = [
         ("ctrl+q", "quit", "Quit"),
+        ("f", "toggle_jump_mode", "Jump Mode"),
     ]
     COMMANDS = {AppProvider}
 
@@ -33,7 +36,9 @@ class App(TextualApp):
     """The currently selected theme. Changing this reactive should
     trigger a complete refresh via the `watch_theme` method."""
     layout: Reactive[str] = reactive("h")
-    
+    """The current layout of the app."""
+    _jumping: Reactive[bool] = reactive(False, init=False, bindings=True)
+    """True if 'jump mode' is currently active, otherwise False."""
     
     #region init
     def __init__(self):
@@ -45,7 +50,20 @@ class App(TextualApp):
     
     
     def on_mount(self) -> None:
+        # --------------- theme -------------- #
         self.theme_change_signal = Signal[Theme](self, "theme-changed")
+        # -------------- jumper -------------- #
+        self.jumper = Jumper(
+            {
+                "accounts-container": "u",
+                "insights-container": "i",
+                "records-container": "r",
+                # "incomemode-container": "v",
+                # "datemode-container": "p",
+            },
+            screen=self.screen,
+        )
+        
     
     # used by the textual app to get the theme variables
     def get_css_variables(self) -> dict[str, str]:
@@ -121,6 +139,44 @@ class App(TextualApp):
         #     return
         if not event.option_selected:
             self.theme = self._original_theme
+
+    #region jumper
+    # -------------- jumper -------------- #
+    def action_toggle_jump_mode(self) -> None:
+        self._jumping = not self._jumping
+
+    def watch__jumping(self, jumping: bool) -> None:
+        focused_before = self.focused
+        if focused_before is not None:
+            self.set_focus(None, scroll_visible=False)
+
+        def handle_jump_target(target: str | Widget | None) -> None:
+            if isinstance(target, str):
+                try:
+                    target_widget = self.screen.query_one(f"#{target}")
+                except NoMatches:
+                    log.warning(
+                        f"Attempted to jump to target #{target}, but it couldn't be found on {self.screen!r}"
+                    )
+                else:
+                    if target_widget.focusable:
+                        self.set_focus(target_widget)
+                    else:
+                        target_widget.post_message(
+                            events.Click(0, 0, 0, 0, 0, False, False, False)
+                        )
+
+            elif isinstance(target, Widget):
+                self.set_focus(target)
+            else:
+                # If there's no target (i.e. the user pressed ESC to dismiss)
+                # then re-focus the widget that was focused before we opened
+                # the jumper.
+                if focused_before is not None:
+                    self.set_focus(focused_before, scroll_visible=False)
+
+        self.clear_notifications()
+        self.push_screen(JumpOverlay(self.jumper), callback=handle_jump_target)
 
     #region hooks
     # --------------- hooks -------------- #

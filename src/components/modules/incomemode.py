@@ -1,6 +1,7 @@
 from textual.app import ComposeResult
-from textual.widgets import Label, Static, Switch
+from textual.widgets import Static
 
+from components.button import Button
 from config import CONFIG
 
 
@@ -19,15 +20,18 @@ class IncomeMode(Static):
     # -------------- Builder ------------- #
     
     def rebuild(self) -> None:
-        expense_label: Label = self.query_one("#expense-label")
-        income_label: Label = self.query_one("#income-label")
+        expense_label: Button = self.query_one("#expense-label")
+        income_label: Button = self.query_one("#income-label")
         current_is_income = self.page_parent.mode["isIncome"]
         expense_label.classes = "selected" if not current_is_income else ""
         income_label.classes = "selected" if current_is_income else ""
     
+    # def on_button_pressed(self, event: Button.Pressed) -> None:
+    #     self.page_parent.action_toggle_income_mode()
+            
     #region View
     # --------------- View --------------- #
 
     def compose(self) -> ComposeResult:
-        yield Label("Expense", id="expense-label")
-        yield Label("Income", id="income-label")
+        yield Button("Expense", id="expense-label")
+        yield Button("Income", id="income-label")

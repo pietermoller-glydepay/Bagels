@@ -11,8 +11,10 @@ from textual.widget import Widget
 from textual.widgets import (Footer, Header, Input, Label, ListItem, ListView,
                              Rule, Static)
 
+from components.autocomplete import AutoComplete, Dropdown, DropdownItem
 from components.fields import Fields
 from config import CONFIG
+from models.person import Person
 from models.split import Split
 from queries.accounts import get_all_accounts_with_balance
 from queries.persons import create_person, get_all_persons
@@ -304,6 +306,20 @@ class RecordModal(InputModal):
         for key, value in errors.items():
             field = self.query_one(f"#row-field-{key}")
             field.mount(Label(value, classes="error"))
+        
+    
+
+    def on_auto_complete_created(self, event: AutoComplete.Created) -> None:
+        name = event.item.create_option_text
+        person = create_person({"name": name})
+        for field in self.splitForm:
+            if field["key"].startswith("personId"):
+                field["options"].append({"text": person.name, "value": person.id})
+        for i in range(0, self.splitCount):
+            dropdown: Dropdown = self.query_one(f"#dropdown-personId-{i}")
+            dropdown.items.append(DropdownItem(person.name, "", ""))
+    
+    # def on_auto
     
     # ------------- Callbacks ------------ #
     

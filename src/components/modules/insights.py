@@ -27,7 +27,7 @@ class PercentageBar(Static):
     
     PercentageBar > .bar {
         layout: horizontal;
-        height: auto;
+        height: 3;
         
         .bar-item {
             padding: 1 0 1 0;
@@ -69,8 +69,8 @@ class PercentageBar(Static):
         # we first remove all existing items and labels
         for item in self.query(".bar-item"):
             item.remove()
-        for label in self.query(".bar-label"):
-            label.remove()
+        bar_labels = self.query(".bar-label")
+        bar_labels_count = len(bar_labels)
         
         # we calculate the appropriate width for each item, with last item taking remaining space
         total = sum(item.count for item in self.items)
@@ -81,11 +81,17 @@ class PercentageBar(Static):
             item_widget = Static(" ", classes="bar-item")
             color = item.color
             percentage = round((item.count / total) * 100)
-            label_widget = Container(
-                Label(f"[{color}]●[/{color}] {item.name}", classes="name"),
-                Label(f"{percentage}%", classes="percentage"),
-                classes="bar-label"
-            )
+            if i + 1 > bar_labels_count: # if we have more items than labels, we create a new label
+                label_widget = Container(
+                    Label(f"[{color}]●[/{color}] {item.name}", classes="name"),
+                    Label(f"{percentage}%", classes="percentage"),
+                    classes="bar-label"
+                )
+                labels.mount(label_widget)
+            else: 
+                bar_label = bar_labels[i]
+                bar_label.query_one(".name").update(f"[{color}]●[/{color}] {item.name}")
+                bar_label.query_one(".percentage").update(f"{percentage}%")
             
             width = pwidth = f"{percentage}%"
             if i == len(self.items) - 1:
@@ -97,7 +103,6 @@ class PercentageBar(Static):
             item_widget.update(" " + pwidth)
                 
             bar.mount(item_widget)
-            labels.mount(label_widget)
         
     def compose(self) -> ComposeResult:
         yield Container(classes="bar")

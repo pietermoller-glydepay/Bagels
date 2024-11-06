@@ -13,8 +13,8 @@ from textual.signal import Signal
 from textual.widgets import Footer, Header, Label, Tab, Tabs
 from textual.widgets.text_area import TextAreaTheme
 
+from home import Home
 from models.database.app import init_db
-from pages import Accounts, Categories, Home
 from provider import AppProvider
 from queries.categories import create_default_categories
 from themes import BUILTIN_THEMES, Theme
@@ -166,7 +166,7 @@ class App(TextualApp):
             yield Label("↪ Expense Tracker", classes="title")
             yield Label("0.1.0", classes="version")
             yield Label(get_user_host_string(), classes="user")
-        yield Home.Page(classes="content")
+        yield Home(classes="content")
         yield Footer()
 
 if __name__ == "__main__":

@@ -75,7 +75,6 @@ class Records(Static):
             
         table.focus()
         if hasattr(self, "current_row_index"):
-            print(self.current_row_index)
             table.move_cursor(row=self.current_row_index)
         empty_indicator.display = not table.rows
 
@@ -373,20 +372,22 @@ class Records(Static):
         # ----------------- - ---------------- #
         type = self.current_row.split("-")[0]
         id = self.current_row.split("-")[1]
+        
+        if type == "s":
+            self.app.notify(title="Error", message="You cannot delete or add splits to a record after creation.", severity="error", timeout=2)
+            return
         # ----------------- - ---------------- #
         def check_delete(result: bool) -> None:
             if result:
-                if type == "r":
-                    delete_record(id)
-                else:
-                    delete_split(id)
+                print(result)
+                delete_record(id)
                 self.app.notify(title="Success", message=f"Record deleted", severity="information", timeout=3)
                 self.page_parent.rebuild()
         # ----------------- - ---------------- #
         if type == "r":
-            self.app.push_screen(ConfirmationModal("Are you sure you want to delete this record?"), check_delete)
+            self.app.push_screen(ConfirmationModal("Are you sure you want to delete this record?"), callback=check_delete)
         else:
-            self.app.push_screen(ConfirmationModal("Are you sure you want to delete this split?"), check_delete)
+            self.app.push_screen(ConfirmationModal("Are you sure you want to delete this split?"), callback=check_delete)
     
     def action_new_transfer(self) -> None:
         def check_result(result: bool) -> None:
@@ -414,8 +415,8 @@ class Records(Static):
             displayContainer.border_title = "Display by:"
             displayContainer.border_subtitle = f"{CONFIG.hotkeys.home.display_by_date} {CONFIG.hotkeys.home.display_by_person}"
             with displayContainer:
-                yield Button(f" Date", id="display-date")
-                yield Button(f" Person", id="display-person")
+                yield Button(f"Date", id="display-date")
+                yield Button(f"Person", id="display-person")
         self.table =  DataTable(
             id="records-table", 
             cursor_type="row", 

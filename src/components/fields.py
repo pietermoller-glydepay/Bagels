@@ -52,15 +52,17 @@ class Field(Static):
         # Find matching option and set held value
         for item in self.field["options"]:
             item_text = str(item.get("text", item["value"]))
-            if item_text == str(event.item.main):
+            selected_dropdown_text = str(event.item.main)
+            if item_text == selected_dropdown_text:
                 self.input.heldValue = item["value"]
                 break
-
+    
     def compose(self) -> ComposeResult:
         if self.field_type == "hidden":
             # Hidden fields just need a static widget to hold the value
             self.input = Static(id=f"field-{self.field['key']}")
             self.input.heldValue = self.field.get("defaultValue", "")
+            self.input.value = str(self.input.heldValue)
             yield self.input
             return
 
@@ -77,14 +79,16 @@ class Field(Static):
                         item.get("postfix", "")
                     ) for item in self.field["options"]
                 ]
+                dropdown = Dropdown(
+                    items=dropdown_items,
+                    show_on_focus=True,
+                    id=f"dropdown-{self.field['key']}",
+                    create_option=self.field.get("create_action")
+                )
                 
                 yield AutoComplete(
                     self.input,
-                    Dropdown(
-                        items=dropdown_items,
-                        show_on_focus=True,
-                        create_option=callable(self.field.get("create_action"))
-                    ),
+                    dropdown,
                     classes="field-autocomplete",
                     create_action=self.field.get("create_action")
                 )

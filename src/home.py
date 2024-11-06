@@ -11,26 +11,35 @@ from components.modules.datemode import DateMode
 from components.modules.incomemode import IncomeMode
 from components.modules.insights import Insights
 from components.modules.records import Records
+from components.modules.templates import Templates
 from config import CONFIG
 from queries.accounts import get_accounts_count, get_all_accounts
 from queries.categories import get_categories_count
 from utils.format import format_period_to_readable
 
 
-#region Page
-class Page(Static):
+class Home(Static):
     filter = {
         "offset": 0,
         "offset_type": "month",
     }
     
     BINDINGS = [
-        ("left", "prev_month", "Previous Month"),
-        ("right", "next_month", "Next Month"),
+        Binding("left", "prev_offset_type", "Previous", show=False),
+        Binding("right", "next_offset_type", "Next", show=False),
         Binding(CONFIG.hotkeys.home.cycle_offset_type, "cycle_offset_type", "", show=False),
         Binding(CONFIG.hotkeys.home.toggle_income_mode, "toggle_income_mode", "Income/Expense", show=False),
         Binding(CONFIG.hotkeys.home.select_prev_account, "select_prev_account", "Select previous account", show=False),
         Binding(CONFIG.hotkeys.home.select_next_account, "select_next_account", "Select next account", show=False),
+        Binding("1", "select_template_1", "Template 1", show=False),
+        Binding("2", "select_template_2", "Template 2", show=False),
+        Binding("3", "select_template_3", "Template 3", show=False),
+        Binding("4", "select_template_4", "Template 4", show=False),
+        Binding("5", "select_template_5", "Template 5", show=False),
+        Binding("6", "select_template_6", "Template 6", show=False),
+        Binding("7", "select_template_7", "Template 7", show=False),
+        Binding("8", "select_template_8", "Template 8", show=False),
+        Binding("9", "select_template_9", "Template 9", show=False),
     ]
     
     def __init__(self, *args, **kwargs) -> None:
@@ -80,11 +89,11 @@ class Page(Static):
         layout_container = self.query_one(f".home-modules-container")
         layout_container.set_classes(f"home-modules-container {layout}")
     
-    def action_prev_month(self) -> None:
+    def action_prev_offset_type(self) -> None:
         self.filter["offset"] -= 1
         self.rebuild()
     
-    def action_next_month(self) -> None:
+    def action_next_offset_type(self) -> None:
         if self.filter["offset"] < 0:
             self.filter["offset"] += 1
             self.rebuild()
@@ -116,7 +125,6 @@ class Page(Static):
         self.accounts_indices["index"] = new_index
         self.mode["accountId"]["defaultValue"] = self.accounts[new_index].id
         self.mode["accountId"]["defaultValueText"] = self.accounts[new_index].name
-        print(self.accounts[new_index].name)
         self.accounts_module.rebuild()
 
     def action_select_prev_account(self) -> None:
@@ -124,6 +132,36 @@ class Page(Static):
     
     def action_select_next_account(self) -> None:
         self._select_account(1)
+    
+    #region Templates
+    # ------------- Template ------------- #
+    
+    def action_select_template_1(self) -> None:
+        self.templates_module.select_template(1)
+    
+    def action_select_template_2(self) -> None:
+        self.templates_module.select_template(2)
+    
+    def action_select_template_3(self) -> None:
+        self.templates_module.select_template(3)
+    
+    def action_select_template_4(self) -> None:
+        self.templates_module.select_template(4)
+    
+    def action_select_template_5(self) -> None:
+        self.templates_module.select_template(5)
+    
+    def action_select_template_6(self) -> None:
+        self.templates_module.select_template(6)
+    
+    def action_select_template_7(self) -> None:
+        self.templates_module.select_template(7)
+    
+    def action_select_template_8(self) -> None:
+        self.templates_module.select_template(8)
+    
+    def action_select_template_9(self) -> None:
+        self.templates_module.select_template(9)
     
     #region View
     # --------------- View --------------- #
@@ -140,6 +178,7 @@ class Page(Static):
             self.accounts_module = AccountMode(parent=self)
             self.record_module = Records(parent=self)
             self.insights_module = Insights(parent=self)
+            self.templates_module = Templates(parent=self)
             with Static(classes=f"home-modules-container v"):
                 with Static(classes="left"):
                     with Static(id="home-top-container"):
@@ -148,4 +187,6 @@ class Page(Static):
                             yield self.income_mode_module
                             yield self.date_mode_module
                     yield self.insights_module
-                yield self.record_module
+                with Static(classes="right"):
+                    yield self.templates_module
+                    yield self.record_module

@@ -67,6 +67,18 @@ Input {
   }
 }
 
+Button {
+  width: 50%;
+  text-align: center;
+  color: $accent 50%;
+}
+
+.selected {
+  color: $accent;
+  text-style: bold;
+  background: $surface;
+}
+
 
 /* ---------------------------------- */
 /*                 App                */
@@ -364,18 +376,6 @@ Input {
     #incomemode-container {
       layout: horizontal;
       width: 1fr;
-
-      Label {
-        width: 50%;
-        text-align: center;
-        color: $accent 50%;
-      }
-      
-      .selected {
-        color: $accent;
-        text-style: bold;
-        background: $surface;
-      }
     }
     #datemode-container {
       width: 1fr;
@@ -385,6 +385,9 @@ Input {
         height: 2;
         layout: horizontal;
 
+        Button {
+          width: auto;
+        }
         #prev-month {
           dock: left;
           color: $primary-background-lighten-3;
@@ -431,6 +434,8 @@ Input {
 
 .home-modules-container {
   height: auto;
+  width: 1fr;
+  padding: 0 2;
 
   &.v {
     layout: vertical;
@@ -443,6 +448,9 @@ Input {
     
     .left {
       width: 40%;
+    }
+    .right {
+      width: 60%
     }
   }
 
@@ -471,19 +479,6 @@ Input {
     height: auto;
     border: round $secondary;
   }
-
-  .display-selector {
-    height: auto;
-
-    & > Button {
-      padding: 0 1;
-    }
-
-    .selected {
-      color: $accent;
-      text-style: underline bold;
-    }
-  }
 }
 
 #insights-container {
@@ -507,6 +502,30 @@ Input {
       Label {
         text-align: right;
         width: 1fr;
+      }
+    }
+  }
+}
+
+#templates-container {
+  height: 5;
+
+  .templates-scroll {
+    height: 3;
+
+    .template-item {
+      width: auto;
+      height: auto;
+      padding: 0 1;
+      layout: horizontal;
+      border: round $secondary;
+
+      &:focus {
+        border: round $accent;
+      }
+
+      .dot {
+        padding-right: 1;
       }
     }
   }

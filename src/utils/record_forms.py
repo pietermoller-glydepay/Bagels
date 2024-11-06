@@ -3,6 +3,7 @@ from datetime import datetime
 
 from rich.text import Text
 
+from components.autocomplete import Dropdown
 from queries.accounts import get_all_accounts_with_balance
 from queries.categories import get_all_categories_by_freq
 from queries.persons import create_person, get_all_persons
@@ -73,7 +74,7 @@ class RecordForm:
                 "key": "personId", 
                 "type": "autocomplete",
                 "options":[],
-                "create_action": None,
+                "create_action": True,
                 "isRequired": True,
                 "placeholder": "Select Person"
             },
@@ -109,9 +110,8 @@ class RecordForm:
     
     # ----------------- - ---------------- #
     
-    def __init__(self, created_person_callback: callable = None):
+    def __init__(self):
         self._populate_form_options()
-        self.created_person_callback = created_person_callback
         
     # -------------- Helpers ------------- #
 
@@ -143,17 +143,9 @@ class RecordForm:
         self.SPLIT_FORM[0]["options"] = [
             {"text": person.name, "value": person.id} for person in people
         ]
-        self.SPLIT_FORM[0]["create_action"] = self._action_create_person
         self.SPLIT_FORM[3]["options"] = [
             {"text": account.name, "value": account.id} for account in accounts
         ]
-        
-    # ------------- Functions ------------ #
-    
-    def _action_create_person(self, name: str):
-        person = create_person({"name": name})
-        if self.created_person_callback:
-            self.created_person_callback(person)
     
     # ------------- Builders ------------- #
     

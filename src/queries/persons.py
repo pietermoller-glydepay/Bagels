@@ -16,6 +16,8 @@ def create_person(data):
         new_person = Person(**data)
         db.session.add(new_person)
         db.session.commit()
+        db.session.refresh(new_person)
+        db.session.expunge(new_person)
         return new_person
 
 def get_all_persons():

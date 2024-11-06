@@ -15,7 +15,6 @@ class HomeHotkeys(BaseModel):
     toggle_income_mode: str
     select_prev_account: str
     select_next_account: str
-    toggle_jump_mode: str
     insights: InsightsHotkeys
 
 class RecordModalHotkeys(BaseModel):
@@ -32,6 +31,7 @@ class Hotkeys(BaseModel):
     new: str
     delete: str 
     edit: str
+    toggle_jump_mode: str
     home: HomeHotkeys
     record_modal: RecordModalHotkeys
     categories: CategoriesHotkeys

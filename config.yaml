@@ -2,6 +2,7 @@ hotkeys:
   new: "a"
   delete: "d"
   edit: "e"
+  toggle_jump_mode: "v"
   home:
     new_transfer: "t"
     toggle_splits: "s"
@@ -11,7 +12,6 @@ hotkeys:
     toggle_income_mode: "/"
     select_prev_account: "["
     select_next_account: "]"
-    toggle_jump_mode: "f"
     insights:
       toggle_use_account: '\'
   record_modal:

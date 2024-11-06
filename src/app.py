@@ -15,6 +15,7 @@ from textual.widgets import Footer, Header, Label, Tab, Tabs
 
 from components.jump_overlay import JumpOverlay
 from components.jumper import Jumper
+from config import CONFIG
 from home import Home
 from models.database.app import init_db
 from provider import AppProvider
@@ -28,7 +29,7 @@ class App(TextualApp):
     CSS_PATH = "index.tcss"
     BINDINGS = [
         ("ctrl+q", "quit", "Quit"),
-        ("f", "toggle_jump_mode", "Jump Mode"),
+        (CONFIG.hotkeys.toggle_jump_mode, "toggle_jump_mode", "Jump Mode"),
     ]
     COMMANDS = {AppProvider}
 
@@ -55,9 +56,10 @@ class App(TextualApp):
         # -------------- jumper -------------- #
         self.jumper = Jumper(
             {
-                "accounts-container": "u",
+                "accounts-container": "a",
                 "insights-container": "i",
                 "records-container": "r",
+                "templates-container": "t",
                 # "incomemode-container": "v",
                 # "datemode-container": "p",
             },

@@ -12,6 +12,7 @@ from textual.reactive import Reactive, reactive
 from textual.signal import Signal
 from textual.widget import Widget
 from textual.widgets import Footer, Header, Label, Tab, Tabs
+from tomli import load
 
 from components.jump_overlay import JumpOverlay
 from components.jumper import Jumper
@@ -50,6 +51,9 @@ class App(TextualApp):
         available_themes |= BUILTIN_THEMES
         self.themes = available_themes
         super().__init__()
+        
+        with open("pyproject.toml", "rb") as f:
+            self.project_info = load(f)["project"]
     
     
     def on_mount(self) -> None:
@@ -230,8 +234,8 @@ class App(TextualApp):
     # --------------- View --------------- #
     def compose(self) -> ComposeResult:
         with Container(classes="header"):
-            yield Label("↪ Expense Tracker", classes="title")
-            yield Label("0.1.0", classes="version")
+            yield Label(f"↪ {self.project_info['name']}", classes="title")
+            yield Label(self.project_info['version'], classes="version")
             yield Label(get_user_host_string(), classes="user")
         yield Home(classes="content")
         yield Footer()

@@ -1,5 +1,5 @@
 [project]
-name = "tues"
+name = "Tues"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -42,6 +42,7 @@ dependencies = [
     "textual-dev==1.6.1",
     "textual-serve==1.1.1",
     "textual==0.84.0",
+    "tomli>=2.0.2",
     "typing-extensions==4.12.2",
     "uc-micro-py==1.0.3",
     "werkzeug==3.0.6",

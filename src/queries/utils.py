@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from sqlalchemy import func
+from sqlalchemy import case, func
 
 from models.database.app import get_app
 from models.database.db import db
@@ -85,14 +85,41 @@ def get_period_net(accountId=None, offset_type=None, offset=None, isIncome=None)
             transfer_received_filter.append(Record.transferToAccountId == accountId)
             transfer_sent_filter.append(Record.accountId == accountId)
 
-        total_income = query.with_entities(func.sum(Record.amount)).filter(
-            *income_filter
-        ).scalar() or 0
+        # For records with splits, we need to subtract the split amounts
+        split_subquery = db.session.query(
+            Split.recordId,
+            func.sum(Split.amount).label('split_total')
+        ).group_by(Split.recordId).subquery()
 
-        total_expense = query.with_entities(func.sum(Record.amount)).filter(
-            *expense_filter
-        ).scalar() or 0
+        # Income calculation
+        income_query = query.outerjoin(
+            split_subquery,
+            Record.id == split_subquery.c.recordId
+        ).with_entities(
+            func.sum(
+                case(
+                    (split_subquery.c.split_total.isnot(None), Record.amount - split_subquery.c.split_total),
+                    else_=Record.amount
+                )
+            )
+        ).filter(*income_filter)
+        total_income = income_query.scalar() or 0
+
+        # Expense calculation
+        expense_query = query.outerjoin(
+            split_subquery,
+            Record.id == split_subquery.c.recordId
+        ).with_entities(
+            func.sum(
+                case(
+                    (split_subquery.c.split_total.isnot(None), Record.amount - split_subquery.c.split_total),
+                    else_=Record.amount
+                )
+            )
+        ).filter(*expense_filter)
+        total_expense = expense_query.scalar() or 0
         
+        # Transfer calculations (transfers don't have splits)
         total_transfer_received = query.with_entities(func.sum(Record.amount)).filter(
             *transfer_received_filter
         ).scalar() or 0
@@ -100,41 +127,17 @@ def get_period_net(accountId=None, offset_type=None, offset=None, isIncome=None)
         total_transfer_sent = query.with_entities(func.sum(Record.amount)).filter(
             *transfer_sent_filter
         ).scalar() or 0
-
-        splits_query = db.session.query(Split)
-        if offset_type and offset is not None:
-            splits_query = splits_query.filter(
-                Split.paidDate >= start_of_period,
-                Split.paidDate < end_of_period
-            )
-        
-        split_received_filter = [Record.isIncome.is_(False)]
-        split_sent_filter = [Record.isIncome.is_(True)]
-        
-        if accountId is not None:
-            split_received_filter.append(Split.accountId == accountId)
-            split_sent_filter.append(Split.accountId == accountId)
-        
-        total_split_received = splits_query.join(Record).with_entities(func.sum(Split.amount)).filter(
-            *split_received_filter
-        ).scalar() or 0
-        
-        total_split_sent = splits_query.join(Record).with_entities(func.sum(Split.amount)).filter(
-            *split_sent_filter
-        ).scalar() or 0
         
         match isIncome:
             case True:
-                result = total_income - total_split_sent
+                result = total_income
             case False:
-                result = total_expense - total_split_received
+                result = total_expense
             case None: # result = net
                 result = total_income \
                     - total_expense \
                     + total_transfer_received \
-                    - total_transfer_sent \
-                    + total_split_received \
-                    - total_split_sent
+                    - total_transfer_sent
         return round(result, 2)
 
 #region average

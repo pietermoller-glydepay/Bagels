@@ -21,103 +21,180 @@ people:
   - name: Sarah
   - name: Mike
 
-# Sample records showing a week of transactions
+# Sample records showing transactions throughout the year
 records:
+  # January
   - label: Monthly Salary
     amount: 4000.00
     date: 2024-01-01T09:00:00
-    accountId: 1 # Main Bank Account
-    categoryId: 1 # Income -> Salary
+    accountId: 1
+    categoryId: 8 # Income -> Salary
     isIncome: true
     isTransfer: false
 
   - label: Grocery Shopping
     amount: 120.50
     date: 2024-01-02T15:30:00
-    accountId: 2 # Credit Card
-    categoryId: 7 # Food -> Groceries
+    accountId: 2
+    categoryId: 1 # Food -> Groceries
     isIncome: false
     isTransfer: false
     splits:
       - amount: 60.25
-        personId: 1 # John
+        personId: 1
       - amount: 60.25
-        personId: 2 # Sarah
-
-  - label: Transfer to Savings
-    amount: 500.00
-    date: 2024-01-03T10:00:00
-    accountId: 1 # Main Bank Account
-    isIncome: false
-    isTransfer: true
-    transferToAccountId: 3 # Savings
-
-  - label: Netflix Subscription
-    amount: 15.99
-    date: 2024-01-04T00:00:00
-    accountId: 2 # Credit Card
-    categoryId: 13 # Subscriptions -> Streaming Services
-    isIncome: false
-    isTransfer: false
+        personId: 2
 
   - label: Restaurant Dinner
     amount: 85.00
-    date: 2024-01-05T19:45:00
-    accountId: 2 # Credit Card
-    categoryId: 8 # Food -> Dine out
+    date: 2024-01-10T19:45:00
+    accountId: 2
+    categoryId: 1 # Food -> Restaurants
     isIncome: false
     isTransfer: false
     splits:
-      - amount: 28.33
-        personId: 1 # John
-      - amount: 28.33
-        personId: 2 # Sarah
-      - amount: 28.34
-        personId: 3 # Mike
+      - amount: 42.50
+        personId: 1
+      - amount: 42.50
+        personId: 2
 
   - label: Monthly Rent
     amount: 1200.00
     date: 2024-01-05T09:00:00
-    accountId: 1 # Main Bank Account
-    categoryId: 20 # Bills -> Rent/Mortgage
+    accountId: 1
+    categoryId: 11 # Others -> Miscellaneous
     isIncome: false
     isTransfer: false
 
-  - label: Uber Ride
-    amount: 25.00
-    date: 2024-01-06T22:30:00
-    accountId: 2 # Credit Card
-    categoryId: 5 # Transport -> Taxi
+  - label: Phone Bill
+    amount: 45.00
+    date: 2024-01-20T14:00:00
+    accountId: 2
+    categoryId: 4 # Electronic & Communication -> Phone Bill
     isIncome: false
     isTransfer: false
 
-  - label: Credit Card Payment
-    amount: 246.49 # Sum of all credit card expenses
-    date: 2024-01-07T16:00:00
-    accountId: 1 # Main Bank Account
+  # February
+  - label: Monthly Salary
+    amount: 4000.00
+    date: 2024-02-01T09:00:00
+    accountId: 1
+    categoryId: 8 # Income -> Salary
+    isIncome: true
+    isTransfer: false
+
+  - label: Takeout Dinner
+    amount: 65.00
+    date: 2024-02-05T18:30:00
+    accountId: 2
+    categoryId: 1 # Food -> Takeout
     isIncome: false
-    isTransfer: true
-    transferToAccountId: 2 # Credit Card
+    isTransfer: false
+    splits:
+      - amount: 32.50
+        personId: 1
+      - amount: 32.50
+        personId: 2
+
+  - label: Movie Night
+    amount: 90.00
+    date: 2024-02-14T19:00:00
+    accountId: 2
+    categoryId: 6 # Life & Entertainment -> Movies
+    isIncome: false
+    isTransfer: false
+    splits:
+      - amount: 45.00
+        personId: 1
+      - amount: 45.00
+        personId: 2
+
+  - label: Car Insurance
+    amount: 150.00
+    date: 2024-02-10T11:00:00
+    accountId: 1
+    categoryId: 5 # Vehicle -> Insurance
+    isIncome: false
+    isTransfer: false
+
+  - label: Investment Returns
+    amount: 200.00
+    date: 2024-02-28T16:00:00
+    accountId: 1
+    categoryId: 8 # Income -> Investment Returns
+    isIncome: true
+    isTransfer: false
+
+  # March
+  - label: Monthly Salary
+    amount: 4000.00
+    date: 2024-03-01T09:00:00
+    accountId: 1
+    categoryId: 8 # Income -> Salary
+    isIncome: true
+    isTransfer: false
+
+  - label: Grocery Run
+    amount: 180.00
+    date: 2024-03-05T10:30:00
+    accountId: 2
+    categoryId: 1 # Food -> Groceries
+    isIncome: false
+    isTransfer: false
+    splits:
+      - amount: 90.00
+        personId: 1
+      - amount: 90.00
+        personId: 2
+
+  - label: Weekend Brunch
+    amount: 95.00
+    date: 2024-03-12T11:00:00
+    accountId: 2
+    categoryId: 1 # Food -> Restaurants
+    isIncome: false
+    isTransfer: false
+    splits:
+      - amount: 47.50
+        personId: 1
+      - amount: 47.50
+        personId: 2
+
+  - label: Public Transport Pass
+    amount: 75.00
+    date: 2024-03-20T09:00:00
+    accountId: 1
+    categoryId: 2 # Transport -> Public Transport
+    isIncome: false
+    isTransfer: false
+
+  - label: Electronics Purchase
+    amount: 299.99
+    date: 2024-03-25T16:30:00
+    accountId: 2
+    categoryId: 3 # Shopping -> Electronics
+    isIncome: false
+    isTransfer: false
 
 # Sample record templates for recurring transactions
 record_templates:
   - label: Monthly Rent
     amount: 1200.00
     accountId: 1
-    categoryId: 20
+    categoryId: 11 # Others -> Miscellaneous
     isIncome: false
     isTransfer: false
 
   - label: Netflix Subscription
     amount: 15.99
     accountId: 2
-    categoryId: 13
+    categoryId: 4 # Electronic & Communication -> Streaming Services
     isIncome: false
     isTransfer: false
 
   - label: Monthly Salary
     amount: 4000.00
     accountId: 1
-    categoryId: 1
+    categoryId: 8 # Income -> Salary
     isIncome: true
     isTransfer: false

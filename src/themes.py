@@ -46,19 +46,6 @@ BUILTIN_THEMES: dict[str, Theme] = {
         dark=True,
         syntax="monokai",
     ),
-    "solarized-light": Theme(
-        name="solarized-light",
-        primary="#268bd2",
-        secondary="#2aa198",
-        warning="#cb4b16",
-        error="#dc322f",
-        success="#859900",
-        accent="#6c71c4",
-        background="#fdf6e3",
-        surface="#eee8d5",
-        panel="#eee8d5",
-        syntax="github_light",
-    ),
     "nautilus": Theme(
         name="nautilus",
         primary="#0077BE",  # Ocean Blue
@@ -126,19 +113,6 @@ BUILTIN_THEMES: dict[str, Theme] = {
         surface="#27343B",  # Dark Lead
         panel="#2D3E46",  # Storm Gray
         background="#1F262A",  # Charcoal
-    ),
-    "twilight": Theme(
-        name="twilight",
-        primary="#367588",
-        secondary="#5F9EA0",
-        warning="#FFD700",
-        error="#FF6347",
-        success="#00FA9A",
-        accent="#FF7F50",
-        dark=True,
-        background="#191970",
-        surface="#3B3B6D",
-        panel="#4C516D",
     ),
     "hacker": Theme(
         name="hacker",

@@ -27,7 +27,7 @@ hotkeys:
     new_split: ctrl+a
   toggle_jump_mode: v
 state:
-  theme: cobalt
+  theme: posting
 symbols:
   amount_negative: '-'
   amount_positive: +

@@ -645,3 +645,53 @@ Button {
 JumpOverlay {
   background: $background 50%;
 }
+
+
+/* ---------------- - --------------- */
+
+
+PeriodBarchart {
+  width: 1fr;
+  height: auto;
+
+  & > .data-container {
+    layout: horizontal;
+    height: auto;
+
+    .labels-container {
+      height: auto;
+      width: 5;
+      color: $text-muted;
+      border-right: wide $accent-lighten-3;
+      background: $surface;
+      
+      .label {
+        width: 1fr;
+      }
+    }
+
+    .bars-container {
+      background: transparent;
+      height: auto;
+
+      .bar-container {
+        height: 1;
+        width: 100%;
+        background: $surface;
+        
+        .bar {
+          background: $surface-lighten-2;
+          min-width: 1;
+          border-top: tall $surface-lighten-3;
+        }
+      }
+    }
+
+  }
+
+  .max-amount {
+    color: $text-muted;
+    text-align: right;
+    width: 1fr;
+  }
+}

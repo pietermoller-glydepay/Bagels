@@ -184,12 +184,13 @@ class Home(Static):
         self.insights_module.rebuild()
     
     def _select_account(self, dir: int) -> None:
-        new_index = (self.accounts_indices["index"] + dir) % self.accounts_indices["count"]
-        self.accounts_indices["index"] = new_index
-        self.mode["accountId"]["defaultValue"] = self.accounts[new_index].id
-        self.mode["accountId"]["defaultValueText"] = self.accounts[new_index].name
-        self.accounts_module.rebuild()
-        self.insights_module.rebuild()
+        if self.accounts_indices["count"] > 0:
+            new_index = (self.accounts_indices["index"] + dir) % self.accounts_indices["count"]
+            self.accounts_indices["index"] = new_index
+            self.mode["accountId"]["defaultValue"] = self.accounts[new_index].id
+            self.mode["accountId"]["defaultValueText"] = self.accounts[new_index].name
+            self.accounts_module.rebuild()
+            self.insights_module.rebuild()
 
     def action_select_prev_account(self) -> None:
         self._select_account(-1)

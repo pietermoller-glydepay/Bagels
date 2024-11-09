@@ -12,10 +12,14 @@ def _validate_number(value: str, field: dict, is_float: bool = False) -> tuple[b
 
     # Check if valid number
     if is_float:
-        is_valid = value.replace('.', '', 1).isdigit()
+        # Allow negative sign at start
+        test_value = value.lstrip('-').replace('.', '', 1)
+        is_valid = test_value.isdigit()
         type_name = "number"
     else:
-        is_valid = value.isdigit() 
+        # Allow negative sign at start
+        test_value = value.lstrip('-')
+        is_valid = test_value.isdigit()
         type_name = "integer"
 
     if not is_valid:

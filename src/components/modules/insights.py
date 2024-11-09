@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from pydantic import BaseModel
 from rich.color import Color as RichColor
 from rich.text import Text
@@ -8,7 +10,8 @@ from textual.widgets import Label, Static
 
 from config import CONFIG
 from queries.categories import get_all_categories_records
-from queries.utils import get_period_average, get_period_net
+from queries.utils import (get_period_average, get_period_net,
+                           get_start_end_of_period)
 
 
 class PercentageBarItem(BaseModel):
@@ -166,9 +169,93 @@ class PercentageBar(Static):
             if self.rounded: yield self.bar_end
         yield self.labels_container
 
+class PeriodBarchartData(BaseModel):
+    amounts: list[float]
+    labels: list[str]
+
 #region PeriodBarchart
 class PeriodBarchart(Static):
-    pass
+    DEFAULT_CSS = """
+    """
+    
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.data = PeriodBarchartData(
+            amounts=[],
+            labels=[]
+        )
+        self.last_count = 0
+        
+    
+    def on_mount(self) -> None:
+        self.rebuild()
+    
+    def set_data(self, data: PeriodBarchartData) -> None:
+        self.data = data
+        self.rebuild()
+    
+    def rebuild(self):
+        if len(self.data.amounts) == 0:
+            self.styles.display = "none"
+            return
+        else:
+            self.styles.display = "block"
+
+        max_amount = max(self.data.amounts)
+        self.query_one(".max-amount").update(f"{max_amount}")
+
+        # If count changed, do full rebuild
+        if len(self.data.amounts) != self.last_count:
+            # Clear existing bars and labels
+            bars_container = self.query(".bars-container")
+            if bars_container:
+                bars_container[0].remove()
+                
+            labels_container = self.query(".labels-container") 
+            if labels_container:
+                labels_container[0].remove()
+            
+            bars_container = Container(classes="bars-container")
+            labels_container = Container(classes="labels-container")
+            
+            for i in range(len(self.data.amounts)):
+                amount = self.data.amounts[i]
+                label = self.data.labels[i]
+                percentage = (amount / max_amount * 100) if max_amount > 0 else 0
+                # build bar
+                bar_container = Container(classes="bar-container")
+                bar = Static(" ", classes="bar")
+                bar.styles.width = f"{percentage}%"
+                bar_container.compose_add_child(bar)
+                bars_container.compose_add_child(bar_container)
+                # build label
+                label_widget = Label(label, classes="label")
+                labels_container.compose_add_child(label_widget)
+            
+            data_container = self.query_one(".data-container")
+            data_container.mount(labels_container)
+            data_container.mount(bars_container)
+            
+            self.last_count = len(self.data.amounts)
+            
+        else:
+            # Just update existing widgets
+            bars = self.query(".bar")
+            labels = self.query(".label")
+            
+            for i in range(len(self.data.amounts)):
+                amount = self.data.amounts[i]
+                label = self.data.labels[i]
+                percentage = (amount / max_amount * 100) if max_amount > 0 else 0
+                
+                bars[i].styles.width = f"{percentage}%"
+                labels[i].update(label)
+
+    def compose(self) -> ComposeResult:
+        # Create containers
+        yield Label(f"Loading...", classes="max-amount")
+        yield Container(classes="data-container")
+                
 
 #region Insights
 class Insights(Static):
@@ -195,6 +282,8 @@ class Insights(Static):
     def rebuild(self) -> None:
         items = self.get_percentage_bar_items()
         self.percentage_bar.set_items(items)
+        data = self.get_period_barchart_data()
+        self.period_barchart.set_data(data)
         self._update_labels()
     
     def _update_labels(self) -> None:
@@ -271,9 +360,77 @@ class Insights(Static):
         
         return items
 
-    def get_period_barchart_items(self) -> list[PercentageBarItem]:
-        items = []
-        return items
+    def get_period_barchart_data(self) -> PeriodBarchartData:
+        offset_type = self.page_parent.filter["offset_type"]
+        offset = self.page_parent.filter["offset"]
+        if offset_type == "day":
+            return PeriodBarchartData(
+                amounts=[],
+                labels=[]
+            )
+            
+        
+        # Get data for each sub-period
+        amounts = []
+        labels = []
+        
+        match offset_type:
+            case "year":
+                # Get start of the target year
+                start_date = datetime.now().replace(month=1, day=1, year=datetime.now().year + offset)
+                for i in range(12):
+                    # Calculate month offset relative to today
+                    target_date = start_date.replace(month=i+1)
+                    month_offset = (target_date.year - datetime.now().year) * 12 + (target_date.month - datetime.now().month)
+                    
+                    amount = get_period_net(
+                        offset_type="month",
+                        offset=month_offset,
+                        isIncome=self.page_parent.mode["isIncome"]
+                    )
+                    amounts.append(abs(amount))
+                    labels.append(target_date.strftime("%b"))
+            case "month":
+                # Get start and end of target month
+                start_date, end_date = get_start_end_of_period(offset, "month")
+                
+                # Get the Monday of the first week that contains any day of the month
+                first_monday = start_date - timedelta(days=start_date.weekday())
+                
+                for i in range(4):
+                    target_date = first_monday + timedelta(weeks=i)
+                    week_offset = (target_date - datetime.now()).days // 7
+                    
+                    amount = get_period_net(
+                        offset_type="week",
+                        offset=week_offset,
+                        isIncome=self.page_parent.mode["isIncome"]
+                    )
+                    amounts.append(abs(amount))
+                    labels.append(f"w{i+1}")
+            case "week":
+                start_date, end_date = get_start_end_of_period(
+                    offset,
+                    offset_type
+                )
+                days_diff = (end_date - start_date).days + 1
+                
+                for i in range(days_diff):
+                    current_date = start_date + timedelta(days=i)
+                    day_offset = (current_date - datetime.now()).days
+                    
+                    amount = get_period_net(
+                        offset_type="day",
+                        offset=day_offset,
+                        isIncome=self.page_parent.mode["isIncome"]
+                    )
+                    amounts.append(abs(amount))
+                    labels.append(current_date.strftime("%d"))
+            
+        return PeriodBarchartData(
+            amounts=amounts,
+            labels=labels
+        )
 
     #region Callbacks
     # ------------- callbacks ------------ #

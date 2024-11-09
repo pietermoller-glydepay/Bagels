@@ -9,15 +9,15 @@ hotkeys:
   home:
     categories: c
     cycle_offset_type: .
+    datemode:
+      go_to_day: g
     display_by_date: q
     display_by_person: w
     insights:
       toggle_use_account: \
-    datemode:
-      go_to_day: g
     new_transfer: t
-    select_next_account: "]"
-    select_prev_account: "["
+    select_next_account: ']'
+    select_prev_account: '['
     toggle_income_mode: /
     toggle_splits: s
   new: a
@@ -29,7 +29,7 @@ hotkeys:
 state:
   theme: cobalt
 symbols:
-  amount_negative: "-"
+  amount_negative: '-'
   amount_positive: +
   category_color: "\u25CF"
   finish_line_char: "\u2570"

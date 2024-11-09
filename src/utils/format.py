@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
 
+from config import CONFIG
+
 
 def format_date_to_readable(date):
     today = datetime.now().date()
@@ -23,6 +25,7 @@ def format_date_to_readable(date):
 def format_period_to_readable(filter: dict) -> str:
     offset = filter["offset"]
     offset_type = filter["offset_type"]
+    first_day_of_week = CONFIG.defaults.first_day_of_week
     if offset_type == "day":
         return format_date_to_readable(datetime.now() + timedelta(days=offset))
     match offset:
@@ -43,7 +46,9 @@ def format_period_to_readable(filter: dict) -> str:
                     return f"{datetime(target_year, target_month, 1).strftime('%B %Y')}"
                 case "week":
                     target_date = now + timedelta(weeks=offset)
-                    start = target_date - timedelta(days=target_date.weekday())
+                    # Calculate days to first day of week based on first_day_of_week setting
+                    days_to_first = (target_date.weekday() - first_day_of_week) % 7
+                    start = target_date - timedelta(days=days_to_first)
                     end = start + timedelta(days=6)
                     return f"{start.strftime('%d %b')} - {end.strftime('%d %b')}"
                 case "day":

@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING, cast
 from textual.command import DiscoveryHit, Hit, Hits, Provider
 from textual.types import IgnoreReturnCallbackType
 
+from queries.samples import create_sample_entries
+
 if TYPE_CHECKING:
     from app import App
 
@@ -19,6 +21,7 @@ class AppProvider(Provider):
             *self.get_theme_commands(),
             ("app: quit", app.action_quit, "Quit App", True),
             ("app: create default categories", app.action_create_default_categories, "Create default categories defined in templates/default_categories.yaml", True),
+            ("app: create sample entries", self._action_create_sample_entries, "Create sample entries defined in templates/sample_entries.yaml", True),
         ]
 
         return tuple(commands_to_show)
@@ -75,3 +78,6 @@ class AppProvider(Provider):
     @property
     def app(self) -> "App":
         return cast("App", self.screen.app)
+    
+    def _action_create_sample_entries(self) -> None:
+        create_sample_entries()

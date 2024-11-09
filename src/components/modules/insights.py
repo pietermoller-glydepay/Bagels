@@ -1,118 +1,17 @@
-from pydantic import BaseModel
-from rich.color import Color as RichColor
-from rich.text import Text
+from datetime import datetime, timedelta
+
 from textual.app import ComposeResult
-from textual.color import Color
-from textual.containers import Container, Horizontal, Vertical
+from textual.containers import Container, Horizontal
 from textual.widgets import Label, Static
 
+from components.barchart import Barchart, BarchartData
+from components.percentage_bar import PercentageBar, PercentageBarItem
 from config import CONFIG
 from queries.categories import get_all_categories_records
-from queries.utils import get_period_average, get_period_net
+from queries.utils import (get_period_average, get_period_net,
+                           get_start_end_of_period)
 
 
-class PercentageBarItem(BaseModel):
-    name: str
-    count: int
-    color: str
-
-#region PercentageBar
-class PercentageBar(Static):
-    DEFAULT_CSS = """
-    PercentageBar {
-        layout: vertical;
-        width: 1fr;
-        height: auto;
-    }
-    
-    PercentageBar > .bar {
-        layout: horizontal;
-        height: 3;
-        
-        .bar-item {
-            padding: 1 0 1 0;
-        }
-    }
-    
-    PercentageBar > .labels {
-        layout: vertical;
-        height: auto;
-        margin-top: 1;
-        
-        .bar-label {
-            layout: horizontal;
-            height: 1;
-        }
-        
-        .bar-label > .percentage {
-            margin-left: 2;
-            color: $primary-background-lighten-3;
-        }
-    }
-    
-    """
-    
-    items: list[PercentageBarItem] = [
-    ]
-    
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-    
-    def on_mount(self) -> None:
-        self.rebuild()
-    
-    def set_items(self, items: list[PercentageBarItem]) -> None:
-        self.items = items
-        self.rebuild()
-    
-    def rebuild(self) -> None:
-        # we first remove all existing items and labels
-        for item in self.query(".bar-item"):
-            item.remove()
-        bar_labels = self.query(".bar-label")
-        bar_labels_count = len(bar_labels)
-        
-        # we calculate the appropriate width for each item, with last item taking remaining space
-        total = sum(item.count for item in self.items)
-        bar = self.query_one(".bar")
-        labels = self.query_one(".labels")
-        
-        for i, item in enumerate(self.items):
-            item_widget = Static(" ", classes="bar-item")
-            color = item.color
-            percentage = round((item.count / total) * 100)
-            if i + 1 > bar_labels_count: # if we have more items than labels, we create a new label
-                label_widget = Container(
-                    Label(f"[{color}]●[/{color}] {item.name}", classes="name"),
-                    Label(f"{percentage}%", classes="percentage"),
-                    classes="bar-label"
-                )
-                labels.mount(label_widget)
-            else: 
-                bar_label = bar_labels[i]
-                bar_label.query_one(".name").update(f"[{color}]●[/{color}] {item.name}")
-                bar_label.query_one(".percentage").update(f"{percentage}%")
-            
-            width = pwidth = f"{percentage}%"
-            if i == len(self.items) - 1:
-                # Last item takes remaining space
-                width = "1fr"
-
-            item_widget.styles.width = width
-            item_widget.styles.background = Color.from_rich_color(RichColor.parse(item.color))
-            item_widget.update(" " + pwidth)
-                
-            bar.mount(item_widget)
-        
-    def compose(self) -> ComposeResult:
-        yield Container(classes="bar")
-        yield Container(classes="labels")
-
-#region PeriodBarchart
-class PeriodBarchart(Static):
-    pass
-
-#region Insights
 class Insights(Static):
     
     BINDINGS = [
@@ -132,11 +31,15 @@ class Insights(Static):
     
     #region Builder
     # -------------- Builder ------------- #
-    
+
     def rebuild(self) -> None:
         items = self.get_percentage_bar_items()
         self.percentage_bar.set_items(items)
-        
+        data = self.get_period_barchart_data()
+        self.period_barchart.set_data(data)
+        self._update_labels()
+    
+    def _update_labels(self) -> None:
         current_filter_label = self.query_one(".current-filter-label")
         period_net_label = self.query_one(".period-net")
         period_average_label = self.query_one(".period-average")
@@ -145,8 +48,12 @@ class Insights(Static):
         mode_isIncome = self.page_parent.mode["isIncome"]
         label = "Income" if mode_isIncome else "Expense"
         
-        current_filter_label.update(f"{label} of {self.page_parent.get_filter_label()}")
+        if self.use_account:
+            current_filter_label.update(f"{self.page_parent.mode['accountId']['defaultValueText']} {label} of {self.page_parent.get_filter_label()}")
+        else:
+            current_filter_label.update(f"{label} of {self.page_parent.get_filter_label()}")
         average_label.update(f"{label} per day")
+        
         if self.use_account:
             params = {
                 **self.page_parent.filter,
@@ -165,7 +72,17 @@ class Insights(Static):
         period_average_label.update(str(period_average))
 
     def get_percentage_bar_items(self, limit: int = 5) -> list[PercentageBarItem]:
-        category_records = get_all_categories_records(**self.page_parent.filter, isExpense=not self.page_parent.mode["isIncome"])
+        if self.use_account:
+            category_records = get_all_categories_records(
+                **self.page_parent.filter,
+                isExpense=not self.page_parent.mode["isIncome"],
+                account_id=self.page_parent.mode["accountId"]["defaultValue"]
+            )
+        else:
+            category_records = get_all_categories_records(
+                **self.page_parent.filter,
+                isExpense=not self.page_parent.mode["isIncome"]
+            )
         
         # Sort categories by percentage in descending order
         items = []
@@ -196,9 +113,77 @@ class Insights(Static):
         
         return items
 
-    def get_period_barchart_items(self) -> list[PercentageBarItem]:
-        items = []
-        return items
+    def get_period_barchart_data(self) -> BarchartData:
+        offset_type = self.page_parent.filter["offset_type"]
+        offset = self.page_parent.filter["offset"]
+        if offset_type == "day":
+            return BarchartData(
+                amounts=[],
+                labels=[]
+            )
+            
+        
+        # Get data for each sub-period
+        amounts = []
+        labels = []
+        
+        match offset_type:
+            case "year":
+                # Get start of the target year
+                start_date = datetime.now().replace(month=1, day=1, year=datetime.now().year + offset)
+                for i in range(12):
+                    # Calculate month offset relative to today
+                    target_date = start_date.replace(month=i+1)
+                    month_offset = (target_date.year - datetime.now().year) * 12 + (target_date.month - datetime.now().month)
+                    
+                    amount = get_period_net(
+                        offset_type="month",
+                        offset=month_offset,
+                        isIncome=self.page_parent.mode["isIncome"]
+                    )
+                    amounts.append(abs(amount))
+                    labels.append(target_date.strftime("%b"))
+            case "month":
+                # Get start and end of target month
+                start_date, end_date = get_start_end_of_period(offset, "month")
+                
+                # Get the Monday of the first week that contains any day of the month
+                first_monday = start_date - timedelta(days=start_date.weekday())
+                
+                for i in range(4):
+                    target_date = first_monday + timedelta(weeks=i)
+                    week_offset = (target_date - datetime.now()).days // 7
+                    
+                    amount = get_period_net(
+                        offset_type="week",
+                        offset=week_offset,
+                        isIncome=self.page_parent.mode["isIncome"]
+                    )
+                    amounts.append(abs(amount))
+                    labels.append(f"w{i+1}")
+            case "week":
+                start_date, end_date = get_start_end_of_period(
+                    offset,
+                    offset_type
+                )
+                days_diff = (end_date - start_date).days + 1
+                
+                for i in range(days_diff):
+                    current_date = start_date + timedelta(days=i)
+                    day_offset = (current_date - datetime.now()).days
+                    
+                    amount = get_period_net(
+                        offset_type="day",
+                        offset=day_offset,
+                        isIncome=self.page_parent.mode["isIncome"]
+                    )
+                    amounts.append(abs(amount))
+                    labels.append(current_date.strftime("%d"))
+            
+        return BarchartData(
+            amounts=amounts,
+            labels=labels
+        )
 
     #region Callbacks
     # ------------- callbacks ------------ #
@@ -219,6 +204,6 @@ class Insights(Static):
                 yield Label("Loading...", classes="period-average amount") # dynamic
             
         self.percentage_bar = PercentageBar()
-        self.period_barchart = PeriodBarchart()
+        self.period_barchart = Barchart()
         yield self.percentage_bar
         yield self.period_barchart

@@ -15,9 +15,10 @@ from textual.widgets import Footer, Header, Label, Tab, Tabs
 
 from components.jump_overlay import JumpOverlay
 from components.jumper import Jumper
-from config import CONFIG
+from config import CONFIG, write_state
 from home import Home
 from models.database.app import init_db
+from pages.Categories import Categories
 from provider import AppProvider
 from queries.categories import create_default_categories
 from themes import BUILTIN_THEMES, Theme
@@ -28,12 +29,13 @@ class App(TextualApp):
     
     CSS_PATH = "index.tcss"
     BINDINGS = [
-        ("ctrl+q", "quit", "Quit"),
         (CONFIG.hotkeys.toggle_jump_mode, "toggle_jump_mode", "Jump Mode"),
+        (CONFIG.hotkeys.home.categories, "go_to_categories", "Categories"),
+        ("ctrl+q", "quit", "Quit"),
     ]
     COMMANDS = {AppProvider}
 
-    theme: Reactive[str] = reactive("galaxy", init=False)
+    theme: Reactive[str] = reactive(CONFIG.state.theme, init=False)
     """The currently selected theme. Changing this reactive should
     trigger a complete refresh via the `watch_theme` method."""
     layout: Reactive[str] = reactive("h")
@@ -61,7 +63,7 @@ class App(TextualApp):
                 "records-container": "r",
                 "templates-container": "t",
                 # "incomemode-container": "v",
-                # "datemode-container": "p",
+                "datemode-container": "p",
             },
             screen=self.screen,
         )
@@ -84,6 +86,7 @@ class App(TextualApp):
         self.notify(
             f"Theme is now [b]{theme!r}[/].", title="Theme updated", timeout=2.5
         )
+        write_state("theme", theme)
     
     #region bindings
     # ---------- Bindings helper ---------- #
@@ -216,6 +219,12 @@ class App(TextualApp):
     
     def action_create_default_categories(self) -> None:
         create_default_categories()
+    
+    def action_go_to_categories(self) -> None:
+        self.push_screen(Categories(), callback=self.on_categories_dismissed)
+    
+    def on_categories_dismissed(self, _) -> None:
+        pass
     
     #region view
     # --------------- View --------------- #

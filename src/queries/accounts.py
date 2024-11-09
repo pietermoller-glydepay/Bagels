@@ -1,5 +1,7 @@
 
 
+from datetime import datetime
+
 from models.account import Account
 from models.database.app import get_app
 from models.database.db import db
@@ -19,14 +21,6 @@ def calculate_account_balance(accountId):
     
 # --------------- CRUD --------------- #
 
-def get_all_accounts():
-    with app.app_context():
-        return Account.query.all()
-
-def get_accounts_count():
-    with app.app_context():
-        return Account.query.count()
-
 def create_account(data):
     with app.app_context():
         new_account = Account(**data)
@@ -34,9 +28,26 @@ def create_account(data):
         db.session.commit()
     return new_account
 
-def get_all_accounts_with_balance():
+def _get_base_accounts_query(get_hidden=False):
+    query = Account.query.filter(Account.deletedAt.is_(None))
+    if not get_hidden:
+        query = query.filter(Account.hidden.is_(False))
+    else:
+        # Sort hidden accounts to end by ordering by hidden flag
+        query = query.order_by(Account.hidden)
+    return query
+
+def get_all_accounts(get_hidden=False):
     with app.app_context():
-        accounts = Account.query.all()
+        return _get_base_accounts_query(get_hidden).all()
+
+def get_accounts_count(get_hidden=False):
+    with app.app_context():
+        return _get_base_accounts_query(get_hidden).count()
+
+def get_all_accounts_with_balance(get_hidden=False):
+    with app.app_context():
+        accounts = _get_base_accounts_query(get_hidden).all()
         for account in accounts:
             account.balance = calculate_account_balance(account.id)
         return accounts
@@ -62,6 +73,8 @@ def delete_account(account_id):
     with app.app_context():
         account = Account.query.get(account_id)
         if account:
-            db.session.delete(account)
-        db.session.commit()
-        return True
+            account.deletedAt = datetime.now()
+            db.session.commit()
+            db.session.refresh(account) 
+            db.session.expunge(account)
+            return True

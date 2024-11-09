@@ -60,6 +60,7 @@ class Records(Static):
     #region Table
         
     def rebuild(self) -> None:
+        if not hasattr(self, "table"): return
         table = self.table
         empty_indicator: EmptyIndicator = self.query_one("#empty-indicator")
         self._initialize_table(table)
@@ -87,12 +88,13 @@ class Records(Static):
             case DisplayMode.DATE:
                 table.add_columns(" ", "Category", "Amount", "Label", "Account")
 
+    #region Date view
     def _build_date_view(self, table: DataTable, records: list) -> None:
         prev_group = None
         for record in records:
             flow_icon = self._get_flow_icon(len(record.splits) > 0, record.isIncome)
             
-            category_string, amount_string = self._format_category_and_amount(record, flow_icon)
+            category_string, amount_string, account_string = self._format_record_fields(record, flow_icon)
             label_string = record.label if record.label else "-"
             
             # Add group header based on filter type
@@ -123,7 +125,7 @@ class Records(Static):
                 category_string,
                 amount_string,
                 label_string,
-                record.account.name,
+                account_string,
                 key=f"r-{str(record.id)}",
             )
             
@@ -140,10 +142,13 @@ class Records(Static):
             flow_icon_negative = f"[red]{CONFIG.symbols.amount_negative}[/red]"
         return flow_icon_positive if is_income else flow_icon_negative
 
-    def _format_category_and_amount(self, record, flow_icon: str) -> tuple[str, str]:
+    def _format_record_fields(self, record, flow_icon: str) -> tuple[str, str]:
         if record.isTransfer:
-            category_string = f"{record.account.name} → {record.transferToAccount.name}"
+            from_account = '[italic]' + record.account.name + '[/italic]' if record.account.hidden else record.account.name
+            to_account = '[italic]' + record.transferToAccount.name + '[/italic]' if record.transferToAccount.hidden else record.transferToAccount.name
+            category_string = f"{from_account} → {to_account}"
             amount_string = record.amount
+            account_string = "-"
         else:
             color_tag = record.category.color.lower()
             category_string = f"[{color_tag}]{CONFIG.symbols.category_color}[/{color_tag}] {record.category.name}"
@@ -153,8 +158,10 @@ class Records(Static):
                 amount_string = f"{flow_icon} {amount_self}"
             else:
                 amount_string = f"{flow_icon} {record.amount}"
+            
+            account_string = record.account.name
                 
-        return category_string, amount_string
+        return category_string, amount_string, account_string
 
     def _add_group_header_row(self, table: DataTable, string: str, key: str = None) -> None:
         table.add_row(
@@ -203,6 +210,7 @@ class Records(Static):
         else:
             return f"[grey]{CONFIG.symbols.split_unpaid}[/grey]"
 
+    #region Person view
     def _build_person_view(self, table: DataTable, _) -> None:
         persons = get_persons_with_splits(**self.page_parent.filter)
         
@@ -229,7 +237,7 @@ class Records(Static):
                         category,
                         amount,
                         account,
-                        key=f"split-{split.id}"
+                        key=f"s-{split.id}"
                     )
 
     #region Helpers
@@ -290,10 +298,11 @@ class Records(Static):
                     self.app.notify(title="Success", message=f"Record created", severity="information", timeout=3)
                     self.page_parent.rebuild()
         
-        self.app.push_screen(RecordModal("New Record", form=self.record_form.get_form(self.page_parent.mode)), callback=check_result)
+        date = self.page_parent.mode["date"]
+        self.app.push_screen(RecordModal(f"New Record on {format_date_to_readable(date)}", form=self.record_form.get_form(self.page_parent.mode)), callback=check_result)
     
     def action_edit(self) -> None:
-        if not self.current_row:
+        if not (hasattr(self, "current_row") and self.current_row):
             self.app.notify(title="Error", message="Nothing selected", severity="error", timeout=2)
             self.app.bell()
             return
@@ -365,7 +374,7 @@ class Records(Static):
                 pass
                 
     def action_delete(self) -> None:
-        if not self.current_row:
+        if not (hasattr(self, "current_row") and self.current_row):
             self.app.notify(title="Error", message="Nothing selected", severity="error", timeout=2)
             self.app.bell()
             return
@@ -379,15 +388,17 @@ class Records(Static):
         # ----------------- - ---------------- #
         def check_delete(result: bool) -> None:
             if result:
-                print(result)
                 delete_record(id)
                 self.app.notify(title="Success", message=f"Record deleted", severity="information", timeout=3)
                 self.page_parent.rebuild()
         # ----------------- - ---------------- #
-        if type == "r":
-            self.app.push_screen(ConfirmationModal("Are you sure you want to delete this record?"), callback=check_delete)
-        else:
-            self.app.push_screen(ConfirmationModal("Are you sure you want to delete this split?"), callback=check_delete)
+        match type:
+            case "r":
+                self.app.push_screen(ConfirmationModal("Are you sure you want to delete this record?"), callback=check_delete)
+            case "s":
+                self.app.push_screen(ConfirmationModal("Are you sure you want to delete this split?"), callback=check_delete)
+            case _:
+                pass
     
     def action_new_transfer(self) -> None:
         def check_result(result: bool) -> None:
@@ -401,10 +412,7 @@ class Records(Static):
                     self.page_parent.rebuild()
             else:
                 self.app.notify(title="Discarded", message=f"Record not updated", severity="warning", timeout=3)
-        if get_accounts_count() > 1:
-            self.app.push_screen(TransferModal(), callback=check_result)
-        else:
-            self.app.notify(title="Error", message="Please have at least two accounts to create a transfer.", severity="error", timeout=2)
+        self.app.push_screen(TransferModal(), callback=check_result)
     
     #region View
     # --------------- View --------------- #

@@ -1,7 +1,7 @@
 from textual import events
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Container, HorizontalScroll
+from textual.containers import Container, Horizontal, HorizontalScroll
 from textual.widgets import Label, Static
 
 from components.modals import ConfirmationModal, InputModal
@@ -38,6 +38,10 @@ class Templates(Static):
     # -------------- Builder ------------- #
     
     def _create_templates_widgets(self, container: Container) -> None:
+        if len(self.templates) == 0:
+            widget = Label("No templates. Jump here to create one.", classes="empty")
+            container.compose_add_child(widget)
+            return container
         for index, template in enumerate(self.templates):
             if index > 8:
                 break
@@ -55,10 +59,10 @@ class Templates(Static):
     
     def rebuild(self) -> None:
         self.templates = get_all_templates()
-        container = self.query(".templates-scroll")
+        container = self.query(".templates")
         if len(container) > 0:
             container[0].remove()
-        container = HorizontalScroll(classes="templates-scroll")
+        container = Horizontal(classes="templates")
         container = self._create_templates_widgets(container)
         self.mount(container)
     

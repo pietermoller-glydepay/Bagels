@@ -43,20 +43,17 @@ class ConfirmationModal(ModalScreen):
 #region Container
 class ModalContainer(Widget):
     # usage: ModalContainer(w1, w2, w3..... hotkeys=[])
-    def __init__(self, *content, hotkeys: list[dict] = [], custom_classes: str = "wrapper max-width-50"):
+    def __init__(self, *content, custom_classes: str = "wrapper max-width-60"):
         super().__init__(classes=custom_classes)
         self.content = content
-        self.hotkeys = hotkeys
+        # self.hotkeys = hotkeys
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
         with Container(classes="container"):
             for widget in self.content:
                 yield widget
-        with Container(classes="footer"):
-            for hotkey in self.hotkeys:
-                key_display = self.app.get_key_display(Binding(hotkey["key"], ""))
-                yield Label(f"[bold yellow]{key_display}[/bold yellow] {hotkey['label']}")
+        yield Footer(show_command_palette=False)
 
 #region Base
 class InputModal(ModalScreen):
@@ -102,8 +99,8 @@ class Accounts(ListView):
     def __init__(self, accounts, initial_index: int = 0, type: str = "", *args, **kwargs):
         super().__init__(
             *[ListItem(
-                    Label(str(account.name), classes="name"), 
-                    Label(str(account.balance), classes="balance"), 
+                    Label(str(account.name), classes="name " + ("hidden-name" if account.hidden else "")), 
+                    Label(str(account.balance), classes="balance " + ("hidden-balance" if account.hidden else "")), 
                     classes="item", 
                     id=f"account-{account.id}"
                 ) for account in accounts],
@@ -117,7 +114,7 @@ class Accounts(ListView):
 class TransferModal(ModalScreen):
     def __init__(self, record=None, *args, **kwargs):
         super().__init__(classes="modal-screen", *args, **kwargs)
-        self.accounts = get_all_accounts_with_balance()
+        self.accounts = get_all_accounts_with_balance(get_hidden=True)
         self.form = [
             {
                 "title": "Label",
@@ -225,16 +222,28 @@ class TransferModal(ModalScreen):
                 Label(id="transfer-error"),
                 id="transfer-modal"
             ),
-            custom_classes="wrapper"
+            custom_classes="wrapper max-width-80"
         )
 
 #region Record
 class RecordModal(InputModal):
+    
+    isEditing = False
+    
+    BINDINGS = [
+        Binding(CONFIG.hotkeys.record_modal.new_split, "add_split", "Add split", priority=True),
+        Binding(CONFIG.hotkeys.record_modal.new_paid_split, "add_paid_split", "Add paid split", priority=True),
+        Binding(CONFIG.hotkeys.record_modal.delete_last_split, "delete_last_split", "Delete last split", priority=True)
+    ] 
+    
     def __init__(self, title: str, form: list[dict] = [], splitForm: list[dict] = [], isEditing: bool = False, *args, **kwargs):
         super().__init__(title, form, *args, **kwargs)
         self.record_form = RecordForm()
         self.splitForm = splitForm
         self.isEditing = isEditing
+        if isEditing: 
+            self._bindings.key_to_bindings.clear()
+            self.refresh_bindings()
         self.splitFormOneLength = len(self.record_form.get_split_form(0, False))
         self.splitCount = int(len(splitForm) / self.splitFormOneLength)
         self.persons = get_all_persons()
@@ -307,8 +316,6 @@ class RecordModal(InputModal):
             field = self.query_one(f"#row-field-{key}")
             field.mount(Label(value, classes="error"))
         
-    
-
     def on_auto_complete_created(self, event: AutoComplete.Created) -> None:
         name = event.item.create_option_text
         person = create_person({"name": name})
@@ -338,13 +345,10 @@ class RecordModal(InputModal):
             case "escape":
                 self.dismiss(None)
             case _:
-                if not self.isEditing:
-                    if event.key == CONFIG.hotkeys.record_modal.new_split:
-                        self.action_add_split(paid=False)
-                    elif event.key == CONFIG.hotkeys.record_modal.new_paid_split:
-                        self.action_add_split(paid=True)
-                    elif event.key == CONFIG.hotkeys.record_modal.delete_last_split:
-                        self.action_delete_last_split()
+                pass
+    
+    def action_add_paid_split(self):
+        self.action_add_split(paid=True)
     
     def action_add_split(self, paid: bool = False):
         splits_container = self.query_one("#splits-container", Container)
@@ -365,6 +369,7 @@ class RecordModal(InputModal):
     def action_delete_last_split(self):
         if self.splitCount > 0:
             self.query_one(f"#split-{self.splitCount - 1}").remove()
+            self.query_one(f"#dropdown-personId-{self.splitCount - 1}").remove() # idk why this is needed
             for i in range(self.splitFormOneLength):
                 self.splitForm.pop()
             self.splitCount -= 1
@@ -398,9 +403,4 @@ class RecordModal(InputModal):
                 *self._get_init_split_widgets(),
                 id="splits-container"
             ),
-            hotkeys=[
-                {"key": CONFIG.hotkeys.record_modal.new_split, "label": "Split amount"},
-                {"key": CONFIG.hotkeys.record_modal.new_paid_split, "label": "Split paid"},
-                {"key": CONFIG.hotkeys.record_modal.delete_last_split, "label": "Delete split"}
-            ] if not self.isEditing else []
         )

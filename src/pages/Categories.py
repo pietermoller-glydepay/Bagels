@@ -1,13 +1,17 @@
 import copy
 
 from rich.text import Text
+from textual import events
 from textual.app import ComposeResult
+from textual.binding import Binding
+from textual.containers import Container
+from textual.screen import ModalScreen
+from textual.widget import Widget
 from textual.widgets import Static
 
-from components.base import BasePage
 from components.datatable import DataTable
 from components.indicators import EmptyIndicator
-from components.modals import ConfirmationModal, InputModal
+from components.modals import ConfirmationModal, InputModal, ModalContainer
 from config import CONFIG
 from constants import COLORS
 from models.category import Nature
@@ -16,14 +20,29 @@ from queries.categories import (create_category, create_default_categories,
                                 get_category_by_id, update_category)
 
 
-class Page(Static):
+class Categories(ModalScreen[str | Widget | None]):
     
     COLUMNS = ("", "Name", "Nature")
+    
+    BINDINGS = [
+        Binding(CONFIG.hotkeys.new, "new_category", "Add"),
+        Binding(CONFIG.hotkeys.categories.new_subcategory, "new_subcategory", "Add Subcategory"),
+        Binding(CONFIG.hotkeys.edit, "edit_category", "Edit"),
+        Binding(CONFIG.hotkeys.delete, "delete_category", "Delete"),
+    ]
+    
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs, id="categories-modal-screen", classes="modal-screen")
+        self.title = "Manage your categories"
     
     # --------------- Hooks -------------- #
     
     def on_mount(self) -> None:
         self._build_table()
+    
+    def on_key(self, event: events.Key) -> None:
+        if event.key == "escape":
+            self.dismiss()
     
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         if event.row_key:
@@ -140,18 +159,10 @@ class Page(Static):
     
     # --------------- View --------------- #
     def compose(self) -> ComposeResult:
-        self.basePage = BasePage(
-            pageName="Categories",
-            bindings=[
-                (CONFIG.hotkeys.new, "new_category", "Add", self.action_new_category),
-                (CONFIG.hotkeys.categories.new_subcategory, "new_subcategory", "Add Subcategory", self.action_new_subcategory),
-                (CONFIG.hotkeys.edit, "edit_category", "Edit", self.action_edit_category),
-                (CONFIG.hotkeys.delete, "delete_category", "Delete", self.action_delete_category),
-            ],
+        yield ModalContainer(
+            DataTable(id="categories-table", cursor_type="row", cursor_foreground_priority=True),
+            EmptyIndicator("No categories")
         )
-        with self.basePage:
-            yield DataTable(id="categories-table", cursor_type="row", cursor_foreground_priority=True)
-            yield EmptyIndicator("No categories")
 
 CATEGORY_FORM = [
     {

@@ -125,16 +125,17 @@ def get_period_net(accountId=None, offset_type=None, offset=None, isIncome=None)
         
         match isIncome:
             case True:
-                return total_income - total_split_sent
+                result = total_income - total_split_sent
             case False:
-                return total_expense - total_split_received
-            case None: # return net
-                return total_income \
+                result = total_expense - total_split_received
+            case None: # result = net
+                result = total_income \
                     - total_expense \
                     + total_transfer_received \
                     - total_transfer_sent \
                     + total_split_received \
                     - total_split_sent
+        return round(result, 2)
 
 #region average
 # -------------- average ------------- #

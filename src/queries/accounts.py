@@ -1,5 +1,7 @@
 
 
+from datetime import datetime
+
 from models.account import Account
 from models.database.app import get_app
 from models.database.db import db
@@ -21,11 +23,11 @@ def calculate_account_balance(accountId):
 
 def get_all_accounts():
     with app.app_context():
-        return Account.query.all()
+        return Account.query.filter(Account.deletedAt.is_(None)).all()
 
 def get_accounts_count():
     with app.app_context():
-        return Account.query.count()
+        return Account.query.filter(Account.deletedAt.is_(None)).count()
 
 def create_account(data):
     with app.app_context():
@@ -36,7 +38,7 @@ def create_account(data):
 
 def get_all_accounts_with_balance():
     with app.app_context():
-        accounts = Account.query.all()
+        accounts = Account.query.filter(Account.deletedAt.is_(None)).all()
         for account in accounts:
             account.balance = calculate_account_balance(account.id)
         return accounts
@@ -62,6 +64,8 @@ def delete_account(account_id):
     with app.app_context():
         account = Account.query.get(account_id)
         if account:
-            db.session.delete(account)
-        db.session.commit()
-        return True
+            account.deletedAt = datetime.now()
+            db.session.commit()
+            db.session.refresh(account) 
+            db.session.expunge(account)
+            return True

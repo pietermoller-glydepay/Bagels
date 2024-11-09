@@ -60,6 +60,7 @@ class Records(Static):
     #region Table
         
     def rebuild(self) -> None:
+        if not hasattr(self, "table"): return
         table = self.table
         empty_indicator: EmptyIndicator = self.query_one("#empty-indicator")
         self._initialize_table(table)
@@ -229,7 +230,7 @@ class Records(Static):
                         category,
                         amount,
                         account,
-                        key=f"split-{split.id}"
+                        key=f"s-{split.id}"
                     )
 
     #region Helpers
@@ -293,7 +294,7 @@ class Records(Static):
         self.app.push_screen(RecordModal("New Record", form=self.record_form.get_form(self.page_parent.mode)), callback=check_result)
     
     def action_edit(self) -> None:
-        if not self.current_row:
+        if not (hasattr(self, "current_row") and self.current_row):
             self.app.notify(title="Error", message="Nothing selected", severity="error", timeout=2)
             self.app.bell()
             return
@@ -365,7 +366,7 @@ class Records(Static):
                 pass
                 
     def action_delete(self) -> None:
-        if not self.current_row:
+        if not (hasattr(self, "current_row") and self.current_row):
             self.app.notify(title="Error", message="Nothing selected", severity="error", timeout=2)
             self.app.bell()
             return
@@ -379,15 +380,17 @@ class Records(Static):
         # ----------------- - ---------------- #
         def check_delete(result: bool) -> None:
             if result:
-                print(result)
                 delete_record(id)
                 self.app.notify(title="Success", message=f"Record deleted", severity="information", timeout=3)
                 self.page_parent.rebuild()
         # ----------------- - ---------------- #
-        if type == "r":
-            self.app.push_screen(ConfirmationModal("Are you sure you want to delete this record?"), callback=check_delete)
-        else:
-            self.app.push_screen(ConfirmationModal("Are you sure you want to delete this split?"), callback=check_delete)
+        match type:
+            case "r":
+                self.app.push_screen(ConfirmationModal("Are you sure you want to delete this record?"), callback=check_delete)
+            case "s":
+                self.app.push_screen(ConfirmationModal("Are you sure you want to delete this split?"), callback=check_delete)
+            case _:
+                pass
     
     def action_new_transfer(self) -> None:
         def check_result(result: bool) -> None:

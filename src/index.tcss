@@ -167,22 +167,23 @@ Button {
 #confirmation-modal-screen {
   align: center bottom;
   background: $background 60%;
-}
 
-.dialog {
-  padding: 0 1;
-  margin: 2;
-  width: 100%;
-  height: 5;
-  border: wide $accent;
-  align-vertical: middle;
-
-  Label {
-    color: white;
-    width: 1fr;
-    text-align: center;
+  .dialog {
+    padding: 0 1;
+    margin: 2;
+    width: 100%;
+    height: 5;
+    border: wide $accent;
+    align-vertical: middle;
+  
+    Label {
+      color: white;
+      width: 1fr;
+      text-align: center;
+    }
   }
 }
+
 
 /* ---------------------------------- */
 /*             Input modal            */
@@ -192,8 +193,8 @@ Button {
   align: center top;
   background: $background 60%;
 
-  .max-width-50 {
-    max-width: 50;
+  .max-width-60 {
+    max-width: 60;
   }
 
   .wrapper {
@@ -205,16 +206,16 @@ Button {
       background: $surface-lighten-2;
     }
 
-    .footer {
+    Footer {
       width: 1fr;
       height: 1;
       background: $surface-lighten-2;
-      padding-left: 1;
-      padding-right: 1;
-      layout: horizontal;
 
-      Label {
-        margin-right: 2;
+      FooterKey {
+        background: $surface-lighten-2;
+        .footer-key--key {
+          background: $surface-lighten-2;
+        }
       }
     }
 
@@ -315,6 +316,22 @@ Button {
 }
 
 /* ---------------------------------- */
+/*             Categories             */
+/* ---------------------------------- */
+
+#categories-modal-screen {
+  background: $background 60%;
+
+  .dialog {
+    height: 1fr;
+    width: 1fr;
+    margin: 3;
+    padding: 1;
+    border: round $accent;
+  }
+}
+
+/* ---------------------------------- */
 /*              Home page             */
 /* ---------------------------------- */
 
@@ -344,8 +361,8 @@ Button {
       border-top: tall $surface;
       
       .left-container {
-        height: 1;
-        layout: horizontal;
+        height: auto;
+        # layout: horizontal;
 
         .name {
           margin-right: 2;
@@ -353,6 +370,11 @@ Button {
 
         .description {
           color: $primary-background-lighten-3;
+          
+        }
+        
+        .none {
+          display: none;
         }
       }
       
@@ -379,7 +401,7 @@ Button {
     }
     #datemode-container {
       width: 1fr;
-      height: 9;
+      height: 11;
 
       .month-selector {
         height: 2;
@@ -402,7 +424,7 @@ Button {
         }
       }
       .calendar {
-        height: 5;
+        height: 6;
         width: 20;
         offset-x: 3;
 
@@ -412,12 +434,26 @@ Button {
           Label {
             width: 3;
           }
-          .not_current {
+          .not_current_month {
             color: $panel-lighten-1;
           }
         }
 
-        .this_week, .this_month, .today {
+        .calendar-dotw-row {
+          height: 1;
+
+          Label {
+            width: 3;
+            color: $primary-background-lighten-3;
+            text-style: italic;
+          }
+        }
+        
+        .target_month {
+          background: $accent 10%;
+        }
+
+        .target_week, .target {
           background: $accent 20%;
         }
 
@@ -513,6 +549,13 @@ Button {
   .templates-scroll {
     height: 3;
 
+    .empty {
+      width: 1fr;
+      margin-top: 1;
+      color: $primary-background-lighten-3;
+      text-align: center;
+    }
+
     .template-item {
       width: auto;
       height: auto;
@@ -531,7 +574,6 @@ Button {
   }
 }
 
-
 /* ---------------------------------- */
 /*               Utility              */
 /* ---------------------------------- */
@@ -543,7 +585,7 @@ Button {
 }
 
 .label-empty {
-  color: $primary-background-lighten-3;
+  color: $accent;
   width: 1fr;
   padding-top: 2;
   text-align: center;

@@ -1,0 +1,123 @@
+# Sample accounts
+accounts:
+  - name: Main Bank Account
+    description: Primary checking account
+    beginningBalance: 5000.00
+    repaymentDate: 1
+
+  - name: Credit Card
+    description: Monthly credit card
+    beginningBalance: 0.00
+    repaymentDate: 15
+
+  - name: Savings
+    description: Emergency fund
+    beginningBalance: 10000.00
+    repaymentDate: null
+
+# Sample people for splits
+people:
+  - name: John
+  - name: Sarah
+  - name: Mike
+
+# Sample records showing a week of transactions
+records:
+  - label: Monthly Salary
+    amount: 4000.00
+    date: 2024-01-01T09:00:00
+    accountId: 1 # Main Bank Account
+    categoryId: 1 # Income -> Salary
+    isIncome: true
+    isTransfer: false
+
+  - label: Grocery Shopping
+    amount: 120.50
+    date: 2024-01-02T15:30:00
+    accountId: 2 # Credit Card
+    categoryId: 7 # Food -> Groceries
+    isIncome: false
+    isTransfer: false
+    splits:
+      - amount: 60.25
+        personId: 1 # John
+      - amount: 60.25
+        personId: 2 # Sarah
+
+  - label: Transfer to Savings
+    amount: 500.00
+    date: 2024-01-03T10:00:00
+    accountId: 1 # Main Bank Account
+    isIncome: false
+    isTransfer: true
+    transferToAccountId: 3 # Savings
+
+  - label: Netflix Subscription
+    amount: 15.99
+    date: 2024-01-04T00:00:00
+    accountId: 2 # Credit Card
+    categoryId: 13 # Subscriptions -> Streaming Services
+    isIncome: false
+    isTransfer: false
+
+  - label: Restaurant Dinner
+    amount: 85.00
+    date: 2024-01-05T19:45:00
+    accountId: 2 # Credit Card
+    categoryId: 8 # Food -> Dine out
+    isIncome: false
+    isTransfer: false
+    splits:
+      - amount: 28.33
+        personId: 1 # John
+      - amount: 28.33
+        personId: 2 # Sarah
+      - amount: 28.34
+        personId: 3 # Mike
+
+  - label: Monthly Rent
+    amount: 1200.00
+    date: 2024-01-05T09:00:00
+    accountId: 1 # Main Bank Account
+    categoryId: 20 # Bills -> Rent/Mortgage
+    isIncome: false
+    isTransfer: false
+
+  - label: Uber Ride
+    amount: 25.00
+    date: 2024-01-06T22:30:00
+    accountId: 2 # Credit Card
+    categoryId: 5 # Transport -> Taxi
+    isIncome: false
+    isTransfer: false
+
+  - label: Credit Card Payment
+    amount: 246.49 # Sum of all credit card expenses
+    date: 2024-01-07T16:00:00
+    accountId: 1 # Main Bank Account
+    isIncome: false
+    isTransfer: true
+    transferToAccountId: 2 # Credit Card
+
+# Sample record templates for recurring transactions
+record_templates:
+  - label: Monthly Rent
+    amount: 1200.00
+    accountId: 1
+    categoryId: 20
+    isIncome: false
+    isTransfer: false
+
+  - label: Netflix Subscription
+    amount: 15.99
+    accountId: 2
+    categoryId: 13
+    isIncome: false
+    isTransfer: false
+
+  - label: Monthly Salary
+    amount: 4000.00
+    accountId: 1
+    categoryId: 1
+    isIncome: true
+    isTransfer: false

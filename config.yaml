@@ -1,30 +1,36 @@
+defaults:
+  first_day_of_week: 6
+  period: day
 hotkeys:
-  new: "a"
-  delete: "d"
-  edit: "e"
-  toggle_jump_mode: "v"
-  home:
-    new_transfer: "t"
-    toggle_splits: "s"
-    display_by_date: "q"
-    display_by_person: "w"
-    cycle_offset_type: "."
-    toggle_income_mode: "/"
-    select_prev_account: "["
-    select_next_account: "]"
-    insights:
-      toggle_use_account: '\'
-  record_modal:
-    new_split: "ctrl+a"
-    new_paid_split: "ctrl+s"
-    delete_last_split: "ctrl+d"
   categories:
-    new_subcategory: "s"
+    new_subcategory: s
+  delete: d
+  edit: e
+  home:
+    categories: c
+    cycle_offset_type: .
+    display_by_date: q
+    display_by_person: w
+    insights:
+      toggle_use_account: \
+    new_transfer: t
+    select_next_account: ']'
+    select_prev_account: '['
+    toggle_income_mode: /
+    toggle_splits: s
+  new: a
+  record_modal:
+    delete_last_split: ctrl+d
+    new_paid_split: ctrl+s
+    new_split: ctrl+a
+  toggle_jump_mode: v
+state:
+  theme: cobalt
 symbols:
-  line_char: "│"
-  finish_line_char: "╰"
-  split_paid: "✓"
-  split_unpaid: "⨯"
-  category_color: "●"
-  amount_positive: "+"
-  amount_negative: "-"
+  amount_negative: '-'
+  amount_positive: +
+  category_color: "\u25CF"
+  finish_line_char: "\u2570"
+  line_char: "\u2502"
+  split_paid: "\u2713"
+  split_unpaid: "\u2A2F"

@@ -2,6 +2,8 @@
 
 Powerful expense tracker that lives in your terminal. WIP!
 
+[] Add split existing id
+
 ## Development setup
 
 Install uv:

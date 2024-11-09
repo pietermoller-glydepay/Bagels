@@ -8,6 +8,7 @@ class Account(db.Model):
     
     createdAt = db.Column(db.DateTime, nullable=False, default=datetime.now)
     updatedAt = db.Column(db.DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
+    deletedAt = db.Column(db.DateTime, nullable=True)
 
     id = db.Column(db.Integer, primary_key=True, index=True)
     name = db.Column(db.String, nullable=False)

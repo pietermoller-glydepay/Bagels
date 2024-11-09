@@ -38,6 +38,10 @@ class Templates(Static):
     # -------------- Builder ------------- #
     
     def _create_templates_widgets(self, container: Container) -> None:
+        if len(self.templates) == 0:
+            widget = Label("No templates. Jump here to create one.", classes="empty")
+            container.compose_add_child(widget)
+            return container
         for index, template in enumerate(self.templates):
             if index > 8:
                 break

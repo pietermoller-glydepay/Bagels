@@ -98,7 +98,6 @@ class RecordForm:
                 "type": "hidden",
                 "options": [],
                 "placeholder": "Select Account",
-                "defaultValue": None
             },
             {
                 "title": "Paid Date",

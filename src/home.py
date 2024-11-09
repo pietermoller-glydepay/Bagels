@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -21,12 +21,12 @@ from utils.format import format_period_to_readable
 class Home(Static):
     filter = {
         "offset": 0,
-        "offset_type": "month",
+        "offset_type": CONFIG.defaults.period,
     }
     
     BINDINGS = [
-        Binding("left", "prev_offset_type", "Previous", show=False),
-        Binding("right", "next_offset_type", "Next", show=False),
+        Binding("left", "dec_offset", "Previous", show=False),
+        Binding("right", "inc_offset", "Next", show=False),
         Binding(CONFIG.hotkeys.home.cycle_offset_type, "cycle_offset_type", "", show=False),
         Binding(CONFIG.hotkeys.home.toggle_income_mode, "toggle_income_mode", "Income/Expense", show=False),
         Binding(CONFIG.hotkeys.home.select_prev_account, "select_prev_account", "Select previous account", show=False),
@@ -62,9 +62,17 @@ class Home(Static):
             "count": len(accounts)
         }
         self.accounts = accounts
+        self.accounts_module = AccountMode(parent=self)
+        self.date_mode_module = DateMode(parent=self)
+        self.income_mode_module = IncomeMode(parent=self)
+        self.record_module = Records(parent=self)
+        self.insights_module = Insights(parent=self)
+        self.templates_module = Templates(parent=self)
     
     def on_mount(self) -> None:
         self.app.watch(self.app, "layout", self.on_layout_change)
+        if hasattr(self, "record_module"):
+            self.record_module.focus()
 
     # -------------- Helpers ------------- #
     
@@ -81,21 +89,54 @@ class Home(Static):
     def update_filter_label(self, label: Label) -> None:
         string = format_period_to_readable(self.filter)
         label.update(string)
-        
+    
+    def get_target_date(self) -> datetime:
+        """Returns the date that new records will be based on"""
+        offset = self.filter["offset"]
+        offset_type = self.filter["offset_type"]
+        today = datetime.now()
+        if offset == 0:
+            return today
+            
+        match offset_type:
+            case "year":
+                return today
+            case "month":
+                # Get first day of current month
+                first_of_month = today.replace(day=1)
+                # Add months by adding days and resetting to first of month
+                target_date = first_of_month + timedelta(days=32*offset)
+                return target_date.replace(day=1)
+            case "week":
+                # Get first day of current week
+                days_to_first = (today.weekday() - CONFIG.defaults.first_day_of_week) % 7
+                first_of_week = today - timedelta(days=days_to_first)
+                # Add weeks
+                return first_of_week + timedelta(weeks=offset)
+            case "day":
+                return today + timedelta(days=offset)
+        return today
+    
+    def _update_date(self) -> None:
+        self.mode["date"] = self.get_target_date()
+    
     #region Callbacks
     # ------------- Callbacks ------------ #
     
     def on_layout_change(self, layout: str) -> None:
-        layout_container = self.query_one(f".home-modules-container")
-        layout_container.set_classes(f"home-modules-container {layout}")
+        layout_container = self.query(".home-modules-container")
+        if len(layout_container) > 0:
+            layout_container[0].set_classes(f"home-modules-container {layout}")
     
-    def action_prev_offset_type(self) -> None:
+    def action_dec_offset(self) -> None:
         self.filter["offset"] -= 1
+        self._update_date()
         self.rebuild()
     
-    def action_next_offset_type(self) -> None:
+    def action_inc_offset(self) -> None:
         if self.filter["offset"] < 0:
             self.filter["offset"] += 1
+            self._update_date()
             self.rebuild()
         else:
             self.app.bell()
@@ -107,10 +148,11 @@ class Home(Static):
         # Get current index
         current_index = cycle_order.index(self.filter["offset_type"])
         
-        next_index = (current_index - 1) % len(cycle_order)
+        next_index = (current_index + 1) % len(cycle_order)
             
         # Update filter type
         self.filter["offset_type"] = cycle_order[next_index]
+        self._update_date()
         
         # Refresh table
         self.rebuild()
@@ -126,6 +168,7 @@ class Home(Static):
         self.mode["accountId"]["defaultValue"] = self.accounts[new_index].id
         self.mode["accountId"]["defaultValueText"] = self.accounts[new_index].name
         self.accounts_module.rebuild()
+        self.insights_module.rebuild()
 
     def action_select_prev_account(self) -> None:
         self._select_account(-1)
@@ -167,26 +210,20 @@ class Home(Static):
     # --------------- View --------------- #
     
     def compose(self) -> ComposeResult:
-        if not self.isReady:
-            yield Label(
-                "Please create at least one account and one category to get started.",
-                classes="label-empty"
-            )
-        else:
-            self.date_mode_module = DateMode(parent=self)
-            self.income_mode_module = IncomeMode(parent=self)
-            self.accounts_module = AccountMode(parent=self)
-            self.record_module = Records(parent=self)
-            self.insights_module = Insights(parent=self)
-            self.templates_module = Templates(parent=self)
-            with Static(classes=f"home-modules-container v"):
-                with Static(classes="left"):
-                    with Static(id="home-top-container"):
-                        yield self.accounts_module
-                        with Static(id="home-mode-container"):
-                            yield self.income_mode_module
-                            yield self.date_mode_module
-                    yield self.insights_module
+        with Static(classes=f"home-modules-container v"):
+            with Static(classes="left"):
+                with Static(id="home-top-container"):
+                    yield self.accounts_module
+                    with Static(id="home-mode-container"):
+                        yield self.income_mode_module
+                        yield self.date_mode_module
+                yield self.insights_module
+            if self.isReady:
                 with Static(classes="right"):
                     yield self.templates_module
                     yield self.record_module
+            else:
+                yield Label(
+                    "Please create at least one account and one category to get started.",
+                    classes="label-empty"
+                )

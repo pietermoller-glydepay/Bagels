@@ -78,7 +78,7 @@ class AccountMode(ScrollableContainer):
                 except Exception as e:
                     self.app.notify(title="Error", message=f"{e}", severity="error", timeout=10)
                 self.app.notify(title="Success", message=f"Account {result['name']} created", severity="information", timeout=3)
-                self.page_parent.rebuild()
+                self.app.refresh(layout=True, recompose=True) # the big button
         account_form = self.account_form.get_form()
         self.app.push_screen(InputModal("New Account", account_form), callback=check_result)
 
@@ -105,7 +105,7 @@ class AccountMode(ScrollableContainer):
             if result:
                 delete_account(id)
                 self.app.notify(title="Success", message=f"Archived account", severity="information", timeout=3)
-                self.page_parent.rebuild()
+                self.app.refresh(layout=True, recompose=True) # the big button
         if id:
             self.app.push_screen(ConfirmationModal("Are you sure you want to archive this account?"), check_delete)
         else:

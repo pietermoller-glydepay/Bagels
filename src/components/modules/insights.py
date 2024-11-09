@@ -37,7 +37,12 @@ class PercentageBar(Static):
             
             .empty-bar {
                 hatch: right $panel-lighten-2;
-                text-align: center;
+                
+                Label {
+                    dock: left;
+                    align-horizontal: center;
+                    padding: 0 1 0 1;
+                }
             }
             
             # .bar-item {
@@ -92,12 +97,15 @@ class PercentageBar(Static):
         prev_empty_bar = self.bar.query(".empty-bar")
         if len(self.items) == 0:
             if self.rounded:
-                self.bar_start.styles.color = "transparent"
-                self.bar_end.styles.color = "transparent"
+                self.bar_start.styles.display = "none"
+                self.bar_end.styles.display = "none"
             if len(prev_empty_bar) == 0:
-                empty_bar = Static("No data to display", classes="empty-bar")
+                empty_bar = Container(Label("No data to display"), classes="empty-bar")
                 self.bar.mount(empty_bar)
         else:
+            if self.rounded:
+                self.bar_start.styles.display = "block"
+                self.bar_end.styles.display = "block"
             if len(prev_empty_bar) > 0:
                 prev_empty_bar[0].remove()
         
@@ -178,7 +186,7 @@ class Insights(Static):
     def __init__(self, parent: Static, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs, id="insights-container", classes="module-container")
         super().__setattr__("border_title", "Insights")
-        super().__setattr__("border_subtitle", CONFIG.hotkeys.home.insights.toggle_use_account)
+        # super().__setattr__("border_subtitle", CONFIG.hotkeys.home.insights.toggle_use_account)
         self.page_parent = parent
         self.use_account = False # insights of specific account if True
     

@@ -12,6 +12,9 @@ class Defaults(BaseModel):
 
 class InsightsHotkeys(BaseModel):
     toggle_use_account: str
+    
+class DatemodeHotkeys(BaseModel):
+    go_to_day: str
 
 class HomeHotkeys(BaseModel):
     categories: str
@@ -24,6 +27,7 @@ class HomeHotkeys(BaseModel):
     select_prev_account: str
     select_next_account: str
     insights: InsightsHotkeys
+    datemode: DatemodeHotkeys
 
 class RecordModalHotkeys(BaseModel):
     new_split: str  

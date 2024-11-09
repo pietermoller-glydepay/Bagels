@@ -1,14 +1,32 @@
 from datetime import datetime, timedelta
 
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.containers import Container, Horizontal
 from textual.widgets import Label, Static
 
 from components.button import Button
+from components.modals import InputModal
 from config import CONFIG
 
 
 class DateMode(Static):
+    
+    can_focus = True
+    
+    BINDINGS = [
+        Binding(CONFIG.hotkeys.home.datemode.go_to_day, "go_to_day", "Go to Day"),
+    ]
+    
+    FORM = [
+        {
+            "type": "dateAutoDay",
+            "key": "date",
+            "title": "Date",
+            "defaultValue": datetime.now().strftime("%d")
+        }
+    ]
+    
     def __init__(self, parent: Static, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs, id="datemode-container", classes="module-container")
         super().__setattr__("border_title", "Period")
@@ -21,6 +39,9 @@ class DateMode(Static):
     
     #region Builder
     # -------------- Builder ------------- #
+    
+    # cell classes:
+    # today, not_current_month, target, target_week, target_month
 
     def _get_month_days(self, date: datetime) -> list[tuple[datetime, bool]]:
         """Returns list of (date, is_current_month) tuples for calendar"""
@@ -117,6 +138,16 @@ class DateMode(Static):
         elif event.button.id == "next-month":
             self.page_parent.action_inc_offset()
         self.rebuild()
+    
+    #region Callbacks
+    # --------------- Callbacks --------------- #
+    
+    def action_go_to_day(self) -> None:
+        def check_result(result) -> None:
+            if result:
+                self.page_parent.set_target_date(result["date"])
+        
+        self.app.push_screen(InputModal("Go to Day", form=self.FORM), callback=check_result)
     
     #region View
     # --------------- View --------------- #

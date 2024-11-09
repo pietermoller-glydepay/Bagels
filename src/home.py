@@ -120,6 +120,17 @@ class Home(Static):
     def _update_date(self) -> None:
         self.mode["date"] = self.get_target_date()
     
+    def set_target_date(self, date: datetime) -> None:
+        self.mode["date"] = date
+        
+        # we also need to update the filters
+        self.filter["offset_type"] = "day"
+        offset = (date - datetime.now()).days
+        self.filter["offset"] = offset + 1
+        
+        # rebuild
+        self.rebuild()
+    
     #region Callbacks
     # ------------- Callbacks ------------ #
     

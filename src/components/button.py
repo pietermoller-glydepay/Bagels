@@ -19,7 +19,7 @@ from textual.reactive import reactive
 from textual.widget import Widget
 
 
-class Button(Widget, can_focus=True):
+class Button(Widget):
     """A simple clickable button."""
 
     DEFAULT_CSS = """

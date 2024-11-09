@@ -291,7 +291,8 @@ class Records(Static):
                     self.app.notify(title="Success", message=f"Record created", severity="information", timeout=3)
                     self.page_parent.rebuild()
         
-        self.app.push_screen(RecordModal("New Record", form=self.record_form.get_form(self.page_parent.mode)), callback=check_result)
+        date = self.page_parent.mode["date"]
+        self.app.push_screen(RecordModal(f"New Record on {format_date_to_readable(date)}", form=self.record_form.get_form(self.page_parent.mode)), callback=check_result)
     
     def action_edit(self) -> None:
         if not (hasattr(self, "current_row") and self.current_row):

@@ -63,7 +63,7 @@ class App(TextualApp):
                 "records-container": "r",
                 "templates-container": "t",
                 # "incomemode-container": "v",
-                # "datemode-container": "p",
+                "datemode-container": "p",
             },
             screen=self.screen,
         )

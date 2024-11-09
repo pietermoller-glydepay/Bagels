@@ -71,13 +71,17 @@ Button {
   width: 50%;
   text-align: center;
   color: $accent 50%;
+  
+  &.selected {
+    color: $accent;
+    text-style: bold;
+    background: $surface;
+  }
+  &:focus {
+    background: $accent 10%;
+  }
 }
 
-.selected {
-  color: $accent;
-  text-style: bold;
-  background: $surface;
-}
 
 
 /* ---------------------------------- */
@@ -390,6 +394,7 @@ Button {
         color: $secondary;
       }
     }
+
   }
 
   #home-mode-container {
@@ -546,7 +551,7 @@ Button {
 #templates-container {
   height: 5;
 
-  .templates-scroll {
+  .templates {
     height: 3;
 
     .empty {

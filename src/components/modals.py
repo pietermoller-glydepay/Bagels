@@ -99,8 +99,8 @@ class Accounts(ListView):
     def __init__(self, accounts, initial_index: int = 0, type: str = "", *args, **kwargs):
         super().__init__(
             *[ListItem(
-                    Label(str(account.name), classes="name"), 
-                    Label(str(account.balance), classes="balance"), 
+                    Label(str(account.name), classes="name " + ("hidden-name" if account.hidden else "")), 
+                    Label(str(account.balance), classes="balance " + ("hidden-balance" if account.hidden else "")), 
                     classes="item", 
                     id=f"account-{account.id}"
                 ) for account in accounts],
@@ -114,7 +114,7 @@ class Accounts(ListView):
 class TransferModal(ModalScreen):
     def __init__(self, record=None, *args, **kwargs):
         super().__init__(classes="modal-screen", *args, **kwargs)
-        self.accounts = get_all_accounts_with_balance()
+        self.accounts = get_all_accounts_with_balance(get_hidden=True)
         self.form = [
             {
                 "title": "Label",
@@ -222,7 +222,7 @@ class TransferModal(ModalScreen):
                 Label(id="transfer-error"),
                 id="transfer-modal"
             ),
-            custom_classes="wrapper"
+            custom_classes="wrapper max-width-80"
         )
 
 #region Record

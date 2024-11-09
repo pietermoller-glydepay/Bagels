@@ -16,6 +16,8 @@ class Account(db.Model):
     beginningBalance = db.Column(db.Float, nullable=False)
     repaymentDate = db.Column(db.Integer)
     
+    hidden = db.Column(db.Boolean, nullable=False, default=False)
+    
     records = db.relationship("Record", back_populates="account", foreign_keys="[Record.accountId]")
     transferFromRecords = db.relationship("Record", back_populates="transferToAccount", foreign_keys="[Record.transferToAccountId]")
     splits = db.relationship("Split", back_populates="account")

@@ -201,6 +201,10 @@ Button {
     max-width: 60;
   }
 
+  .max-width-80 {
+    max-width: 80;
+  }
+
   .wrapper {
     margin: 2;
     width: 1fr;
@@ -279,7 +283,7 @@ Button {
 
     .accounts {
       height: 1fr;
-      background: transparent;
+      background: $surface 40%;
 
       &:focus {
         border-bottom: hkey $accent;
@@ -309,10 +313,19 @@ Button {
 
         .name {
           dock: left;
+
+          &.hidden-name {
+            text-style: italic;
+            color: $text-muted;
+          }
         }
         .balance {
           dock: right;
           color: $secondary;
+
+          &.hidden-balance {
+            display: none;
+          }
         }
       }
     }
@@ -644,54 +657,4 @@ Button {
 
 JumpOverlay {
   background: $background 50%;
-}
-
-
-/* ---------------- - --------------- */
-
-
-PeriodBarchart {
-  width: 1fr;
-  height: auto;
-
-  & > .data-container {
-    layout: horizontal;
-    height: auto;
-
-    .labels-container {
-      height: auto;
-      width: 5;
-      color: $text-muted;
-      border-right: wide $accent-lighten-3;
-      background: $surface;
-      
-      .label {
-        width: 1fr;
-      }
-    }
-
-    .bars-container {
-      background: transparent;
-      height: auto;
-
-      .bar-container {
-        height: 1;
-        width: 100%;
-        background: $surface;
-        
-        .bar {
-          background: $surface-lighten-2;
-          min-width: 1;
-          border-top: tall $surface-lighten-3;
-        }
-      }
-    }
-
-  }
-
-  .max-amount {
-    color: $text-muted;
-    text-align: right;
-    width: 1fr;
-  }
 }

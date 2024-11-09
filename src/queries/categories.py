@@ -61,7 +61,7 @@ def get_category_by_id(category_id):
     with app.app_context():
         return Category.query.get(category_id)  
 
-def get_all_categories_records(offset: int = 0, offset_type: str = "month", record_limit: int = 3, isExpense: bool = True, subcategories: bool = False):
+def get_all_categories_records(offset: int = 0, offset_type: str = "month", record_limit: int = 3, isExpense: bool = True, subcategories: bool = False, account_id: int = None):
     # Get all the categories sorted by the total net amount of expense/income of records in that category
     # Populate categories.records with the last record_limit records
     # Categories should have the net amount and the percentage of net/total amount
@@ -69,28 +69,28 @@ def get_all_categories_records(offset: int = 0, offset_type: str = "month", reco
         # Get start and end dates for the period
         start_of_period, end_of_period = get_start_end_of_period(offset, offset_type)
 
+        # Base query with account filter if provided
+        base_query = db.session.query(
+            Category,
+            db.func.sum(Record.amount).label('net_amount')
+        ).join(Category.records)\
+         .filter(Record.date >= start_of_period)\
+         .filter(Record.date < end_of_period)\
+         .filter(Record.isIncome == (not isExpense))
+        
+        if account_id is not None:
+            base_query = base_query.filter(Record.accountId == account_id)
+
         if subcategories:
-            categories = db.session.query(
-                Category,
-                db.func.sum(Record.amount).label('net_amount')
-            ).join(Category.records)\
-             .filter(Record.date >= start_of_period)\
-             .filter(Record.date < end_of_period)\
-             .filter(Record.isIncome == (not isExpense))\
-             .group_by(Category.id)\
-             .order_by(db.desc('net_amount'))\
-             .all()
+            categories = base_query\
+                .group_by(Category.id)\
+                .order_by(db.desc('net_amount'))\
+                .all()
         else:
-            categories = db.session.query(
-                Category,
-                db.func.sum(Record.amount).label('net_amount')
-            ).join(Category.records)\
-             .filter(Record.date >= start_of_period)\
-             .filter(Record.date < end_of_period)\
-             .filter(Record.isIncome == (not isExpense))\
-             .group_by(Category.id)\
-             .order_by(db.desc('net_amount'))\
-             .all()
+            categories = base_query\
+                .group_by(Category.id)\
+                .order_by(db.desc('net_amount'))\
+                .all()
 
             # Aggregate subcategories into their parent categories
             category_dict = {}
@@ -109,12 +109,17 @@ def get_all_categories_records(offset: int = 0, offset_type: str = "month", reco
         # Format results and fetch recent records
         result = []
         for category, net_amount in categories:
-            # Get recent records for this category
-            recent_records = Record.query\
+            # Get recent records for this category with account filter if provided
+            recent_records_query = Record.query\
                 .filter(Record.categoryId == category.id)\
                 .filter(Record.date >= start_of_period)\
                 .filter(Record.date < end_of_period)\
-                .filter(Record.isIncome == (not isExpense))\
+                .filter(Record.isIncome == (not isExpense))
+            
+            if account_id is not None:
+                recent_records_query = recent_records_query.filter(Record.accountId == account_id)
+                
+            recent_records = recent_records_query\
                 .order_by(Record.date.desc())\
                 .limit(record_limit)\
                 .all()

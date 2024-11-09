@@ -161,8 +161,18 @@ class Home(Static):
         
         next_index = (current_index + 1) % len(cycle_order)
             
-        # Update filter type
-        self.filter["offset_type"] = cycle_order[next_index]
+        next_type = cycle_order[next_index]
+        
+        # calculate appropriate offset based on the target (mode date)
+        match next_type:
+            case "week": # day -> week
+                self.filter["offset"] = (self.get_target_date() - datetime.now()).days // 7 + 1
+            case "month": # week -> month
+                self.filter["offset"] = (self.get_target_date().year - datetime.now().year) * 12 + (self.get_target_date().month - datetime.now().month)
+            case _:
+                self.filter["offset"] = 0
+
+        self.filter["offset_type"] = next_type
         self._update_date()
         
         # Refresh table

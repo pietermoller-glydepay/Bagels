@@ -140,7 +140,7 @@ class PercentageBar(Static):
                 label.query_one(".percentage").update(f"{percentage}%")
             
                 
-            width = pwidth = f"{percentage}%"
+            width = f"{percentage}%"
             if i == len(self.items) - 1:
                 # Last item takes remaining space
                 width = "1fr"
@@ -150,11 +150,7 @@ class PercentageBar(Static):
             if self.rounded:
                 if i > 0:
                     prev_background_color = Color.from_rich_color(RichColor.parse(self.items[i - 1].color)).hex
-                    item_widget.update(f"[{prev_background_color} on {background_color}][/{prev_background_color} on {background_color}] {pwidth}")
-                else:
-                    item_widget.update(pwidth)
-            else:
-                item_widget.update(f" {pwidth}")
+                    item_widget.update(f"[{prev_background_color} on {background_color}][/{prev_background_color} on {background_color}]")
                 
                 
             self.bar.mount(item_widget)
@@ -234,7 +230,17 @@ class Insights(Static):
         period_average_label.update(str(period_average))
 
     def get_percentage_bar_items(self, limit: int = 5) -> list[PercentageBarItem]:
-        category_records = get_all_categories_records(**self.page_parent.filter, isExpense=not self.page_parent.mode["isIncome"])
+        if self.use_account:
+            category_records = get_all_categories_records(
+                **self.page_parent.filter,
+                isExpense=not self.page_parent.mode["isIncome"],
+                account_id=self.page_parent.mode["accountId"]["defaultValue"]
+            )
+        else:
+            category_records = get_all_categories_records(
+                **self.page_parent.filter,
+                isExpense=not self.page_parent.mode["isIncome"]
+            )
         
         # Sort categories by percentage in descending order
         items = []

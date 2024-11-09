@@ -506,19 +506,27 @@ Button {
   &:focus {
     border: round $accent;
   }
+  
+  &:focus-within {
+    border: round $accent;
+  }
 }
 
 /* ------------- Records ------------ */
 
-.selectors {
-  height: auto;
-  layout: horizontal;
-  
-  & > Container {
-    layout: horizontal;
-    align: center middle;
+#records-container {
+
+
+  .selectors {
     height: auto;
-    border: round $secondary;
+    layout: horizontal;
+    
+    & > Container {
+      layout: horizontal;
+      align: center middle;
+      height: auto;
+      border: round $secondary;
+    }
   }
 }
 

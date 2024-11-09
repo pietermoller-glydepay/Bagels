@@ -49,7 +49,7 @@ def get_record_total_split_amount(record_id: int):
         splits = get_splits_by_record_id(record_id)
         return sum(split.amount for split in splits)
 
-def get_records(offset: int = 0, offset_type: str = "month", sort_by: str = 'createdAt', sort_direction: str = 'desc'):
+def get_records(offset: int = 0, offset_type: str = "month"):
     with app.app_context():
         query = Record.query.options(
             db.joinedload(Record.category),
@@ -65,12 +65,9 @@ def get_records(offset: int = 0, offset_type: str = "month", sort_by: str = 'cre
         query = query.filter(Record.date >= start_of_period, 
                              Record.date < end_of_period)
 
-        if sort_by:
-            column = getattr(Record, sort_by)
-            if sort_direction.lower() == 'asc':
-                query = query.order_by(column.asc())
-            else:
-                query = query.order_by(column.desc())
+        createdAt_column = getattr(Record, "createdAt")
+        date_column = getattr(Record, "date")
+        query = query.order_by(date_column.desc(), createdAt_column.desc())
 
         records = query.all()
         return records

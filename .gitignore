@@ -1,3 +1,6 @@
 __pycache__/
 .venv/
 *.db
+dist/
+Bagels.egg-info/
+instance/

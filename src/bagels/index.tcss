@@ -1,0 +1,658 @@
+/* ---------------------------------- */
+/*                Base                */
+/* ---------------------------------- */
+
+* {
+  scrollbar-color: $accent 30%;
+  scrollbar-color-hover: $accent 80%;
+  scrollbar-color-active: $accent;
+  scrollbar-background: $surface-darken-1;
+  scrollbar-background-hover: $surface-darken-1;
+  scrollbar-background-active: $surface-darken-1;
+  scrollbar-size-vertical: 1;
+
+  &:focus {
+    scrollbar-color: $accent 55%;
+  }
+}
+
+Screen {
+  background: $background;
+}
+
+Rule {
+  margin: 0;
+  color: $primary-background;
+}
+
+.base-page {
+  padding: 0 1;
+}
+
+DataTable > .datatable--net-row {
+  color: $primary-background-lighten-3;
+  text-style: italic;
+}
+
+DataTable > .datatable--group-header-row {
+  color: $primary-background-darken-3;
+  background: $secondary-lighten-3;
+  text-style: underline bold;
+}
+
+Input {
+  padding: 0 1;
+  height: 1;
+  background: $surface;
+  border: none;
+  &.-invalid {
+    padding-left: 0;
+    border-left: outer $error;
+  }
+
+  &:focus {
+    background: $surface-lighten-1;
+    padding-left: 0;
+    border-left: outer $surface-lighten-2;
+    &.-invalid {
+      border-left: outer $error;
+    }
+
+    & .input--cursor {
+      color: $text;
+      background: $accent;
+      text-style: not reverse;
+    }
+
+  }
+}
+
+Button {
+  width: 50%;
+  text-align: center;
+  color: $accent 50%;
+  
+  &.selected {
+    color: $accent;
+    text-style: bold;
+    background: $surface;
+  }
+  &:focus {
+    background: $accent 10%;
+  }
+}
+
+
+
+/* ---------------------------------- */
+/*                 App                */
+/* ---------------------------------- */
+
+.header {
+  layout: horizontal;
+  height: auto;
+  padding: 1 2;
+
+  .version {
+    color: $primary-background-lighten-3;
+    margin-left: 1;
+  }
+
+  .user {
+    dock: right;
+  }
+}
+
+/* ---------------------------------- */
+/*             Input field            */
+/* ---------------------------------- */
+
+.field-row {
+  height: 3;
+
+  .label {
+    color: $accent;
+  }
+
+  Input {
+  }
+
+  Label.error {
+    color: $error;
+    dock: right;
+    layer: error;
+    border-right: outer $error;
+    background: $error 20%;
+    padding-left: 1;
+  }
+
+  .switch-group {
+    layout: horizontal;
+
+    .left {
+      dock: left;
+    }
+
+    .right {
+      dock: right;
+    }
+
+    Switch {
+      width: 1fr;
+      margin: 0 2;
+      padding: 0;
+      border: none;
+  
+      .switch--slider {
+        color: $accent;
+        background: $surface;
+      }
+  
+      &:focus > .switch--slider {
+        color: $accent-lighten-1;
+        background: $surface-lighten-2;
+      }
+  
+      .-on > .switch--slider {
+        color: $accent;
+      }
+  }
+  }
+
+  .field-autocomplete {
+    margin-left: 0;
+  }
+}
+
+/* ---------------------------------- */
+/*         Confirmation Modal         */
+/* ---------------------------------- */
+
+#confirmation-modal-screen {
+  align: center bottom;
+  background: $background 60%;
+
+  .dialog {
+    padding: 0 1;
+    margin: 2;
+    width: 100%;
+    height: 5;
+    border: wide $accent;
+    align-vertical: middle;
+  
+    Label {
+      color: white;
+      width: 1fr;
+      text-align: center;
+    }
+  }
+}
+
+
+/* ---------------------------------- */
+/*             Input modal            */
+/* ---------------------------------- */
+
+.modal-screen {
+  align: center top;
+  background: $background 60%;
+
+  .max-width-60 {
+    max-width: 60;
+  }
+
+  .max-width-80 {
+    max-width: 80;
+  }
+
+  .wrapper {
+    margin: 2;
+    width: 1fr;
+    height: auto;
+
+    Header {
+      background: $surface-lighten-2;
+    }
+
+    Footer {
+      width: 1fr;
+      height: 1;
+      background: $surface-lighten-2;
+
+      FooterKey {
+        background: $surface-lighten-2;
+        .footer-key--key {
+          background: $surface-lighten-2;
+        }
+      }
+    }
+
+    .container {
+      padding: 1 2;
+      height: auto;
+      border-left: outer $surface-lighten-2;
+      border-right: outer $surface-lighten-2;
+
+      #split-total {
+        border-top: double $primary-background;
+        width: 1fr;
+        margin-top: 1;
+      }
+
+      #splits-container {
+        height: auto;
+
+        .split {
+          border-top: round $surface-lighten-3;
+          height: auto;
+          padding-top: 1;
+
+        }
+      }
+    }
+  }
+}
+
+/* ---------------------------------- */
+/*           Transfer Modal           */
+/* ---------------------------------- */
+
+#transfer-modal {
+  align-horizontal: center;
+  height: auto;
+
+  .active { # transfer-error
+    color: $error;
+    background: $error 20%;
+    border-left: outer $error;
+    border-right: outer $error;
+    width: 1fr;
+    text-align: center;
+    margin-top: 1;
+  }
+
+  .transfer-accounts-container {
+    height: 10;
+    margin-top: 1;
+    layout: horizontal;
+    align: center middle;
+
+    .arrow {
+      padding: 4 2;
+    }
+
+    .accounts {
+      height: 1fr;
+      background: $surface 40%;
+
+      &:focus {
+        border-bottom: hkey $accent;
+        # box-sizing: content-box;
+      }
+      
+      .item {
+        height: 3;
+        layout: horizontal;
+        padding: 0 1 1 1;
+        border-top: tall $surface-lighten-2;
+        background: $surface;
+
+        # & > Widget :hover {
+        #     background: $boost;
+        # }
+        &.--highlight {
+          border-left: outer $accent;
+          padding: 1 1 1 1;
+          border-top: none;
+          background: $surface-lighten-2;
+        }
+        
+        & > .selected {
+          background: $surface;
+        }
+
+        .name {
+          dock: left;
+
+          &.hidden-name {
+            text-style: italic;
+            color: $text-muted;
+          }
+        }
+        .balance {
+          dock: right;
+          color: $secondary;
+
+          &.hidden-balance {
+            display: none;
+          }
+        }
+      }
+    }
+  }
+}
+
+/* ---------------------------------- */
+/*             Categories             */
+/* ---------------------------------- */
+
+#categories-modal-screen {
+  background: $background 60%;
+
+  .dialog {
+    height: 1fr;
+    width: 1fr;
+    margin: 3;
+    padding: 1;
+    border: round $accent;
+  }
+}
+
+/* ---------------------------------- */
+/*              Home page             */
+/* ---------------------------------- */
+
+/* --------------- top -------------- */
+
+#empty-indicator {
+  width: 1fr;
+  hatch: right $primary-background;
+  text-align: center;
+  padding: 6 0;
+  color: $primary-background-lighten-1;
+}
+
+#home-top-container {
+  layout: horizontal;
+  width: 1fr;
+  height: auto;
+
+  #accounts-container {
+    width: 1fr;
+    height: 100%;
+
+    .account-container {
+      height: auto;
+      align-vertical: middle;
+      padding: 0 1 1 1;
+      border-top: tall $surface;
+      
+      .left-container {
+        height: auto;
+        # layout: horizontal;
+
+        .name {
+          margin-right: 2;
+        }
+
+        .description {
+          color: $primary-background-lighten-3;
+          
+        }
+        
+        .none {
+          display: none;
+        }
+      }
+      
+      &.selected {
+        border-left: outer $surface-lighten-2;
+        padding: 1 1 1 1;
+        border-top: none;
+        background: $surface;
+      }
+      
+      .balance {
+        dock: right;
+        color: $secondary;
+      }
+    }
+
+  }
+
+  #home-mode-container {
+    width: 30;
+    
+    #incomemode-container {
+      layout: horizontal;
+      width: 1fr;
+    }
+    #datemode-container {
+      width: 1fr;
+      height: 11;
+
+      .month-selector {
+        height: 2;
+        layout: horizontal;
+
+        Button {
+          width: auto;
+        }
+        #prev-month {
+          dock: left;
+          color: $primary-background-lighten-3;
+        }
+        .current-filter-label {
+          dock: left;
+          align: center middle;
+        }
+        #next-month {
+          dock: right;
+          color: $primary-background-lighten-3;
+        }
+      }
+      .calendar {
+        height: 6;
+        width: 20;
+        offset-x: 3;
+
+        .calendar-row {
+          height: 1;
+
+          Label {
+            width: 3;
+          }
+          .not_current_month {
+            color: $panel-lighten-1;
+          }
+        }
+
+        .calendar-dotw-row {
+          height: 1;
+
+          Label {
+            width: 3;
+            color: $primary-background-lighten-3;
+            text-style: italic;
+          }
+        }
+        
+        .target_month {
+          background: $accent 10%;
+        }
+
+        .target_week, .target {
+          background: $accent 20%;
+        }
+
+
+        .today {
+          color: $accent;
+          text-style: bold underline;
+        }
+        
+      }
+    }
+  }
+}
+
+.home-modules-container {
+  height: auto;
+  width: 1fr;
+  padding: 0 2;
+
+  &.v {
+    layout: vertical;
+
+  }
+  
+  &.h {
+    layout: horizontal;
+    width: 1fr;
+    
+    .left {
+      width: 40%;
+    }
+    .right {
+      width: 60%
+    }
+  }
+
+}
+
+.module-container {
+  width: 1fr;
+  border: round $panel-lighten-2;
+  padding-left: 1;  
+  padding-right: 1;
+
+  &:focus {
+    border: round $accent;
+  }
+  
+  &:focus-within {
+    border: round $accent;
+  }
+}
+
+/* ------------- Records ------------ */
+
+#records-container {
+
+
+  .selectors {
+    height: auto;
+    layout: horizontal;
+    
+    & > Container {
+      layout: horizontal;
+      align: center middle;
+      height: auto;
+      border: round $secondary;
+    }
+  }
+}
+
+#insights-container {
+  .figures-container {
+    height: auto;
+    margin-bottom: 1;
+
+    .container {
+      height: auto;
+
+      .title {
+        color: $primary-background-lighten-3;
+      }
+
+      .amount {
+        text-style: bold;
+      }
+    }
+    
+    .average {
+      Label {
+        text-align: right;
+        width: 1fr;
+      }
+    }
+  }
+}
+
+#templates-container {
+  height: 5;
+
+  .templates {
+    height: 3;
+
+    .empty {
+      width: 1fr;
+      margin-top: 1;
+      color: $primary-background-lighten-3;
+      text-align: center;
+    }
+
+    .template-item {
+      width: auto;
+      height: auto;
+      padding: 0 1;
+      layout: horizontal;
+      border: round $secondary;
+
+      &:focus {
+        border: round $accent;
+      }
+
+      .dot {
+        padding-right: 1;
+      }
+    }
+  }
+}
+
+/* ---------------------------------- */
+/*               Utility              */
+/* ---------------------------------- */
+
+.hidden {
+  visibility: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+.label-empty {
+  color: $accent;
+  width: 1fr;
+  padding-top: 2;
+  text-align: center;
+}
+
+/* ---------------------------------- */
+/*               Jumper               */
+/* ---------------------------------- */
+
+.textual-jump-label {
+  layer: textual-jump;
+  dock: top;
+  # background: $accent-lighten-2;
+  text-style: bold;
+  color: $text;
+  border: round $accent;
+  padding: 0 1;
+}
+
+#textual-jump-info {
+  margin-bottom: 1;
+  dock: bottom;
+  height: 1;
+  width: 1fr;
+  background: $accent;
+  color: $text;
+  hatch: right $accent-darken-2;
+  
+  & Label {
+    width: auto;
+    padding: 0 1;
+  }
+}
+
+#textual-jump-dismiss {
+  dock: bottom;
+  height: 1;
+  background: transparent;
+  color: $text-muted 42%;
+}
+
+JumpOverlay {
+  background: $background 50%;
+}

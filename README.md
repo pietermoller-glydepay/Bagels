@@ -8,14 +8,14 @@ Powerful expense tracker that lives in your terminal. WIP!
 
 Install uv:
 
-```
-curl -LsSf https://astral.sh/uv/install.sh | s
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
 Install:
 
-```
-uv tool install bagels
+```bash
+uv tool install --python 3.13 bagels
 ```
 
 ## Development setup

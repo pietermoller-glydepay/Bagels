@@ -14,10 +14,11 @@ from .db import db
 def create_app():
     """Create Flask app with dynamic database URI"""
     app = Flask(__name__)
-    app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{database_file().resolve()}"
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{database_file().resolve()}"
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     db.init_app(app)
     return app
+
 
 def _create_outside_source_account():
     outside_account = Account.query.filter_by(name="Outside source").first()
@@ -26,10 +27,11 @@ def _create_outside_source_account():
             name="Outside source",
             description="Default account for external transactions",
             beginningBalance=0.0,
-            hidden=True
+            hidden=True,
         )
         db.session.add(outside_account)
         db.session.commit()
+
 
 def init_db():
     # Recreate app to ensure latest database path is used
@@ -39,9 +41,11 @@ def init_db():
         db.create_all()
         _create_outside_source_account()
 
+
 def get_app():
     # Return current app instance with latest database path
     return app
+
 
 def wipe_database():
     # Recreate app to ensure latest database path is used

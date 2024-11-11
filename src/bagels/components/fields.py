@@ -7,10 +7,11 @@ from bagels.components.autocomplete import AutoComplete, Dropdown, DropdownItem
 
 class Fields(Static):
     """Container for multiple form fields"""
+
     def __init__(self, fields: list[dict]):
         super().__init__()
         self.fields = fields
-    
+
     def compose(self) -> ComposeResult:
         for field in self.fields:
             yield Field(field)
@@ -18,15 +19,15 @@ class Fields(Static):
 
 class Field(Static):
     """Individual form field that can be text, number, boolean, or autocomplete"""
+
     def __init__(self, field: dict):
         super().__init__()
         self.field = field
         self.field_type = field["type"]
-        
+
         # Create base input widget
         self.input = Input(
-            placeholder=field.get("placeholder", ""),
-            id=f"field-{field['key']}"
+            placeholder=field.get("placeholder", ""), id=f"field-{field['key']}"
         )
 
         # Configure input based on field type
@@ -36,19 +37,20 @@ class Field(Static):
             case "integer" | "number":
                 self.input.type = self.field_type
                 self.input.value = field.get("defaultValue", "")
-                
+
             case "autocomplete":
                 self.input.heldValue = field.get("defaultValue", "")
-                self.input.value = str(field.get("defaultValueText", field.get("defaultValue", "")))
-            
+                self.input.value = str(
+                    field.get("defaultValueText", field.get("defaultValue", ""))
+                )
+
             case type_ if type_ != "boolean":
                 self.input.value = field.get("defaultValue", "")
-        
 
     def on_auto_complete_selected(self, event: AutoComplete.Selected) -> None:
         """Handle autocomplete selection"""
         self.screen.focus_next()
-        
+
         # Find matching option and set held value
         for item in self.field["options"]:
             item_text = str(item.get("text", item["value"]))
@@ -56,7 +58,7 @@ class Field(Static):
             if item_text == selected_dropdown_text:
                 self.input.heldValue = item["value"]
                 break
-    
+
     def compose(self) -> ComposeResult:
         if self.field_type == "hidden":
             # Hidden fields just need a static widget to hold the value
@@ -75,30 +77,31 @@ class Field(Static):
                 dropdown_items = [
                     DropdownItem(
                         item.get("text", item["value"]),
-                        item.get("prefix", ""), 
-                        item.get("postfix", "")
-                    ) for item in self.field["options"]
+                        item.get("prefix", ""),
+                        item.get("postfix", ""),
+                    )
+                    for item in self.field["options"]
                 ]
                 dropdown = Dropdown(
                     items=dropdown_items,
                     show_on_focus=True,
                     id=f"dropdown-{self.field['key']}",
-                    create_option=self.field.get("create_action")
+                    create_option=self.field.get("create_action"),
                 )
-                
+
                 yield AutoComplete(
                     self.input,
                     dropdown,
                     classes="field-autocomplete",
-                    create_action=self.field.get("create_action")
+                    create_action=self.field.get("create_action"),
                 )
 
             elif self.field_type == "boolean":
                 with Container(classes="switch-group"):
                     yield Label(str(self.field["labels"][0]), classes="left")
                     yield Switch(
-                        id=f"field-{self.field['key']}", 
-                        value=self.field.get("defaultValue", False)
+                        id=f"field-{self.field['key']}",
+                        value=self.field.get("defaultValue", False),
                     )
                     yield Label(str(self.field["labels"][1]), classes="right")
 

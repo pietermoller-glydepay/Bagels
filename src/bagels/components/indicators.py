@@ -6,6 +6,6 @@ class EmptyIndicator(Static):
     def __init__(self, message: str):
         super().__init__()
         self.message = message
-    
+
     def compose(self) -> ComposeResult:
         yield Static(self.message, id="empty-indicator")

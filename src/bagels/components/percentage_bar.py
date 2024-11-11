@@ -11,6 +11,7 @@ class PercentageBarItem(BaseModel):
     count: int
     color: str
 
+
 class PercentageBar(Static):
     DEFAULT_CSS = """
     PercentageBar {
@@ -59,21 +60,20 @@ class PercentageBar(Static):
     }
     
     """
-    
-    items: list[PercentageBarItem] = [
-    ]
-    
+
+    items: list[PercentageBarItem] = []
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.rounded = True
-    
+
     def on_mount(self) -> None:
         self.rebuild()
-    
+
     def set_items(self, items: list[PercentageBarItem]) -> None:
         self.items = items
         self.rebuild()
-    
+
     #  50%  50% 
     # ^-----======^
     def rebuild(self) -> None:
@@ -83,7 +83,7 @@ class PercentageBar(Static):
         labels = self.query(".bar-label")
         labels_count = len(labels)
         items_count = len(self.items)
-        
+
         prev_empty_bar = self.bar.query(".empty-bar")
         if len(self.items) == 0:
             if self.rounded:
@@ -98,7 +98,7 @@ class PercentageBar(Static):
                 self.bar_end.styles.display = "block"
             if len(prev_empty_bar) > 0:
                 prev_empty_bar[0].remove()
-        
+
         to_remove_count = labels_count - items_count
         if to_remove_count > 0:
             for i in range(to_remove_count):
@@ -117,19 +117,20 @@ class PercentageBar(Static):
                     self.bar_end.styles.color = background_color
             # calculate percentage
             percentage = round((item.count / total) * 100)
-            if i + 1 > labels_count: # if we have more items than labels, we create a new label
+            if (
+                i + 1 > labels_count
+            ):  # if we have more items than labels, we create a new label
                 label_widget = Container(
                     Label(f"[{color}]●[/{color}] {item.name}", classes="name"),
                     Label(f"{percentage}%", classes="percentage"),
-                    classes="bar-label"
+                    classes="bar-label",
                 )
                 self.labels_container.mount(label_widget)
-            else: 
+            else:
                 label = labels[i]
                 label.query_one(".name").update(f"[{color}]●[/{color}] {item.name}")
                 label.query_one(".percentage").update(f"{percentage}%")
-            
-                
+
             width = f"{percentage}%"
             if i == len(self.items) - 1:
                 # Last item takes remaining space
@@ -139,19 +140,24 @@ class PercentageBar(Static):
             item_widget.styles.background = background_color
             if self.rounded:
                 if i > 0:
-                    prev_background_color = Color.from_rich_color(RichColor.parse(self.items[i - 1].color)).hex
-                    item_widget.update(f"[{prev_background_color} on {background_color}][/{prev_background_color} on {background_color}]")
-                
-                
+                    prev_background_color = Color.from_rich_color(
+                        RichColor.parse(self.items[i - 1].color)
+                    ).hex
+                    item_widget.update(
+                        f"[{prev_background_color} on {background_color}][/{prev_background_color} on {background_color}]"
+                    )
+
             self.bar.mount(item_widget)
-        
+
     def compose(self) -> ComposeResult:
         self.bar_start = Label("", classes="bar-start")
         self.bar = Container(classes="bar")
         self.bar_end = Label("", classes="bar-end")
         self.labels_container = Container(classes="labels-container")
         with Container(classes="bar-container"):
-            if self.rounded: yield self.bar_start
+            if self.rounded:
+                yield self.bar_start
             yield self.bar
-            if self.rounded: yield self.bar_end
+            if self.rounded:
+                yield self.bar_end
         yield self.labels_container

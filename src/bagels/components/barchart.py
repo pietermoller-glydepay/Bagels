@@ -8,6 +8,7 @@ class BarchartData(BaseModel):
     amounts: list[float]
     labels: list[str]
 
+
 class Barchart(Static):
     DEFAULT_CSS = """
     Barchart {
@@ -55,23 +56,19 @@ class Barchart(Static):
         }
     }
     """
-    
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.data = BarchartData(
-            amounts=[],
-            labels=[]
-        )
+        self.data = BarchartData(amounts=[], labels=[])
         self.last_count = 0
-        
-    
+
     def on_mount(self) -> None:
         self.rebuild()
-    
+
     def set_data(self, data: BarchartData) -> None:
         self.data = data
         self.rebuild()
-    
+
     def rebuild(self):
         if len(self.data.amounts) == 0:
             self.styles.display = "none"
@@ -88,14 +85,14 @@ class Barchart(Static):
             bars_container = self.query(".bars-container")
             if bars_container:
                 bars_container[0].remove()
-                
-            labels_container = self.query(".labels-container") 
+
+            labels_container = self.query(".labels-container")
             if labels_container:
                 labels_container[0].remove()
-            
+
             bars_container = Container(classes="bars-container")
             labels_container = Container(classes="labels-container")
-            
+
             for i in range(len(self.data.amounts)):
                 amount = self.data.amounts[i]
                 label = self.data.labels[i]
@@ -109,23 +106,23 @@ class Barchart(Static):
                 # build label
                 label_widget = Label(label, classes="label")
                 labels_container.compose_add_child(label_widget)
-            
+
             data_container = self.query_one(".data-container")
             data_container.mount(labels_container)
             data_container.mount(bars_container)
-            
+
             self.last_count = len(self.data.amounts)
-            
+
         else:
             # Just update existing widgets
             bars = self.query(".bar")
             labels = self.query(".label")
-            
+
             for i in range(len(self.data.amounts)):
                 amount = self.data.amounts[i]
                 label = self.data.labels[i]
                 percentage = (amount / max_amount * 100) if max_amount > 0 else 0
-                
+
                 bars[i].styles.width = f"{percentage}%"
                 labels[i].update(label)
 
@@ -133,4 +130,3 @@ class Barchart(Static):
         # Create containers
         yield Label(f"Loading...", classes="max-amount")
         yield Container(classes="data-container")
-                

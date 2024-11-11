@@ -1,6 +1,6 @@
 from typing import Any, Mapping, NamedTuple, Protocol, runtime_checkable
-from textual.errors import NoWidget
 
+from textual.errors import NoWidget
 from textual.geometry import Offset
 from textual.screen import Screen
 from textual.widget import Widget

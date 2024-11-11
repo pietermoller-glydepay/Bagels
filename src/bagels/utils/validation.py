@@ -3,7 +3,9 @@ from datetime import datetime
 from textual.widget import Widget
 
 
-def _validate_number(value: str, field: dict, is_float: bool = False) -> tuple[bool, str | None]:
+def _validate_number(
+    value: str, field: dict, is_float: bool = False
+) -> tuple[bool, str | None]:
     """Validate a number field and return (is_valid, error_message)"""
     if not value:
         if field.get("isRequired", False):
@@ -13,12 +15,12 @@ def _validate_number(value: str, field: dict, is_float: bool = False) -> tuple[b
     # Check if valid number
     if is_float:
         # Allow negative sign at start
-        test_value = value.lstrip('-').replace('.', '', 1)
+        test_value = value.lstrip("-").replace(".", "", 1)
         is_valid = test_value.isdigit()
         type_name = "number"
     else:
         # Allow negative sign at start
-        test_value = value.lstrip('-')
+        test_value = value.lstrip("-")
         is_valid = test_value.isdigit()
         type_name = "integer"
 
@@ -34,7 +36,7 @@ def _validate_number(value: str, field: dict, is_float: bool = False) -> tuple[b
         if num_val <= min_val:
             return False, f"Must be greater than {field['min']}"
 
-    # Check maximum  
+    # Check maximum
     if "max" in field:
         max_val = float(field["max"]) if is_float else int(field["max"])
         if num_val > max_val:
@@ -43,7 +45,9 @@ def _validate_number(value: str, field: dict, is_float: bool = False) -> tuple[b
     return True, None
 
 
-def _validate_date(value: str, field: dict, auto_day: bool = False) -> tuple[datetime | None, str | None]:
+def _validate_date(
+    value: str, field: dict, auto_day: bool = False
+) -> tuple[datetime | None, str | None]:
     """Validate a date field and return (parsed_date, error_message)"""
     if not value or value == "":
         if field.get("isRequired", False):
@@ -64,7 +68,9 @@ def _validate_date(value: str, field: dict, auto_day: bool = False) -> tuple[dat
         return None, f"Must be in {format_str}"
 
 
-def _validate_autocomplete(value: str, held_value: str, field: dict) -> tuple[bool, str | None]:
+def _validate_autocomplete(
+    value: str, held_value: str, field: dict
+) -> tuple[bool, str | None]:
     """Validate an autocomplete field and return (is_valid, error_message)"""
     if not value and not held_value:
         if field.get("isRequired", False):
@@ -89,7 +95,9 @@ def _validate_autocomplete(value: str, held_value: str, field: dict) -> tuple[bo
     return True, None
 
 
-def validateForm(formComponent: Widget, formData: list[dict]) -> tuple[dict, dict, bool]:
+def validateForm(
+    formComponent: Widget, formData: list[dict]
+) -> tuple[dict, dict, bool]:
     result = {}
     errors = {}
     isValid = True
@@ -97,7 +105,11 @@ def validateForm(formComponent: Widget, formData: list[dict]) -> tuple[dict, dic
     for field in formData:
         fieldKey = field["key"]
         fieldWidget = formComponent.query_one(f"#field-{fieldKey}")
-        fieldValue = fieldWidget.heldValue if hasattr(fieldWidget, "heldValue") else fieldWidget.value
+        fieldValue = (
+            fieldWidget.heldValue
+            if hasattr(fieldWidget, "heldValue")
+            else fieldWidget.value
+        )
 
         error = None
 
@@ -123,10 +135,12 @@ def validateForm(formComponent: Widget, formData: list[dict]) -> tuple[dict, dic
                     result[fieldKey] = date
 
             case "autocomplete":
-                is_valid, error = _validate_autocomplete(fieldWidget.value, fieldValue, field)
+                is_valid, error = _validate_autocomplete(
+                    fieldWidget.value, fieldValue, field
+                )
                 if is_valid and fieldValue:
                     result[fieldKey] = fieldValue
-            
+
             case _:
                 if not fieldValue and field.get("isRequired", False):
                     error = f"Required"

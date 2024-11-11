@@ -19,9 +19,14 @@ def create_config_file() -> None:
             yaml.dump(Config.get_default().model_dump(), f)
     except OSError:
         pass
-    
+
+
 @click.group(invoke_without_command=True)
-@click.option('--at', type=click.Path(exists=True, file_okay=True, dir_okay=True, path_type=Path), help='Specify the path.')
+@click.option(
+    "--at",
+    type=click.Path(exists=True, file_okay=True, dir_okay=True, path_type=Path),
+    help="Specify the path.",
+)
 @click.pass_context
 def cli(ctx, at: click.Path | None):
     """Bagels CLI."""
@@ -31,14 +36,13 @@ def cli(ctx, at: click.Path | None):
         create_config_file()
         init_db()
         from bagels.app import App
+
         app = App()
         app.run()
 
+
 @cli.command()
-@click.argument(
-    "thing_to_locate",
-    type=click.Choice(["config", "database"])
-)
+@click.argument("thing_to_locate", type=click.Choice(["config", "database"]))
 def locate(thing_to_locate: str) -> None:
     if thing_to_locate == "config":
         print("Config file:")
@@ -46,6 +50,7 @@ def locate(thing_to_locate: str) -> None:
     elif thing_to_locate == "database":
         print("Database file:")
         print(database_file())
+
 
 if __name__ == "__main__":
     cli()

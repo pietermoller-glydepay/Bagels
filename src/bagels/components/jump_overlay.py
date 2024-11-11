@@ -49,7 +49,13 @@ class JumpOverlay(ModalScreen[str | Widget | None]):
         # arrive at the parent after the overlay is closed, then the parent
         # will handle the key event, resulting in the focus being shifted
         # again (unexpectedly) after the jump target was focused.
-        if key_event.key in ["tab", "shift+tab", CONFIG.hotkeys.new, CONFIG.hotkeys.edit, CONFIG.hotkeys.delete]:
+        if key_event.key in [
+            "tab",
+            "shift+tab",
+            CONFIG.hotkeys.new,
+            CONFIG.hotkeys.edit,
+            CONFIG.hotkeys.delete,
+        ]:
             key_event.stop()
             key_event.prevent_default()
 

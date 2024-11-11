@@ -13,12 +13,13 @@ from bagels.queries.categories import create_default_categories
 
 app = get_app()
 
+
 def create_sample_entries():
     yaml_path = Path(__file__).parent.parent / "templates" / "sample_entries.yaml"
-    
-    with open(yaml_path, 'r') as file:
+
+    with open(yaml_path, "r") as file:
         sample_entries = yaml.safe_load(file)
-    
+
     create_default_categories()
 
     with app.app_context():
@@ -42,7 +43,7 @@ def create_sample_entries():
         for record_data in sample_entries["records"]:
             # Handle splits if present
             splits_data = record_data.pop("splits", None)
-            
+
             # Create record
             record = Record(**record_data)
             db.session.add(record)
@@ -51,10 +52,7 @@ def create_sample_entries():
             # Create splits if any
             if splits_data:
                 for split_data in splits_data:
-                    split = Split(
-                        recordId=record.id,
-                        **split_data
-                    )
+                    split = Split(recordId=record.id, **split_data)
                     db.session.add(split)
 
         # Create record templates

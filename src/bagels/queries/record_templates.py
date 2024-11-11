@@ -4,7 +4,8 @@ from bagels.models.record_template import RecordTemplate
 
 app = get_app()
 
-#region c
+
+# region c
 def create_template(data):
     with app.app_context():
         new_template = RecordTemplate(**data)
@@ -12,22 +13,25 @@ def create_template(data):
         db.session.commit()
         return new_template
 
-#region r
+
+# region r
 def get_all_templates():
     with app.app_context():
         return RecordTemplate.query.options(
             db.joinedload(RecordTemplate.category),
-            db.joinedload(RecordTemplate.account)
+            db.joinedload(RecordTemplate.account),
         ).all()
+
 
 def get_template_by_id(recordtemplate_id):
     with app.app_context():
         return RecordTemplate.query.options(
             db.joinedload(RecordTemplate.category),
-            db.joinedload(RecordTemplate.account)
+            db.joinedload(RecordTemplate.account),
         ).get(recordtemplate_id)
 
-#region u
+
+# region u
 def update_template(recordtemplate_id, data):
     with app.app_context():
         recordtemplate = RecordTemplate.query.get(recordtemplate_id)
@@ -37,7 +41,8 @@ def update_template(recordtemplate_id, data):
             db.session.commit()
         return recordtemplate
 
-#region d
+
+# region d
 def delete_template(recordtemplate_id):
     with app.app_context():
         recordtemplate = RecordTemplate.query.get(recordtemplate_id)

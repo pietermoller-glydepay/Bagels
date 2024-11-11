@@ -1,8 +1,10 @@
+from importlib.metadata import metadata
+
 from rich.console import Group
 from rich.text import Text
 from textual import events, log, on
 from textual.app import App as TextualApp
-from textual.app import ComposeResult, SystemCommand
+from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.command import CommandPalette
 from textual.containers import Container
@@ -11,14 +13,12 @@ from textual.geometry import Size
 from textual.reactive import Reactive, reactive
 from textual.signal import Signal
 from textual.widget import Widget
-from textual.widgets import Footer, Header, Label, Tab, Tabs
-from tomli import load
+from textual.widgets import Footer, Label, Tabs
 
 from bagels.components.jump_overlay import JumpOverlay
 from bagels.components.jumper import Jumper
 from bagels.config import CONFIG, write_state
 from bagels.home import Home
-from bagels.models.database.app import init_db
 from bagels.pages.Categories import Categories
 from bagels.provider import AppProvider
 from bagels.queries.categories import create_default_categories
@@ -27,7 +27,7 @@ from bagels.utils.user_host import get_user_host_string
 
 
 class App(TextualApp):
-    
+
     CSS_PATH = "index.tcss"
     BINDINGS = [
         (CONFIG.hotkeys.toggle_jump_mode, "toggle_jump_mode", "Jump Mode"),
@@ -43,19 +43,19 @@ class App(TextualApp):
     """The current layout of the app."""
     _jumping: Reactive[bool] = reactive(False, init=False, bindings=True)
     """True if 'jump mode' is currently active, otherwise False."""
-    
-    #region init
+
+    # region init
     def __init__(self):
         # Initialize available themes with a default
         available_themes: dict[str, Theme] = {"galaxy": BUILTIN_THEMES["galaxy"]}
         available_themes |= BUILTIN_THEMES
         self.themes = available_themes
         super().__init__()
-        
-        with open("pyproject.toml", "rb") as f:
-            self.project_info = load(f)["project"]
-    
-    
+
+        # Get package metadata directly
+        meta = metadata("bagels")
+        self.project_info = {"name": meta["Name"], "version": meta["Version"]}
+
     def on_mount(self) -> None:
         # --------------- theme -------------- #
         self.theme_change_signal = Signal[Theme](self, "theme-changed")
@@ -71,8 +71,7 @@ class App(TextualApp):
             },
             screen=self.screen,
         )
-        
-    
+
     # used by the textual app to get the theme variables
     def get_css_variables(self) -> dict[str, str]:
         if self.theme:
@@ -91,14 +90,14 @@ class App(TextualApp):
             f"Theme is now [b]{theme!r}[/].", title="Theme updated", timeout=2.5
         )
         write_state("theme", theme)
-    
-    #region bindings
+
+    # region bindings
     # ---------- Bindings helper ---------- #
-    
+
     def newBinding(self, binding: Binding) -> None:
         self._bindings.key_to_bindings.setdefault(binding.key, []).append(binding)
         self.refresh_bindings()
-    
+
     def checkBindingExists(self, key: str) -> bool:
         return key in self._bindings.key_to_bindings
 
@@ -106,8 +105,8 @@ class App(TextualApp):
         binding = self._bindings.key_to_bindings.pop(key, None)
         if binding:
             self.refresh_bindings()
-    
-    #region theme 
+
+    # region theme
     # --------------- theme -------------- #
     def watch_theme(self, theme: str | None) -> None:
         self.refresh_css(animate=False)
@@ -115,11 +114,11 @@ class App(TextualApp):
         if theme:
             theme_object = self.themes[theme]
             self.theme_change_signal.publish(theme_object)
-    
+
     @on(CommandPalette.Opened)
     def palette_opened(self) -> None:
         self._original_theme = self.theme
-    
+
     @on(CommandPalette.OptionHighlighted)
     def palette_option_highlighted(
         self, event: CommandPalette.OptionHighlighted
@@ -138,7 +137,7 @@ class App(TextualApp):
                     self.theme = value
             else:
                 self.theme = self._original_theme
-        
+
     @on(CommandPalette.Closed)
     def palette_closed(self, event: CommandPalette.Closed) -> None:
         # If we closed with a result, that will be handled by the command
@@ -149,7 +148,7 @@ class App(TextualApp):
         if not event.option_selected:
             self.theme = self._original_theme
 
-    #region jumper
+    # region jumper
     # -------------- jumper -------------- #
     def action_toggle_jump_mode(self) -> None:
         self._jumping = not self._jumping
@@ -187,9 +186,9 @@ class App(TextualApp):
         self.clear_notifications()
         self.push_screen(JumpOverlay(self.jumper), callback=handle_jump_target)
 
-    #region hooks
+    # region hooks
     # --------------- hooks -------------- #
-    
+
     def on_tabs_tab_activated(self, event: Tabs.TabActivated) -> None:
         if event.tab.id.startswith("t"):
             activeIndex = int(event.tab.id.removeprefix("t")) - 1
@@ -201,7 +200,7 @@ class App(TextualApp):
             page_class = self.PAGES[activeIndex]["class"]
             page_instance = page_class(classes="content")
             self.mount(page_instance)
-    
+
     def on_resize(self, event: events.Resize) -> None:
         console_size: Size = self.console.size
         aspect_ratio = (console_size.width / 2) / console_size.height
@@ -209,8 +208,8 @@ class App(TextualApp):
             self.layout = "v"
         else:
             self.layout = "h"
-    
-    #region callbacks
+
+    # region callbacks
     # --------------- Callbacks ------------ #
 
     def action_goToTab(self, tab_number: int) -> None:
@@ -220,25 +219,22 @@ class App(TextualApp):
 
     def action_quit(self) -> None:
         self.exit()
-    
+
     def action_create_default_categories(self) -> None:
         create_default_categories()
-    
+
     def action_go_to_categories(self) -> None:
         self.push_screen(Categories(), callback=self.on_categories_dismissed)
-    
+
     def on_categories_dismissed(self, _) -> None:
         pass
-    
-    #region view
+
+    # region view
     # --------------- View --------------- #
     def compose(self) -> ComposeResult:
         with Container(classes="header"):
             yield Label(f"↪ {self.project_info['name']}", classes="title")
-            yield Label(self.project_info['version'], classes="version")
+            yield Label(self.project_info["version"], classes="version")
             yield Label(get_user_host_string(), classes="user")
         yield Home(classes="content")
         yield Footer()
-
-
-    

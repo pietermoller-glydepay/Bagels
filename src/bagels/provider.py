@@ -21,9 +21,24 @@ class AppProvider(Provider):
 
         commands_to_show: list[tuple[str, IgnoreReturnCallbackType, str, bool]] = [
             ("app: quit", app.action_quit, "Quit App", True),
-            ("app: create default categories", app.action_create_default_categories, "Create default categories defined in templates/default_categories.yaml", True),
-            ("dev: create sample entries", self._action_create_sample_entries, "Create sample entries defined in templates/sample_entries.yaml", False),
-            ("dev: wipe database", self._action_wipe_database, "Delete everything from the database", False),
+            (
+                "app: create default categories",
+                app.action_create_default_categories,
+                "Create default categories defined in templates/default_categories.yaml",
+                True,
+            ),
+            (
+                "dev: create sample entries",
+                self._action_create_sample_entries,
+                "Create sample entries defined in templates/sample_entries.yaml",
+                False,
+            ),
+            (
+                "dev: wipe database",
+                self._action_wipe_database,
+                "Delete everything from the database",
+                False,
+            ),
             *self.get_theme_commands(),
         ]
 
@@ -81,11 +96,11 @@ class AppProvider(Provider):
     @property
     def app(self) -> "App":
         return cast("App", self.screen.app)
-    
+
     def _action_create_sample_entries(self) -> None:
         create_sample_entries()
         self.app.refresh(layout=True, recompose=True)
-        
+
     def _action_wipe_database(self) -> None:
         wipe_database()
         self.app.refresh(layout=True, recompose=True)

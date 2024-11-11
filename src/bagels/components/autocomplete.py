@@ -219,9 +219,7 @@ class AutoComplete(Widget):
             selected_value = selected.main.plain
             selected_is_create_option = selected.is_create_option
             if selected_is_create_option and self.create_action:
-                self.post_message(
-                    self.Created(item=selected)
-                )
+                self.post_message(self.Created(item=selected))
             elif completion_strategy == "replace":
                 self.input.value = ""
                 self.input.insert_text_at_cursor(selected_value)
@@ -244,15 +242,13 @@ class AutoComplete(Widget):
                 self.input.cursor_position = new_state.cursor_position
 
             self.dropdown.display = False
-            self.post_message(
-                self.Selected(item=self.dropdown.selected_item)
-            )
+            self.post_message(self.Selected(item=self.dropdown.selected_item))
 
     class Selected(Message):
         def __init__(self, item: DropdownItem):
             super().__init__()
             self.item = item
-    
+
     class Created(Message):
         def __init__(self, item: DropdownItem):
             super().__init__()
@@ -359,7 +355,7 @@ Dropdown .autocomplete--right-column {
             attribute_name="cursor_position",
             callback=self._input_cursor_position_changed,
         )
-        
+
         self.watch(
             self.input_widget,
             attribute_name="has_focus",
@@ -407,7 +403,7 @@ Dropdown .autocomplete--right-column {
     def _input_value_changed(self, value: str) -> None:
         if self.input_widget is not None:
             self.sync_state(value, self.input_widget.cursor_position)
-        
+
     def _input_focus_changed(self, has_focus: bool) -> None:
         if self.input_widget is not None and self.show_on_focus:
             self.sync_state(self.input_widget.value, self.input_widget.cursor_position)
@@ -445,12 +441,12 @@ Dropdown .autocomplete--right-column {
                     left_meta="+",  # Optional: Add a plus icon
                     main=f"Create '{value}'",
                     is_create_option=True,
-                    create_option_text=value
+                    create_option_text=value,
                 )
             )
 
         self.child.matches = matches
-        
+
         # # If there's exactly one match and input has focus, auto-select it
         # if len(matches) == 1 and self.input_widget and self.input_widget.has_focus and (self.input_widget.value != matches[0].main.plain):
         #     self.input_widget.value = matches[0].main.plain
@@ -568,4 +564,3 @@ DropdownChild {
         )
         self.parent.scroll_to_region(region=region, animate=False)
         self.refresh(layout=True)
-

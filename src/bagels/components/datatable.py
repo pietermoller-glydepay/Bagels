@@ -4,8 +4,7 @@ import functools
 from dataclasses import dataclass
 from itertools import chain, zip_longest
 from operator import itemgetter
-from typing import (Any, Callable, ClassVar, Generic, Iterable, NamedTuple,
-                    TypeVar)
+from typing import Any, Callable, ClassVar, Generic, Iterable, NamedTuple, TypeVar
 
 import rich.repr
 from rich.console import RenderableType
@@ -2455,16 +2454,22 @@ class DataTable(ScrollView, Generic[CellType], can_focus=True):
                 row = self.ordered_rows[row_index]
                 if row.style_name is not None:
                     # Apply custom style if specified
-                    row_style = self.get_component_styles(f"datatable--{row.style_name}-row").rich_style
+                    row_style = self.get_component_styles(
+                        f"datatable--{row.style_name}-row"
+                    ).rich_style
                 elif self.zebra_stripes:
                     # Fall back to zebra stripes
-                    component_row_style = "datatable--odd-row" if row_index % 2 else "datatable--even-row"
-                    row_style = self.get_component_styles(component_row_style).rich_style
+                    component_row_style = (
+                        "datatable--odd-row" if row_index % 2 else "datatable--even-row"
+                    )
+                    row_style = self.get_component_styles(
+                        component_row_style
+                    ).rich_style
                 else:
                     row_style = base_style
             except IndexError:
                 row_style = base_style
-                
+
         return row_style
 
     def _on_mouse_move(self, event: events.MouseMove):

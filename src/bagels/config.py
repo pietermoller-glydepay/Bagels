@@ -13,11 +13,14 @@ class Defaults(BaseModel):
     period: Literal["day", "week", "month", "year"] = "day"
     first_day_of_week: int = Field(ge=0, le=6, default=6)
 
+
 class InsightsHotkeys(BaseModel):
     toggle_use_account: str = "\\"
-    
+
+
 class DatemodeHotkeys(BaseModel):
     go_to_day: str = "g"
+
 
 class HomeHotkeys(BaseModel):
     categories: str = "c"
@@ -32,13 +35,16 @@ class HomeHotkeys(BaseModel):
     insights: InsightsHotkeys = InsightsHotkeys()
     datemode: DatemodeHotkeys = DatemodeHotkeys()
 
+
 class RecordModalHotkeys(BaseModel):
     new_split: str = "ctrl+a"
     new_paid_split: str = "ctrl+s"
     delete_last_split: str = "ctrl+d"
 
+
 class CategoriesHotkeys(BaseModel):
     new_subcategory: str = "s"
+
 
 class Hotkeys(BaseModel):
     new: str = "a"
@@ -49,6 +55,7 @@ class Hotkeys(BaseModel):
     record_modal: RecordModalHotkeys = RecordModalHotkeys()
     categories: CategoriesHotkeys = CategoriesHotkeys()
 
+
 class Symbols(BaseModel):
     line_char: str = "│"
     finish_line_char: str = "╰"
@@ -58,15 +65,17 @@ class Symbols(BaseModel):
     amount_positive: str = "+"
     amount_negative: str = "-"
 
+
 class State(BaseModel):
     theme: str = "posting"
+
 
 class Config(YamlBaseSettings):
     hotkeys: Hotkeys = Hotkeys()
     symbols: Symbols = Symbols()
     model_config = SettingsConfigDict(
         yaml_file=str(config_file()),
-        yaml_file_encoding='utf-8',
+        yaml_file_encoding="utf-8",
     )
     defaults: Defaults = Defaults()
     state: State = State()
@@ -75,18 +84,19 @@ class Config(YamlBaseSettings):
     def get_default(cls):
         # Create a default instance without reading from file
         return cls.model_construct(
-            hotkeys=Hotkeys(),
-            symbols=Symbols(),
-            defaults=Defaults(),
-            state=State()
+            hotkeys=Hotkeys(), symbols=Symbols(), defaults=Defaults(), state=State()
         )
+
 
 # Only try to load from file if it exists
 config_path = config_file()
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
-    CONFIG = Config.get_default() if not config_path.exists() else Config() # ignore warnings about empty env file
+    CONFIG = (
+        Config.get_default() if not config_path.exists() else Config()
+    )  # ignore warnings about empty env file
+
 
 def write_state(key: str, value: Any) -> None:
     """Write a state value to the config.yaml file."""
@@ -95,10 +105,10 @@ def write_state(key: str, value: Any) -> None:
             config = yaml.safe_load(f) or {}
     except FileNotFoundError:
         config = {}
-    
+
     if "state" not in config:
         config["state"] = {}
     config["state"][key] = value
-    
+
     with open(config_file(), "w") as f:
         yaml.dump(config, f, default_flow_style=False)

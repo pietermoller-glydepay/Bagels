@@ -1,5 +1,6 @@
 from datetime import datetime
-
+from sqlalchemy import func, event, select
+from sqlalchemy.orm import validates
 from .database.db import db
 
 
@@ -17,9 +18,9 @@ class RecordTemplate(db.Model):
     accountId = db.Column(db.Integer, db.ForeignKey("account.id"), nullable=False)
     categoryId = db.Column(db.Integer, db.ForeignKey("category.id"), nullable=True)
 
-    # if record adds money to account
+    order = db.Column(db.Integer, nullable=False, unique=True)
+
     isIncome = db.Column(db.Boolean, nullable=False, default=False)
-    # if record is transfer to this account
     isTransfer = db.Column(
         db.Boolean,
         db.CheckConstraint("(isTransfer = FALSE) OR (isIncome = FALSE)"),
@@ -29,14 +30,12 @@ class RecordTemplate(db.Model):
     transferToAccountId = db.Column(
         db.Integer, db.ForeignKey("account.id"), nullable=True
     )
-    # if value is provided, the record's amount is paying for a service spread over a number of months
-    # service_spread_over_months = db.Column(db.Integer, db.CheckConstraint('(service_spread_over_months IS NULL) OR (isIncome = FALSE AND isTransfer = FALSE)'), nullable=True)
 
     account = db.relationship("Account", foreign_keys=[accountId])
     category = db.relationship("Category", foreign_keys=[categoryId])
     transferToAccount = db.relationship("Account", foreign_keys=[transferToAccountId])
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict:  # creates a dictionary object to feed into create_record
         return {
             "label": self.label,
             "amount": self.amount,
@@ -46,3 +45,26 @@ class RecordTemplate(db.Model):
             "isTransfer": self.isTransfer,
             "transferToAccountId": self.transferToAccountId,
         }
+
+    @validates("order")
+    def validate_order(self, key, order):
+        if order is None:
+            raise ValueError("Order cannot be null.")
+        return order
+
+
+@event.listens_for(RecordTemplate, "before_insert")
+def receive_before_insert(mapper, connection, target):
+    max_order = connection.execute(
+        select(func.max(RecordTemplate.order))
+    ).scalar_one_or_none()
+    target.order = (max_order or 0) + 1
+
+
+@event.listens_for(RecordTemplate, "before_delete")
+def receive_before_delete(mapper, connection, target):
+    connection.execute(
+        db.update(RecordTemplate)
+        .where(RecordTemplate.order > target.order)
+        .values(order=RecordTemplate.order - 1)
+    )

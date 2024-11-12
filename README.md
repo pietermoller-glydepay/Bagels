@@ -6,24 +6,28 @@ Powerful expense tracker that lives in your terminal. WIP!
 
 ## Install
 
-Install uv:
-
 ```bash
+# install uv (package manager)
 curl -LsSf https://astral.sh/uv/install.sh | sh
-```
-
-Install:
-
-```bash
+# add bin to PATH
+source $HOME/.local/bin/env # or follow instructions
+# install bagels
 uv tool install --python 3.13 bagels
 ```
 
 ## Development setup
 
 ```sh
-git clone https://github.com/EnhancedJax/Bagels
+git clone https://github.com/EnhancedJax/Bagels.git
+cd Bagels
 uv sync
-uv run bagels --at "./instance/"
+mkdir instance
+uv run bagels --at "./instance/" # runs app with storage in ./instance/
+```
+
+- Please use the black formatter to format the code.
+
+```sh
 # uv run textual console -x SYSTEM -x EVENT -x DEBUG -x INFO # for logging
 # uv run textual run --dev src/app.py # in another terminal
 ```

@@ -10,7 +10,7 @@ from bagels.locations import config_file
 
 
 class Defaults(BaseModel):
-    period: Literal["day", "week", "month", "year"] = "day"
+    period: Literal["day", "week", "month", "year"] = "week"
     first_day_of_week: int = Field(ge=0, le=6, default=6)
 
 

@@ -155,24 +155,6 @@ class Insights(Static):
                     )
                     amounts.append(abs(amount))
                     labels.append(target_date.strftime("%b"))
-            case "month":
-                # Get start and end of target month
-                start_date, end_date = get_start_end_of_period(offset, "month")
-
-                # Get the Monday of the first week that contains any day of the month
-                first_monday = start_date - timedelta(days=start_date.weekday())
-
-                for i in range(4):
-                    target_date = first_monday + timedelta(weeks=i)
-                    week_offset = (target_date - datetime.now()).days // 7
-
-                    amount = get_period_figures(
-                        offset_type="week",
-                        offset=week_offset,
-                        isIncome=self.page_parent.mode["isIncome"],
-                    )
-                    amounts.append(abs(amount))
-                    labels.append(f"w{i+1}")
             case "week":
                 start_date, end_date = get_start_end_of_period(offset, offset_type)
                 days_diff = (end_date - start_date).days + 1

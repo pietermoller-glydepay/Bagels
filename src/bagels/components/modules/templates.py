@@ -10,7 +10,9 @@ from bagels.models.record_template import RecordTemplate
 from bagels.queries.record_templates import (
     create_template,
     delete_template,
+    get_adjacent_template,
     get_all_templates,
+    swap_template_order,
     update_template,
 )
 from bagels.queries.records import create_record
@@ -24,6 +26,8 @@ class Templates(Static):
         Binding(CONFIG.hotkeys.new, "new_template", "New Template"),
         Binding(CONFIG.hotkeys.edit, "edit_template", "Edit Template"),
         Binding(CONFIG.hotkeys.delete, "delete_template", "Delete Template"),
+        Binding("left", "swap_previous", "Swap left"),
+        Binding("right", "swap_next", "Swap right"),
     ]
 
     def __init__(self, parent: Static, *args, **kwargs) -> None:
@@ -73,6 +77,21 @@ class Templates(Static):
         container = Horizontal(classes="templates")
         container = self._create_templates_widgets(container)
         self.mount(container)
+        if self.selected_template_id:
+            self.call_after_refresh(
+                lambda: self.query_one(f"#template-{self.selected_template_id}").focus()
+            )
+
+    # helper
+    # -------------- Helper -------------- #
+
+    def _notify_no_selected_template(self) -> None:
+        self.app.notify(
+            title="Error",
+            message="No template selected",
+            severity="error",
+            timeout=3,
+        )
 
     # ------------- Callback ------------- #
 
@@ -106,20 +125,20 @@ class Templates(Static):
     def action_new_template(self) -> None:
         def check_result(result: bool) -> None:
             if result:
-                try:
-                    create_template(result)
-                except Exception as e:
-                    self.app.notify(
-                        title="Error", message=f"{e}", severity="error", timeout=10
-                    )
-                else:
-                    self.app.notify(
-                        title="Success",
-                        message=f"Template created",
-                        severity="information",
-                        timeout=3,
-                    )
-                    self.rebuild()
+                create_template(result)
+                # try:
+                # except Exception as e:
+                #     self.app.notify(
+                #         title="Error", message=f"{e}", severity="error", timeout=10
+                #     )
+                # else:
+                self.app.notify(
+                    title="Success",
+                    message=f"Template created",
+                    severity="information",
+                    timeout=3,
+                )
+                self.rebuild()
 
         self.app.push_screen(
             InputModal("New Template", form=self.template_form.get_form()),
@@ -128,12 +147,7 @@ class Templates(Static):
 
     def action_edit_template(self) -> None:
         if not self.selected_template_id:
-            self.app.notify(
-                title="Error",
-                message="No template selected",
-                severity="error",
-                timeout=3,
-            )
+            self._notify_no_selected_template()
             return
 
         # ----------------- - ---------------- #
@@ -165,12 +179,7 @@ class Templates(Static):
 
     def action_delete_template(self) -> None:
         if not self.selected_template_id:
-            self.app.notify(
-                title="Error",
-                message="No template selected",
-                severity="error",
-                timeout=3,
-            )
+            self._notify_no_selected_template()
             return
 
         # ----------------- - ---------------- #
@@ -183,6 +192,7 @@ class Templates(Static):
                     severity="information",
                     timeout=3,
                 )
+                self.selected_template_id = None
                 self.rebuild()
 
         # ----------------- - ---------------- #
@@ -190,3 +200,26 @@ class Templates(Static):
             ConfirmationModal("Are you sure you want to delete this template?"),
             check_delete,
         )
+
+    def _swap_template(self, direction: str) -> None:
+        if not self.selected_template_id:
+            self._notify_no_selected_template()
+            return
+        if get_adjacent_template(self.selected_template_id, direction) == -1:
+            self.app.notify(
+                title="Error",
+                message=f"No {direction} template",
+                severity="error",
+                timeout=3,
+            )
+            self.app.bell()
+            return
+        else:
+            swap_template_order(self.selected_template_id, direction)
+            self.rebuild()
+
+    def action_swap_previous(self) -> None:
+        self._swap_template("previous")
+
+    def action_swap_next(self) -> None:
+        self._swap_template("next")

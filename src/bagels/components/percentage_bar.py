@@ -65,7 +65,7 @@ class PercentageBar(Static):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.rounded = True
+        self.rounded = False
 
     def on_mount(self) -> None:
         self.rebuild()

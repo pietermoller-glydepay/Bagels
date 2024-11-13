@@ -20,6 +20,7 @@ class Category(db.Model):
     updatedAt = db.Column(
         db.DateTime, nullable=False, default=datetime.now, onupdate=datetime.now
     )
+    deletedAt = db.Column(db.DateTime, nullable=True)
 
     id = db.Column(db.Integer, primary_key=True, index=True)
     parentCategoryId = db.Column(

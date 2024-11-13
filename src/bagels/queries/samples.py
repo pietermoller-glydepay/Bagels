@@ -9,18 +9,15 @@ from bagels.models.person import Person
 from bagels.models.record import Record
 from bagels.models.record_template import RecordTemplate
 from bagels.models.split import Split
-from bagels.queries.categories import create_default_categories
 
 app = get_app()
 
 
 def create_sample_entries():
-    yaml_path = Path(__file__).parent.parent / "templates" / "sample_entries.yaml"
+    yaml_path = Path(__file__).parent.parent / "static" / "sample_entries.yaml"
 
     with open(yaml_path, "r") as file:
         sample_entries = yaml.safe_load(file)
-
-    create_default_categories()
 
     with app.app_context():
         # Create accounts

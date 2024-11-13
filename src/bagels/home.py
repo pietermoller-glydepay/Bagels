@@ -4,6 +4,7 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.widgets import Label, Static
 
+from bagels.components.modules.welcome import Welcome
 from bagels.components.modules.accountmode import AccountMode
 from bagels.components.modules.datemode import DateMode
 from bagels.components.modules.incomemode import IncomeMode
@@ -257,12 +258,9 @@ class Home(Static):
                         yield self.income_mode_module
                         yield self.date_mode_module
                 yield self.insights_module
-            if self.isReady:
-                with Static(classes="right"):
+            with Static(classes="right"):
+                if self.isReady:
                     yield self.templates_module
                     yield self.record_module
-            else:
-                yield Label(
-                    "Please create at least one account and one category to get started.",
-                    classes="label-empty",
-                )
+                else:
+                    yield Welcome()

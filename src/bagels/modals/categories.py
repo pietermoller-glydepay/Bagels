@@ -1,10 +1,6 @@
-import copy
-
-from rich.text import Text
 from textual import events
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Container
 from textual.screen import ModalScreen
 from textual.widget import Widget
 from textual.widgets import Static
@@ -13,23 +9,28 @@ from bagels.components.datatable import DataTable
 from bagels.components.indicators import EmptyIndicator
 from bagels.components.modals import ConfirmationModal, InputModal, ModalContainer
 from bagels.config import CONFIG
-from bagels.constants import COLORS
-from bagels.models.category import Nature
 from bagels.queries.categories import (
     create_category,
-    create_default_categories,
     delete_category,
     get_all_categories_tree,
+    get_categories_count,
     get_category_by_id,
     update_category,
 )
+from bagels.utils.category_form import CategoryForm
 
 
-class Categories(ModalScreen[str | Widget | None]):
+class CategoriesModal(ModalScreen[str | Widget | None]):
 
     COLUMNS = ("", "Name", "Nature")
 
     BINDINGS = [
+        Binding(
+            CONFIG.hotkeys.categories.browse_defaults,
+            "browse_defaults",
+            "Browse",
+            False,
+        ),
         Binding(CONFIG.hotkeys.new, "new_category", "Add"),
         Binding(
             CONFIG.hotkeys.categories.new_subcategory,
@@ -49,7 +50,8 @@ class Categories(ModalScreen[str | Widget | None]):
     # --------------- Hooks -------------- #
 
     def on_mount(self) -> None:
-        self._build_table()
+        categories_is_empty = get_categories_count() == 0
+        self.rebuild()
 
     def on_key(self, event: events.Key) -> None:
         if event.key == "escape":
@@ -59,20 +61,17 @@ class Categories(ModalScreen[str | Widget | None]):
         if event.row_key:
             self.current_row = event.row_key.value
 
-    # -------------- Helpers ------------- #
+    # region Builders
+    # ------------- Builders ------------- #
 
-    def _build_table(self) -> None:
-        def get_table() -> DataTable:
-            return self.query_one("#categories-table")
+    def rebuild(self) -> None:
+        table: DataTable = self.query_one("#categories-table")
+        empty_indicator: Static = self.query_one("#empty-indicator")
 
-        def get_empty_indicator() -> Static:
-            return self.query_one("#empty-indicator")
-
-        table = get_table()
-        empty_indicator = get_empty_indicator()
         table.clear()
         if not table.columns:
             table.add_columns(*self.COLUMNS)
+
         categories = get_all_categories_tree()
         if categories:
             for category, node in categories:
@@ -83,7 +82,11 @@ class Categories(ModalScreen[str | Widget | None]):
             table.focus()
         else:
             self.current_row = None
+
         empty_indicator.display = not categories
+
+    # region Helpers
+    # -------------- Helpers ------------- #
 
     def _notify_no_categories(self) -> None:
         self.app.notify(
@@ -93,6 +96,13 @@ class Categories(ModalScreen[str | Widget | None]):
             timeout=2,
         )
 
+    # def new_binding(self, binding: Binding) -> None:
+    #     self._bindings.key_to_bindings.setdefault(binding.key, []).append(binding)
+
+    # def remove_binding(self, key: str) -> None:
+    #     self._bindings.key_to_bindings.pop(key, None)
+
+    # region callbacks
     # ------------- Callbacks ------------ #
 
     def action_new_category(self) -> None:
@@ -111,10 +121,10 @@ class Categories(ModalScreen[str | Widget | None]):
                         severity="information",
                         timeout=3,
                     )
-                    self._build_table()
+                    self.rebuild()
 
         self.app.push_screen(
-            InputModal("New Category", CATEGORY_FORM), callback=check_result
+            InputModal("New Category", CategoryForm().get_form()), callback=check_result
         )
 
     def action_new_subcategory(self) -> None:
@@ -137,17 +147,11 @@ class Categories(ModalScreen[str | Widget | None]):
                         severity="information",
                         timeout=3,
                     )
-                    self._build_table()
+                    self.rebuild()
 
-        subcategory_form = copy.deepcopy(CATEGORY_FORM)
-        subcategory_form.append(
-            {
-                "key": "parentCategoryId",
-                "type": "hidden",
-                "defaultValue": str(self.current_row),
-            }
-        )
-        parent_category = get_category_by_id(self.current_row)
+        parent_category_id = self.current_row
+        subcategory_form = CategoryForm().get_subcategory_form(parent_category_id)
+        parent_category = get_category_by_id(parent_category_id)
         self.app.push_screen(
             InputModal(f"New Subcategory of {parent_category.name}", subcategory_form),
             callback=check_result,
@@ -166,7 +170,7 @@ class Categories(ModalScreen[str | Widget | None]):
                     self.app.notify(
                         title="Error", message=f"{e}", severity="error", timeout=10
                     )
-                self._build_table()
+                self.rebuild()
 
         self.app.push_screen(
             ConfirmationModal("Are you sure you want to delete this record?"),
@@ -193,25 +197,14 @@ class Categories(ModalScreen[str | Widget | None]):
                         severity="information",
                         timeout=3,
                     )
-                    self._build_table()
+                    self.rebuild()
 
-        category = get_category_by_id(self.current_row)
-        filled_category_form = copy.deepcopy(CATEGORY_FORM)
-        if category:
-            for field in filled_category_form:
-                value = getattr(category, field["key"])
-                if field["key"] == "nature":
-                    field["defaultValue"] = category.nature
-                    field["defaultValueText"] = category.nature.value
-                elif field["key"] == "color":
-                    field["defaultValue"] = category.color
-                    field["defaultValueText"] = category.color
-                else:
-                    field["defaultValue"] = str(value) if value is not None else ""
-            self.app.push_screen(
-                InputModal("Edit Category", filled_category_form), callback=check_result
-            )
+        filled_form = CategoryForm().get_filled_form(self.current_row)
+        self.app.push_screen(
+            InputModal("Edit Category", filled_form), callback=check_result
+        )
 
+    # region View
     # --------------- View --------------- #
     def compose(self) -> ComposeResult:
         yield ModalContainer(
@@ -222,36 +215,3 @@ class Categories(ModalScreen[str | Widget | None]):
             ),
             EmptyIndicator("No categories"),
         )
-
-
-CATEGORY_FORM = [
-    {
-        "placeholder": "My Category",
-        "title": "Name",
-        "key": "name",
-        "type": "string",
-        "isRequired": True,
-    },
-    {
-        "title": "Nature",
-        "key": "nature",
-        "type": "autocomplete",
-        "options": [
-            {"text": "Must", "value": Nature.MUST, "prefix": Text("●", style="red")},
-            {"text": "Need", "value": Nature.NEED, "prefix": Text("●", style="orange")},
-            {"text": "Want", "value": Nature.WANT, "prefix": Text("●", style="green")},
-        ],
-        "isRequired": True,
-        "placeholder": "Select Nature",
-    },
-    {
-        "title": "Color",
-        "key": "color",
-        "type": "autocomplete",
-        "options": [
-            {"value": color, "prefix": Text("●", style=color)} for color in COLORS
-        ],
-        "isRequired": True,
-        "placeholder": "Select Color",
-    },
-]

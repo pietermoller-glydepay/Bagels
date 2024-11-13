@@ -1,17 +1,16 @@
 import warnings
 from typing import Any, Literal
-
 import yaml
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic_settings_yaml import YamlBaseSettings
-
 from bagels.locations import config_file
 
 
 class Defaults(BaseModel):
     period: Literal["day", "week", "month", "year"] = "week"
     first_day_of_week: int = Field(ge=0, le=6, default=6)
+    date_format: str = "%d/%m"
 
 
 class InsightsHotkeys(BaseModel):
@@ -44,6 +43,7 @@ class RecordModalHotkeys(BaseModel):
 
 class CategoriesHotkeys(BaseModel):
     new_subcategory: str = "s"
+    browse_defaults: str = "b"
 
 
 class Hotkeys(BaseModel):
@@ -73,12 +73,40 @@ class State(BaseModel):
 class Config(YamlBaseSettings):
     hotkeys: Hotkeys = Hotkeys()
     symbols: Symbols = Symbols()
+    defaults: Defaults = Defaults()
+    state: State = State()
     model_config = SettingsConfigDict(
         yaml_file=str(config_file()),
         yaml_file_encoding="utf-8",
     )
-    defaults: Defaults = Defaults()
-    state: State = State()
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        self.ensure_yaml_fields()
+
+    def ensure_yaml_fields(self):
+        # Load current config or create a new one if it doesn't exist
+        try:
+            with open(config_file(), "r") as f:
+                config = yaml.safe_load(f) or {}
+        except FileNotFoundError:
+            config = {}
+
+        # Update config with default values for missing fields
+        def update_config(default, current):
+            for key, value in default.items():
+                if isinstance(value, dict):
+                    current[key] = update_config(value, current.get(key, {}))
+                elif key not in current:
+                    current[key] = value
+            return current
+
+        default_config = self.model_dump()
+        config = update_config(default_config, config)
+
+        # Write back to the YAML file
+        with open(config_file(), "w") as f:
+            yaml.dump(config, f, default_flow_style=False)
 
     @classmethod
     def get_default(cls):

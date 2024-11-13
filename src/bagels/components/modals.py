@@ -1,16 +1,14 @@
 from datetime import datetime
 from re import M
 
-from rich.text import Text
 from textual import events
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Container, Horizontal
+from textual.containers import Container, Horizontal, ScrollableContainer
 from textual.screen import ModalScreen
 from textual.widget import Widget
 from textual.widgets import (
     Footer,
-    Header,
     Input,
     Label,
     ListItem,
@@ -21,9 +19,8 @@ from textual.widgets import (
 
 from bagels.components.autocomplete import AutoComplete, Dropdown, DropdownItem
 from bagels.components.fields import Fields
+from bagels.components.header import Header
 from bagels.config import CONFIG
-from bagels.models.person import Person
-from bagels.models.split import Split
 from bagels.queries.accounts import get_all_accounts_with_balance
 from bagels.queries.persons import create_person, get_all_persons
 from bagels.utils.record_forms import RecordForm
@@ -50,7 +47,7 @@ class ConfirmationModal(ModalScreen):
 
 
 # region Container
-class ModalContainer(Widget):
+class ModalContainer(ScrollableContainer, can_focus=False):
     # usage: ModalContainer(w1, w2, w3..... hotkeys=[])
     def __init__(self, *content, custom_classes: str = "wrapper max-width-60"):
         super().__init__(classes=custom_classes)
@@ -58,7 +55,12 @@ class ModalContainer(Widget):
         # self.hotkeys = hotkeys
 
     def compose(self) -> ComposeResult:
-        yield Header(show_clock=False)
+        yield Header(
+            show_clock=False,
+            icon="x",
+            icon_action="app.pop_screen",
+            icon_tooltip="Close",
+        )
         with Container(classes="container"):
             for widget in self.content:
                 yield widget

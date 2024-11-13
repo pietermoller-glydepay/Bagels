@@ -22,15 +22,9 @@ class AppProvider(Provider):
         commands_to_show: list[tuple[str, IgnoreReturnCallbackType, str, bool]] = [
             ("app: quit", app.action_quit, "Quit App", True),
             (
-                "app: create default categories",
-                app.action_create_default_categories,
-                "Create default categories defined in templates/default_categories.yaml",
-                True,
-            ),
-            (
                 "dev: create sample entries",
                 self._action_create_sample_entries,
-                "Create sample entries defined in templates/sample_entries.yaml",
+                "Create sample entries defined in static/sample_entries.yaml",
                 False,
             ),
             (

@@ -7,10 +7,6 @@ from bagels.config import Config
 from bagels.locations import config_file, database_file, set_custom_root
 from bagels.models.database.app import init_db
 
-import threading
-import time
-from bagels.bagel import render_frame, pprint, theta_spacing, phi_spacing
-
 
 def create_config_file() -> None:
     f = config_file()
@@ -38,22 +34,6 @@ def cli(ctx, at: click.Path | None):
         set_custom_root(at)
     if ctx.invoked_subcommand is None:
 
-        # Flag to control the donut animation
-        stop_animation = threading.Event()
-
-        def animate_donut():
-            A = B = 1
-            while not stop_animation.is_set():
-                A += theta_spacing
-                B += phi_spacing
-                print("\x1b[H\x1b[2J")  # Clear screen
-                pprint(render_frame(A, B))
-                time.sleep(0.1)
-
-        # Start donut animation in a separate thread
-        donut_thread = threading.Thread(target=animate_donut)
-        donut_thread.start()
-
         # Perform initialization
         create_config_file()
         init_db()
@@ -61,10 +41,6 @@ def cli(ctx, at: click.Path | None):
         from bagels.app import App
 
         app = App()
-
-        # Stop the animation
-        stop_animation.set()
-        donut_thread.join()
         app.run()
 
 

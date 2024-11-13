@@ -134,8 +134,21 @@ class Records(Static):
                     group_string = record.date.strftime("%B %Y")
                 case "month":
                     # Group by week
-                    week_start = record.date - timedelta(days=record.date.weekday())
+                    week_start = record.date - timedelta(
+                        days=(record.date.weekday() - CONFIG.defaults.first_day_of_week)
+                        % 7
+                    )
                     week_end = week_start + timedelta(days=6)
+
+                    # Adjust week_start and week_end if they are not in the same month as record.date
+                    if week_start.month != record.date.month:
+                        week_start = record.date.replace(day=1)
+                    if week_end.month != record.date.month:
+                        last_day_of_month = (
+                            record.date.replace(day=1) + timedelta(days=32)
+                        ).replace(day=1) - timedelta(days=1)
+                        week_end = last_day_of_month
+
                     group_string = f"{format_date_to_readable(week_start)} - {format_date_to_readable(week_end)}"
                 case "week":
                     # Group by day

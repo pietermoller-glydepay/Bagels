@@ -69,7 +69,7 @@ def get_records(offset: int = 0, offset_type: str = "month"):
         )
 
         createdAt_column = getattr(Record, "createdAt")
-        date_column = getattr(Record, "date")
+        date_column = db.func.date(getattr(Record, "date"))
         query = query.order_by(date_column.desc(), createdAt_column.desc())
 
         records = query.all()

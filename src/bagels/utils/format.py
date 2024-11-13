@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from bagels.config import CONFIG
 
 
-def format_date_to_readable(date):
+def format_date_to_readable(date) -> str:
     today = datetime.now().date()
     date = date.date() if isinstance(date, datetime) else date
 
@@ -20,7 +20,7 @@ def format_date_to_readable(date):
     if start_of_week <= date <= end_of_week:
         return date.strftime("%A")
     else:
-        return date.strftime("%d-%m-%Y")
+        return date.strftime(CONFIG.defaults.date_format)
 
 
 def format_period_to_readable(filter: dict) -> str:

@@ -1,9 +1,9 @@
 import numpy as np
 
-screen_size = 20
-theta_spacing = 0.07
-phi_spacing = 0.02
-illumination = np.fromiter(".,-~:;=!*#$@", dtype="<U1")
+screen_size = 15
+theta_spacing = 0.07  # Spacing for theta, the angle for the circle around R1
+phi_spacing = 0.02  # Spacing for phi, the angle for the rotation around R2
+illumination = np.fromiter(".,-~:;=!$░▒▓", dtype="<U1")
 
 A = 1
 B = 1
@@ -65,6 +65,11 @@ def render_frame(A: float, B: float) -> np.ndarray:
 def pprint(array: np.ndarray) -> None:
     """Pretty print the frame."""
     print(*[" ".join(row) for row in array], sep="\n")
+
+
+def get_string(array: np.ndarray) -> str:
+    """Return the frame as a string."""
+    return "\n".join([" ".join(row) for row in array])
 
 
 if __name__ == "__main__":

@@ -5,7 +5,6 @@ from rich.text import Text
 from textual import events, log, on
 from textual.app import App as TextualApp
 from textual.app import ComposeResult
-from textual.binding import Binding
 from textual.command import CommandPalette
 from textual.containers import Container
 from textual.css.query import NoMatches
@@ -19,9 +18,8 @@ from bagels.components.jump_overlay import JumpOverlay
 from bagels.components.jumper import Jumper
 from bagels.config import CONFIG, write_state
 from bagels.home import Home
-from bagels.pages.Categories import Categories
+from bagels.modals.categories import CategoriesModal
 from bagels.provider import AppProvider
-from bagels.queries.categories import create_default_categories
 from bagels.themes import BUILTIN_THEMES, Theme
 from bagels.utils.user_host import get_user_host_string
 
@@ -90,21 +88,6 @@ class App(TextualApp):
             f"Theme is now [b]{theme!r}[/].", title="Theme updated", timeout=2.5
         )
         write_state("theme", theme)
-
-    # region bindings
-    # ---------- Bindings helper ---------- #
-
-    def newBinding(self, binding: Binding) -> None:
-        self._bindings.key_to_bindings.setdefault(binding.key, []).append(binding)
-        self.refresh_bindings()
-
-    def checkBindingExists(self, key: str) -> bool:
-        return key in self._bindings.key_to_bindings
-
-    def removeBinding(self, key: str) -> None:
-        binding = self._bindings.key_to_bindings.pop(key, None)
-        if binding:
-            self.refresh_bindings()
 
     # region theme
     # --------------- theme -------------- #
@@ -220,14 +203,11 @@ class App(TextualApp):
     def action_quit(self) -> None:
         self.exit()
 
-    def action_create_default_categories(self) -> None:
-        create_default_categories()
-
     def action_go_to_categories(self) -> None:
-        self.push_screen(Categories(), callback=self.on_categories_dismissed)
+        self.push_screen(CategoriesModal(), callback=self.on_categories_dismissed)
 
     def on_categories_dismissed(self, _) -> None:
-        pass
+        self.app.refresh(recompose=True)
 
     # region view
     # --------------- View --------------- #

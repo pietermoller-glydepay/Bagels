@@ -1,7 +1,12 @@
+import yaml
 from flask import Flask
 from flask_migrate import Migrate
+from pathlib import Path
 
+from bagels.models.category import Nature
 from bagels.locations import database_file
+
+# -------- create all imports -------- #
 from bagels.models.account import Account
 from bagels.models.category import Category
 from bagels.models.person import Person
@@ -33,6 +38,39 @@ def _create_outside_source_account():
         )
         db.session.add(outside_account)
         db.session.commit()
+
+
+def _create_default_categories():
+    category_count = Category.query.count()
+    if category_count > 0:
+        return
+    # Get the path to the YAML file
+    yaml_path = (
+        Path(__file__).parent.parent.parent / "static" / "default_categories.yaml"
+    )
+
+    with open(yaml_path, "r") as file:
+        default_categories = yaml.safe_load(file)
+
+    for category in default_categories:
+        parent = Category(
+            name=category["name"],
+            nature=getattr(Nature, category["nature"]),
+            color=category["color"],
+            parentCategoryId=None,
+        )
+        db.session.add(parent)
+        db.session.commit()
+
+        for subcategory in category["subcategories"]:
+            child = Category(
+                name=subcategory["name"],
+                nature=getattr(Nature, subcategory["nature"]),
+                color=category["color"],
+                parentCategoryId=parent.id,
+            )
+            db.session.add(child)
+            db.session.commit()
 
 
 def _sync_database_schema(app):
@@ -72,22 +110,20 @@ def _sync_database_schema(app):
 
 
 def init_db():
-    # Recreate app to ensure latest database path is used
     global app
     app = create_app()
     with app.app_context():
         _sync_database_schema(app)
         db.create_all()
         _create_outside_source_account()
+        _create_default_categories()
 
 
 def get_app():
-    # Return current app instance with latest database path
     return app
 
 
 def wipe_database():
-    # Recreate app to ensure latest database path is used
     global app
     app = create_app()
     with app.app_context():
@@ -95,3 +131,4 @@ def wipe_database():
         _sync_database_schema(app)
         db.create_all()
         _create_outside_source_account()
+        _create_default_categories()

@@ -31,6 +31,7 @@ from bagels.queries.records import (
     update_record_and_splits,
 )
 from bagels.queries.splits import get_split_by_id, update_split
+from bagels.static.forms.form import Form
 from bagels.utils.format import format_date_to_readable
 from bagels.static.forms.person_forms import PersonForm
 from bagels.static.forms.record_forms import RecordForm
@@ -379,6 +380,7 @@ class Records(Static):
             RecordModal(
                 f"New {type} on {account_name} for {date}",
                 form=self.record_form.get_form(self.page_parent.mode),
+                splitForm=Form(),
             ),
             callback=check_result,
         )

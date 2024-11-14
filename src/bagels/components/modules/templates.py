@@ -4,7 +4,8 @@ from textual.binding import Binding
 from textual.containers import Container, Horizontal, HorizontalScroll
 from textual.widgets import Label, Static
 
-from bagels.components.modals import ConfirmationModal, InputModal
+from bagels.modals.confirmation import ConfirmationModal
+from bagels.modals.input import InputModal
 from bagels.config import CONFIG
 from bagels.models.record_template import RecordTemplate
 from bagels.queries.record_templates import (
@@ -16,7 +17,7 @@ from bagels.queries.record_templates import (
     update_template,
 )
 from bagels.queries.records import create_record
-from bagels.utils.recordtemplate_forms import RecordTemplateForm
+from bagels.static.forms.recordtemplate_forms import RecordTemplateForm
 
 
 class Templates(Static):
@@ -123,7 +124,7 @@ class Templates(Static):
         self.page_parent.rebuild()
 
     def action_new_template(self) -> None:
-        def check_result(result: bool) -> None:
+        def check_result(result) -> None:
             if result:
                 create_template(result)
                 # try:
@@ -151,7 +152,7 @@ class Templates(Static):
             return
 
         # ----------------- - ---------------- #
-        def check_result(result: bool) -> None:
+        def check_result(result) -> None:
             if result:
                 try:
                     update_template(self.selected_template_id, result)
@@ -183,7 +184,7 @@ class Templates(Static):
             return
 
         # ----------------- - ---------------- #
-        def check_delete(result: bool) -> None:
+        def check_delete(result) -> None:
             if result:
                 delete_template(self.selected_template_id)
                 self.app.notify(

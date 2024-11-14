@@ -65,11 +65,14 @@ class Home(Static):
         self.mode = {
             "isIncome": False,
             "date": datetime.now(),
-            "accountId": {"defaultValue": None, "defaultValueText": "Select account"},
+            "accountId": {
+                "default_value": None,
+                "default_value_text": "Select account",
+            },
         }
         if accounts:
-            self.mode["accountId"]["defaultValue"] = accounts[0].id
-            self.mode["accountId"]["defaultValueText"] = accounts[0].name
+            self.mode["accountId"]["default_value"] = accounts[0].id
+            self.mode["accountId"]["default_value_text"] = accounts[0].name
         self.accounts_indices = {"index": 0, "count": len(accounts)}
         self.accounts = accounts
         self.accounts_module = AccountMode(parent=self)
@@ -205,8 +208,8 @@ class Home(Static):
                 "count"
             ]
             self.accounts_indices["index"] = new_index
-            self.mode["accountId"]["defaultValue"] = self.accounts[new_index].id
-            self.mode["accountId"]["defaultValueText"] = self.accounts[new_index].name
+            self.mode["accountId"]["default_value"] = self.accounts[new_index].id
+            self.mode["accountId"]["default_value_text"] = self.accounts[new_index].name
             self.accounts_module.rebuild()
             self.insights_module.rebuild()
 

@@ -219,7 +219,7 @@ class AutoComplete(Widget):
             selected_value = selected.main.plain
             selected_is_create_option = selected.is_create_option
             if selected_is_create_option and self.create_action:
-                self.post_message(self.Created(item=selected))
+                self.post_message(self.Created(item=selected, input=self.input))
             elif completion_strategy == "replace":
                 self.input.value = ""
                 self.input.insert_text_at_cursor(selected_value)
@@ -250,9 +250,10 @@ class AutoComplete(Widget):
             self.item = item
 
     class Created(Message):
-        def __init__(self, item: DropdownItem):
+        def __init__(self, item: DropdownItem, input: Input):
             super().__init__()
             self.item = item
+            self.input = input
 
 
 class Dropdown(Widget):

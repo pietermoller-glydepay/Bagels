@@ -7,7 +7,10 @@ from textual.widgets import Static
 
 from bagels.components.datatable import DataTable
 from bagels.components.indicators import EmptyIndicator
-from bagels.components.modals import ConfirmationModal, InputModal, ModalContainer
+from bagels.modals.base_widget import ModalContainer
+from bagels.modals.confirmation import ConfirmationModal
+from bagels.modals.input import InputModal
+
 from bagels.config import CONFIG
 from bagels.queries.categories import (
     create_category,
@@ -17,7 +20,7 @@ from bagels.queries.categories import (
     get_category_by_id,
     update_category,
 )
-from bagels.utils.category_form import CategoryForm
+from bagels.static.forms.category_form import CategoryForm
 
 
 class CategoriesModal(ModalScreen[str | Widget | None]):
@@ -106,7 +109,7 @@ class CategoriesModal(ModalScreen[str | Widget | None]):
     # ------------- Callbacks ------------ #
 
     def action_new_category(self) -> None:
-        def check_result(result: bool) -> None:
+        def check_result(result) -> None:
             if result:
                 try:
                     create_category(result)
@@ -132,7 +135,7 @@ class CategoriesModal(ModalScreen[str | Widget | None]):
             self._notify_no_categories()
             return
 
-        def check_result(result: bool) -> None:
+        def check_result(result) -> None:
             if result:
                 try:
                     create_category(result)
@@ -162,7 +165,7 @@ class CategoriesModal(ModalScreen[str | Widget | None]):
             self._notify_no_categories()
             return
 
-        def check_delete(result: bool) -> None:
+        def check_delete(result) -> None:
             if result:
                 try:
                     delete_category(self.current_row)
@@ -182,7 +185,7 @@ class CategoriesModal(ModalScreen[str | Widget | None]):
             self._notify_no_categories()
             return
 
-        def check_result(result: bool) -> None:
+        def check_result(result) -> None:
             if result:
                 try:
                     update_category(self.current_row, result)

@@ -1,6 +1,6 @@
 import copy
-
 from bagels.queries.persons import get_person_by_id
+from bagels.static.forms.form import Form, FormField, Option, Options
 
 
 class PersonForm:
@@ -13,23 +13,25 @@ class PersonForm:
 
     # ------------ Blueprints ------------ #
 
-    FORM = [
-        {
-            "placeholder": "Steve",
-            "title": "Name",
-            "key": "name",
-            "type": "string",
-            "isRequired": True,
-        },
-    ]
+    FORM = Form(
+        fields=[
+            FormField(
+                placeholder="Steve",
+                title="Name",
+                key="name",
+                type="string",
+                is_required=True,
+            ),
+        ]
+    )
     # ------------- Builders ------------- #
 
     def get_filled_form(self, personId: int):
         form = copy.deepcopy(self.FORM)
         person = get_person_by_id(personId)
-        for field in form:
-            value = getattr(person, field["key"])
-            field["defaultValue"] = str(value) if value is not None else ""
+        for field in form.fields:
+            value = getattr(person, field.key)
+            field.default_value = str(value) if value is not None else ""
         return form
 
     def get_form(self):

@@ -59,7 +59,7 @@ class Insights(Static):
 
         if self.use_account:
             current_filter_label.update(
-                f"{self.page_parent.mode['accountId']['defaultValueText']} {label} of {self.page_parent.get_filter_label()}"
+                f"{self.page_parent.mode['accountId']['default_value_text']} {label} of {self.page_parent.get_filter_label()}"
             )
         else:
             current_filter_label.update(
@@ -70,7 +70,7 @@ class Insights(Static):
         if self.use_account:
             params = {
                 **self.page_parent.filter,
-                "accountId": self.page_parent.mode["accountId"]["defaultValue"],
+                "accountId": self.page_parent.mode["accountId"]["default_value"],
                 "isIncome": mode_isIncome,
             }
         else:
@@ -92,7 +92,7 @@ class Insights(Static):
             category_records = get_all_categories_records(
                 **self.page_parent.filter,
                 is_income=self.page_parent.mode["isIncome"],
-                account_id=self.page_parent.mode["accountId"]["defaultValue"],
+                account_id=self.page_parent.mode["accountId"]["default_value"],
             )
         else:
             category_records = get_all_categories_records(

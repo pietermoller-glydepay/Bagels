@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING, cast
 from textual.command import DiscoveryHit, Hit, Hits, Provider
 from textual.types import IgnoreReturnCallbackType
 
-from bagels.components.modals import ConfirmationModal
 from bagels.models.database.app import wipe_database
 from bagels.queries.samples import create_sample_entries
 
@@ -98,7 +97,7 @@ class AppProvider(Provider):
     def _action_wipe_database(self) -> None:
         wipe_database()
         self.app.refresh(layout=True, recompose=True)
-        # def check_delete(result: bool) -> None:
+        # def check_delete(result) -> None:
 
         # self.app.push_screen(ConfirmationModal(
         #     message="Are you sure you want to wipe the database?",

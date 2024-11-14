@@ -1,15 +1,18 @@
 from datetime import datetime
+from typing import Tuple, Dict, Any
 
 from textual.widget import Widget
 
+from bagels.static.forms.form import Form, FormField
+
 
 def _validate_number(
-    value: str, field: dict, is_float: bool = False
-) -> tuple[bool, str | None]:
+    value: str, field: FormField, is_float: bool = False
+) -> Tuple[bool, str | None]:
     """Validate a number field and return (is_valid, error_message)"""
     if not value:
-        if field.get("isRequired", False):
-            return False, f"Required"
+        if field.is_required:
+            return False, "Required"
         return True, None
 
     # Check if valid number
@@ -31,27 +34,27 @@ def _validate_number(
     num_val = float(value) if is_float else int(value)
 
     # Check minimum
-    if "min" in field:
-        min_val = float(field["min"]) if is_float else int(field["min"])
+    if field.min is not None:
+        min_val = float(field.min) if is_float else int(field.min)
         if num_val <= min_val:
-            return False, f"Must be greater than {field['min']}"
+            return False, f"Must be greater than {field.min}"
 
     # Check maximum
-    if "max" in field:
-        max_val = float(field["max"]) if is_float else int(field["max"])
+    if field.max is not None:
+        max_val = float(field.max) if is_float else int(field.max)
         if num_val > max_val:
-            return False, f"Must be less than {field['max']}"
+            return False, f"Must be less than {field.max}"
 
     return True, None
 
 
 def _validate_date(
-    value: str, field: dict, auto_day: bool = False
-) -> tuple[datetime | None, str | None]:
+    value: str, field: FormField, auto_day: bool = False
+) -> Tuple[datetime | None, str | None]:
     """Validate a date field and return (parsed_date, error_message)"""
     if not value or value == "":
-        if field.get("isRequired", False):
-            return None, f"Required"
+        if field.is_required:
+            return None, "Required"
         return None, None
 
     try:
@@ -69,41 +72,42 @@ def _validate_date(
 
 
 def _validate_autocomplete(
-    value: str, held_value: str, field: dict
-) -> tuple[bool, str | None]:
+    value: str, held_value: str, field: FormField
+) -> Tuple[bool, str | None]:
     """Validate an autocomplete field and return (is_valid, error_message)"""
     if not value and not held_value:
-        if field.get("isRequired", False):
-            return False, f"Must be selected"
+        if field.is_required:
+            return False, "Must be selected"
         return True, None
 
-    if not field["options"]:
+    if not field.options or not field.options.items:
         return True, None
 
-    if field["options"][0].get("text", ""):
+    if field.options.items[0].text:
         # Find matching option
         field_input_value = None
-        for item in field["options"]:
-            if item["text"] == value:
-                field_input_value = str(item["value"])
+        for item in field.options.items:
+            if item.text == value:
+                field_input_value = str(item.value)
                 break
 
         # Verify selected value matches entered text
         if field_input_value != str(held_value):
+            print(field_input_value, held_value)
             return False, "Invalid selection"
 
     return True, None
 
 
 def validateForm(
-    formComponent: Widget, formData: list[dict]
-) -> tuple[dict, dict, bool]:
+    formComponent: Widget, formData: Form
+) -> Tuple[Dict[str, Any], Dict[str, str], bool]:
     result = {}
     errors = {}
     isValid = True
 
-    for field in formData:
-        fieldKey = field["key"]
+    for field in formData.fields:
+        fieldKey = field.key
         fieldWidget = formComponent.query_one(f"#field-{fieldKey}")
         fieldValue = (
             fieldWidget.heldValue
@@ -113,7 +117,7 @@ def validateForm(
 
         error = None
 
-        match field["type"]:
+        match field.type:
             case "integer":
                 is_valid, error = _validate_number(fieldValue, field)
                 if is_valid and fieldValue:
@@ -142,8 +146,8 @@ def validateForm(
                     result[fieldKey] = fieldValue
 
             case _:
-                if not fieldValue and field.get("isRequired", False):
-                    error = f"Required"
+                if not fieldValue and field.is_required:
+                    error = "Required"
                 else:
                     result[fieldKey] = fieldValue
 

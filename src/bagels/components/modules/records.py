@@ -5,19 +5,16 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Container
 from textual.reactive import reactive
-from textual.widgets import Label, Static
+from textual.widgets import Static
 
 from bagels.components.button import Button
 from bagels.components.datatable import DataTable
 from bagels.components.indicators import EmptyIndicator
-from bagels.components.modals import (
-    ConfirmationModal,
-    InputModal,
-    RecordModal,
-    TransferModal,
-)
+from bagels.modals.confirmation import ConfirmationModal
+from bagels.modals.record import RecordModal
+from bagels.modals.transfer import TransferModal
+from bagels.modals.input import InputModal
 from bagels.config import CONFIG
-from bagels.queries.accounts import get_accounts_count, get_all_accounts_with_balance
 from bagels.queries.persons import (
     get_person_by_id,
     get_persons_with_splits,
@@ -30,12 +27,13 @@ from bagels.queries.records import (
     get_record_by_id,
     get_record_total_split_amount,
     get_records,
+    update_record,
     update_record_and_splits,
 )
-from bagels.queries.splits import delete_split, get_split_by_id, update_split
+from bagels.queries.splits import get_split_by_id, update_split
 from bagels.utils.format import format_date_to_readable
-from bagels.utils.person_forms import PersonForm
-from bagels.utils.record_forms import RecordForm
+from bagels.static.forms.person_forms import PersonForm
+from bagels.static.forms.record_forms import RecordForm
 
 
 class DisplayMode:
@@ -357,7 +355,7 @@ class Records(Static):
     # region cud
 
     def action_new(self) -> None:
-        def check_result(result: bool) -> None:
+        def check_result(result) -> None:
             if result:
                 try:
                     create_record_and_splits(result["record"], result["splits"])
@@ -375,7 +373,7 @@ class Records(Static):
                     self.page_parent.rebuild()
 
         date = format_date_to_readable(self.page_parent.mode["date"])
-        account_name = self.page_parent.mode["accountId"]["defaultValueText"]
+        account_name = self.page_parent.mode["accountId"]["default_value_text"]
         type = "Income" if self.page_parent.mode["isIncome"] else "Expense"
         self.app.push_screen(
             RecordModal(
@@ -397,10 +395,13 @@ class Records(Static):
         id = self.current_row.split("-")[1]
 
         # ----------------- - ---------------- #
-        def check_result_records(result: bool) -> None:
+        def check_result_records(result) -> None:
             if result:
                 try:
-                    update_record_and_splits(id, result["record"], result["splits"])
+                    if result.get("record"):  # if not editing a transfer:
+                        update_record_and_splits(id, result["record"], result["splits"])
+                    else:
+                        update_record(id, result)
                 except Exception as e:
                     self.app.notify(
                         title="Error", message=f"{e}", severity="error", timeout=10
@@ -421,7 +422,7 @@ class Records(Static):
                     timeout=3,
                 )
 
-        def check_result_person(result: bool) -> None:
+        def check_result_person(result) -> None:
             if result:
                 try:
                     update_person(id, result)
@@ -487,14 +488,16 @@ class Records(Static):
                     )
                 else:
                     split_data = {
-                        "accountId": self.page_parent.mode["accountId"]["defaultValue"],
+                        "accountId": self.page_parent.mode["accountId"][
+                            "default_value"
+                        ],
                         "isPaid": True,
                         "paidDate": datetime.now(),
                     }
                     update_split(id, split_data)
                     self.app.notify(
                         title="Completed split",
-                        message=f"With account {self.page_parent.mode['accountId']['defaultValueText']} today",
+                        message=f"With account {self.page_parent.mode['accountId']['default_value_text']} today",
                         severity="information",
                         timeout=3,
                     )
@@ -539,7 +542,7 @@ class Records(Static):
             return
 
         # ----------------- - ---------------- #
-        def check_delete(result: bool) -> None:
+        def check_delete(result) -> None:
             if result:
                 delete_record(id)
                 self.app.notify(
@@ -566,7 +569,7 @@ class Records(Static):
                 pass
 
     def action_new_transfer(self) -> None:
-        def check_result(result: bool) -> None:
+        def check_result(result) -> None:
             if result:
                 try:
                     create_record(result)

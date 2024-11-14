@@ -4,7 +4,8 @@ from textual.app import ComposeResult
 from textual.containers import Container, ScrollableContainer
 from textual.widgets import Label, Static
 
-from bagels.components.modals import ConfirmationModal, InputModal
+from bagels.modals.confirmation import ConfirmationModal
+from bagels.modals.input import InputModal
 from bagels.config import CONFIG
 from bagels.queries.accounts import (
     create_account,
@@ -12,7 +13,7 @@ from bagels.queries.accounts import (
     get_all_accounts_with_balance,
     update_account,
 )
-from bagels.utils.account_forms import AccountForm
+from bagels.static.forms.account_forms import AccountForm
 
 
 class AccountMode(ScrollableContainer):
@@ -53,7 +54,7 @@ class AccountMode(ScrollableContainer):
             account_container = self.query_one(f"#account-{account.id}-container")
             selected = (
                 "selected"
-                if self.page_parent.mode["accountId"]["defaultValue"] == account.id
+                if self.page_parent.mode["accountId"]["default_value"] == account.id
                 else ""
             )
             account_container.classes = f"account-container {selected}"
@@ -87,7 +88,7 @@ class AccountMode(ScrollableContainer):
     # ---------------- cud --------------- #
 
     def action_new(self) -> None:
-        def check_result(result: bool) -> None:
+        def check_result(result) -> None:
             if result:
                 try:
                     create_account(result)
@@ -109,9 +110,9 @@ class AccountMode(ScrollableContainer):
         )
 
     def action_edit(self) -> None:
-        id = self.page_parent.mode["accountId"]["defaultValue"]
+        id = self.page_parent.mode["accountId"]["default_value"]
 
-        def check_result(result: bool) -> None:
+        def check_result(result) -> None:
             if result:
                 try:
                     update_account(id, result)
@@ -141,9 +142,9 @@ class AccountMode(ScrollableContainer):
             )
 
     def action_delete(self) -> None:
-        id = self.page_parent.mode["accountId"]["defaultValue"]
+        id = self.page_parent.mode["accountId"]["default_value"]
 
-        def check_delete(result: bool) -> None:
+        def check_delete(result) -> None:
             if result:
                 delete_account(id)
                 self.app.notify(

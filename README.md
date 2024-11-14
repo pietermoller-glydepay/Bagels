@@ -2,8 +2,6 @@
 
 [[HEAVY WIP]] Powerful expense tracker that lives in your terminal.
 
-[] New person not applied
-
 <img width="1637" alt="Screenshot 2024-11-09 at 8 55 41 PM" src="https://github.com/user-attachments/assets/1813fec6-55ae-412b-8e36-69d3de587f69">
 
 ## Install

@@ -80,7 +80,7 @@ def get_all_categories_by_freq():
 
 def get_category_by_id(category_id):
     with app.app_context():
-        return _get_base_categories_query().get(category_id)
+        return _get_base_categories_query().filter_by(id=category_id).first()
 
 
 def get_all_categories_records(

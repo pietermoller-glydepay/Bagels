@@ -6,7 +6,7 @@ from textual.containers import Container, Horizontal
 from textual.widgets import Label, Static
 
 from bagels.components.button import Button
-from bagels.components.modals import InputModal
+from bagels.modals.input import InputModal
 from bagels.config import CONFIG
 
 
@@ -23,7 +23,7 @@ class DateMode(Static):
             "type": "dateAutoDay",
             "key": "date",
             "title": "Date",
-            "defaultValue": datetime.now().strftime("%d"),
+            "default_value": datetime.now().strftime("%d"),
         }
     ]
 

@@ -1,17 +1,18 @@
 from datetime import datetime
+from sqlalchemy import Column, DateTime, Integer, String
+from sqlalchemy.orm import relationship
+from .database.db import Base
 
-from .database.db import db
 
-
-class Person(db.Model):
+class Person(Base):
     __tablename__ = "person"
 
-    createdAt = db.Column(db.DateTime, nullable=False, default=datetime.now)
-    updatedAt = db.Column(
-        db.DateTime, nullable=False, default=datetime.now, onupdate=datetime.now
+    createdAt = Column(DateTime, nullable=False, default=datetime.now)
+    updatedAt = Column(
+        DateTime, nullable=False, default=datetime.now, onupdate=datetime.now
     )
 
-    id = db.Column(db.Integer, primary_key=True, index=True)
-    name = db.Column(db.String)
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
 
-    splits = db.relationship("Split", back_populates="person")
+    splits = relationship("Split", back_populates="person")

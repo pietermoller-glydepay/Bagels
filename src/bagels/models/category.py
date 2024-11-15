@@ -1,7 +1,8 @@
 from datetime import datetime
 from enum import Enum
-
-from .database.db import db
+from sqlalchemy import Column, DateTime, Integer, String, Enum as SQLEnum, ForeignKey
+from sqlalchemy.orm import relationship
+from .database.db import Base
 
 
 class Nature(Enum):
@@ -13,27 +14,25 @@ class Nature(Enum):
         return self.value
 
 
-class Category(db.Model):
+class Category(Base):
     __tablename__ = "category"
 
-    createdAt = db.Column(db.DateTime, nullable=False, default=datetime.now)
-    updatedAt = db.Column(
-        db.DateTime, nullable=False, default=datetime.now, onupdate=datetime.now
+    createdAt = Column(DateTime, nullable=False, default=datetime.now)
+    updatedAt = Column(
+        DateTime, nullable=False, default=datetime.now, onupdate=datetime.now
     )
-    deletedAt = db.Column(db.DateTime, nullable=True)
+    deletedAt = Column(DateTime, nullable=True)
 
-    id = db.Column(db.Integer, primary_key=True, index=True)
-    parentCategoryId = db.Column(
-        db.Integer, db.ForeignKey("category.id"), nullable=True
-    )
-    name = db.Column(db.String, nullable=False)
-    nature = db.Column(db.Enum(Nature), nullable=False)
-    color = db.Column(db.String, nullable=False)
+    id = Column(Integer, primary_key=True, index=True)
+    parentCategoryId = Column(Integer, ForeignKey("category.id"), nullable=True)
+    name = Column(String, nullable=False)
+    nature = Column(SQLEnum(Nature), nullable=False)
+    color = Column(String, nullable=False)
 
-    records = db.relationship("Record", back_populates="category")
-    parentCategory = db.relationship(
+    records = relationship("Record", back_populates="category")
+    parentCategory = relationship(
         "Category", back_populates="subCategories", remote_side=[id]
     )
-    subCategories = db.relationship(
+    subCategories = relationship(
         "Category", back_populates="parentCategory", remote_side=[parentCategoryId]
     )

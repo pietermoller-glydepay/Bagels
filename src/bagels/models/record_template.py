@@ -1,41 +1,53 @@
 from datetime import datetime
-from sqlalchemy import func, event, select
-from sqlalchemy.orm import validates
-from .database.db import db
+from sqlalchemy import (
+    Column,
+    DateTime,
+    Integer,
+    String,
+    Float,
+    Boolean,
+    ForeignKey,
+    CheckConstraint,
+    event,
+    func,
+    select,
+    update,
+)
+from sqlalchemy.orm import relationship, validates
+from .database.db import Base
 
 
-class RecordTemplate(db.Model):
+class RecordTemplate(Base):
     __tablename__ = "record_template"
 
-    createdAt = db.Column(db.DateTime, nullable=False, default=datetime.now)
-    updatedAt = db.Column(
-        db.DateTime, nullable=False, default=datetime.now, onupdate=datetime.now
+    createdAt = Column(DateTime, nullable=False, default=datetime.now)
+    updatedAt = Column(
+        DateTime, nullable=False, default=datetime.now, onupdate=datetime.now
     )
 
-    id = db.Column(db.Integer, primary_key=True, index=True)
-    label = db.Column(db.String, nullable=False)
-    amount = db.Column(db.Float, db.CheckConstraint("amount > 0"), nullable=False)
-    accountId = db.Column(db.Integer, db.ForeignKey("account.id"), nullable=False)
-    categoryId = db.Column(db.Integer, db.ForeignKey("category.id"), nullable=True)
+    id = Column(Integer, primary_key=True, index=True)
+    label = Column(String, nullable=False)
+    amount = Column(Float, CheckConstraint("amount > 0"), nullable=False)
+    accountId = Column(Integer, ForeignKey("account.id"), nullable=False)
+    categoryId = Column(Integer, ForeignKey("category.id"), nullable=True)
 
-    order = db.Column(db.Integer, nullable=False, unique=True)
+    order = Column(Integer, nullable=False, unique=True)
 
-    isIncome = db.Column(db.Boolean, nullable=False, default=False)
-    isTransfer = db.Column(
-        db.Boolean,
-        db.CheckConstraint("(isTransfer = FALSE) OR (isIncome = FALSE)"),
+    isIncome = Column(Boolean, nullable=False, default=False)
+    isTransfer = Column(
+        Boolean,
+        CheckConstraint("(isTransfer = FALSE) OR (isIncome = FALSE)"),
         nullable=False,
         default=False,
     )
-    transferToAccountId = db.Column(
-        db.Integer, db.ForeignKey("account.id"), nullable=True
-    )
+    transferToAccountId = Column(Integer, ForeignKey("account.id"), nullable=True)
 
-    account = db.relationship("Account", foreign_keys=[accountId])
-    category = db.relationship("Category", foreign_keys=[categoryId])
-    transferToAccount = db.relationship("Account", foreign_keys=[transferToAccountId])
+    account = relationship("Account", foreign_keys=[accountId])
+    category = relationship("Category", foreign_keys=[categoryId])
+    transferToAccount = relationship("Account", foreign_keys=[transferToAccountId])
 
-    def to_dict(self) -> dict:  # creates a dictionary object to feed into create_record
+    def to_dict(self) -> dict:
+        """Creates a dictionary object to feed into create_record."""
         return {
             "label": self.label,
             "amount": self.amount,
@@ -64,7 +76,7 @@ def receive_before_insert(mapper, connection, target):
 @event.listens_for(RecordTemplate, "before_delete")
 def receive_before_delete(mapper, connection, target):
     connection.execute(
-        db.update(RecordTemplate)
+        update(RecordTemplate)
         .where(RecordTemplate.order > target.order)
         .values(order=RecordTemplate.order - 1)
     )

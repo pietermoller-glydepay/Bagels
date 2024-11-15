@@ -1,67 +1,88 @@
 from datetime import datetime
-
 from sqlalchemy import and_
+from sqlalchemy.orm import joinedload, sessionmaker
 
-from bagels.models.database.app import get_app
-from bagels.models.database.db import db
+from bagels.models.database.app import db_engine
 from bagels.models.person import Person
 from bagels.models.record import Record
 from bagels.models.split import Split
 from bagels.queries.utils import get_start_end_of_period
 
-app = get_app()
+Session = sessionmaker(bind=db_engine)
 
 
 def create_person(data):
-    with app.app_context():
+    """Create a new person entry in the database."""
+    session = Session()
+    try:
         new_person = Person(**data)
-        db.session.add(new_person)
-        db.session.commit()
-        db.session.refresh(new_person)
-        db.session.expunge(new_person)
+        session.add(new_person)
+        session.commit()
+        session.refresh(new_person)
+        session.expunge(new_person)
         return new_person
+    finally:
+        session.close()
 
 
 def get_all_persons():
-    with app.app_context():
-        return Person.query.all()
+    """Retrieve all persons from the database."""
+    session = Session()
+    try:
+        return session.query(Person).all()
+    finally:
+        session.close()
 
 
 def get_person_by_id(person_id):
-    with app.app_context():
-        return Person.query.get(person_id)
+    """Retrieve a person by their ID."""
+    session = Session()
+    try:
+        return session.query(Person).get(person_id)
+    finally:
+        session.close()
 
 
 def update_person(person_id, data):
-    with app.app_context():
-        person = Person.query.get(person_id)
+    """Update a person's information by their ID."""
+    session = Session()
+    try:
+        person = session.query(Person).get(person_id)
         if person:
             for key, value in data.items():
                 setattr(person, key, value)
-            db.session.commit()
+            session.commit()
         return person
+    finally:
+        session.close()
 
 
 def delete_person(person_id):
-    with app.app_context():
-        person = Person.query.get(person_id)
+    """Delete a person from the database by their ID."""
+    session = Session()
+    try:
+        person = session.query(Person).get(person_id)
         if person:
-            db.session.delete(person)
-            db.session.commit()
+            session.delete(person)
+            session.commit()
             return True
         return False
+    finally:
+        session.close()
 
 
 def get_persons_with_splits(offset: int = 0, offset_type: str = "month"):
-    """Get all persons with their splits for the specified period"""
-    with app.app_context():
+    """Get all persons with their splits for the specified period."""
+    session = Session()
+    try:
         start_of_period, end_of_period = get_start_end_of_period(offset, offset_type)
         return (
-            Person.query.options(
-                db.joinedload(Person.splits)
+            session.query(Person)
+            .options(
+                joinedload(Person.splits)
                 .joinedload(Split.record)
                 .joinedload(Record.category),
-                db.joinedload(Person.splits).joinedload(Split.account),
+                joinedload(Person.splits).joinedload(Split.account),
             )
             .join(Person.splits)
             .join(Split.record)
@@ -70,3 +91,5 @@ def get_persons_with_splits(offset: int = 0, offset_type: str = "month"):
             .distinct()
             .all()
         )
+    finally:
+        session.close()

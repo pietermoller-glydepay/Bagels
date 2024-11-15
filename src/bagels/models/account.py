@@ -1,31 +1,32 @@
 from datetime import datetime
+from sqlalchemy import Column, DateTime, Integer, String, Float, Boolean
+from sqlalchemy.orm import relationship
+from .database.db import Base
 
-from .database.db import db
 
-
-class Account(db.Model):
+class Account(Base):
     __tablename__ = "account"
 
-    createdAt = db.Column(db.DateTime, nullable=False, default=datetime.now)
-    updatedAt = db.Column(
-        db.DateTime, nullable=False, default=datetime.now, onupdate=datetime.now
+    createdAt = Column(DateTime, nullable=False, default=datetime.now)
+    updatedAt = Column(
+        DateTime, nullable=False, default=datetime.now, onupdate=datetime.now
     )
-    deletedAt = db.Column(db.DateTime, nullable=True)
+    deletedAt = Column(DateTime, nullable=True)
 
-    id = db.Column(db.Integer, primary_key=True, index=True)
-    name = db.Column(db.String, nullable=False)
-    description = db.Column(db.String)
-    beginningBalance = db.Column(db.Float, nullable=False)
-    repaymentDate = db.Column(db.Integer)
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    description = Column(String)
+    beginningBalance = Column(Float, nullable=False)
+    repaymentDate = Column(Integer)
 
-    hidden = db.Column(db.Boolean, nullable=False, default=False)
+    hidden = Column(Boolean, nullable=False, default=False)
 
-    records = db.relationship(
+    records = relationship(
         "Record", back_populates="account", foreign_keys="[Record.accountId]"
     )
-    transferFromRecords = db.relationship(
+    transferFromRecords = relationship(
         "Record",
         back_populates="transferToAccount",
         foreign_keys="[Record.transferToAccountId]",
     )
-    splits = db.relationship("Split", back_populates="account")
+    splits = relationship("Split", back_populates="account")

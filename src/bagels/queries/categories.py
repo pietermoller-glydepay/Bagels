@@ -1,17 +1,19 @@
 from datetime import datetime
 from rich.text import Text
+from sqlalchemy import func, desc
+from sqlalchemy.orm import joinedload, sessionmaker
 
 from bagels.models.category import Category
-from bagels.models.database.app import get_app
-from bagels.models.database.db import db
 from bagels.models.record import Record
 from bagels.queries.utils import get_start_end_of_period
+from bagels.models.database.app import db_engine
 
-app = get_app()
+Session = sessionmaker(bind=db_engine)
 
 
-def _get_base_categories_query(include_deleted=False):
-    query = Category.query
+def _get_base_categories_query(session, include_deleted=False):
+    """Base query for categories with optional filtering of deleted entries."""
+    query = session.query(Category)
     if not include_deleted:
         query = query.filter(Category.deletedAt.is_(None))
     return query
@@ -19,26 +21,29 @@ def _get_base_categories_query(include_deleted=False):
 
 # region Get
 def get_categories_count():
-    with app.app_context():
-        return _get_base_categories_query().count()
+    """Count all categories excluding deleted ones."""
+    session = Session()
+    try:
+        return _get_base_categories_query(session).count()
+    finally:
+        session.close()
 
 
-def get_all_categories_tree():  # special function to get the categories in a tree format
-    with app.app_context():
-        # Fetch all categories
+def get_all_categories_tree():
+    """Retrieve all categories in a hierarchical tree format."""
+    session = Session()
+    try:
         categories = (
-            _get_base_categories_query()
-            .options(db.joinedload(Category.parentCategory))
+            _get_base_categories_query(session)
+            .options(joinedload(Category.parentCategory))
             .order_by(Category.id)
             .all()
         )
 
-        # Helper function to recursively build the category tree
         def build_category_tree(parent_id=None, depth=0):
             result = []
             for category in categories:
                 if category.parentCategoryId == parent_id:
-                    # Determine the node symbol based on depth
                     if depth == 0:
                         node = Text("●", style=category.color)
                     else:
@@ -47,9 +52,7 @@ def get_all_categories_tree():  # special function to get the categories in a tr
                             + ("└" if is_last(category, parent_id) else "├"),
                             style=category.color,
                         )
-
                     result.append((category, node))
-                    # Recursively add subcategories with increased depth
                     result.extend(build_category_tree(category.id, depth + 1))
             return result
 
@@ -58,29 +61,35 @@ def get_all_categories_tree():  # special function to get the categories in a tr
             return category == siblings[-1]
 
         return build_category_tree()
+    finally:
+        session.close()
 
 
 def get_all_categories_by_freq():
-    with app.app_context():
-        # Query categories and count their usage in records
+    """Retrieve all categories ordered by the frequency of their usage in records."""
+    session = Session()
+    try:
         categories = (
-            db.session.query(
-                Category, db.func.count(Category.records).label("record_count")
-            )
+            session.query(Category, func.count(Category.records).label("record_count"))
             .outerjoin(Category.records)
             .group_by(Category.id)
-            .order_by(db.desc("record_count"))
-            .options(db.joinedload(Category.parentCategory))
+            .order_by(desc("record_count"))
+            .options(joinedload(Category.parentCategory))
             .filter(Category.deletedAt.is_(None))
             .all()
         )
-
         return categories
+    finally:
+        session.close()
 
 
 def get_category_by_id(category_id):
-    with app.app_context():
-        return _get_base_categories_query().filter_by(id=category_id).first()
+    """Retrieve a category by its ID."""
+    session = Session()
+    try:
+        return _get_base_categories_query(session).filter_by(id=category_id).first()
+    finally:
+        session.close()
 
 
 def get_all_categories_records(
@@ -91,29 +100,13 @@ def get_all_categories_records(
     account_id: int = None,
 ):
     """
-    Returns all categories, sorted by the total net amount of expense/income of records in that category.
-
-    Rules:
-    - Filter applies to only to records (date, account). Splits must always be considered by their associated records.
-    - Income and expenses should be calculated from record less their splits, regardless of the account of the split.
-    - Populate categories.amount with the net total amount of expense/income in that category.
-    - If subcategories is False, group all amounts (income/expense) to their parent category
-    - Only return categories with non-zero amounts.
-    - Sort categories by the total net amount of expense/income.
-
-    Args:
-        accountId (int): The ID of the account to filter by. (Optional)
-        offset_type (str): The type of period to filter by.
-        offset (int): The offset from the current period.
-        is_income (bool): Whether to filter by income or expense.
-        subcategories (bool): Whether to include subcategories in the result
+    Retrieve all categories with their net income or expenses, sorted by total amount.
     """
-    with app.app_context():
-        # Get start and end dates for the period
+    session = Session()
+    try:
         start_of_period, end_of_period = get_start_end_of_period(offset, offset_type)
 
-        # Query records within the specified period and account
-        query = db.session.query(Record).options(db.joinedload(Record.category))
+        query = session.query(Record).options(joinedload(Record.category))
         if account_id is not None:
             query = query.filter(Record.accountId == account_id)
         query = query.filter(
@@ -122,11 +115,9 @@ def get_all_categories_records(
             Record.isIncome == is_income,
         )
 
-        # Calculate net amounts for each category
         category_totals = {}
         records = query.all()
         for record in records:
-
             split_total = sum(split.amount for split in record.splits)
             record_amount = record.amount - split_total
 
@@ -141,9 +132,8 @@ def get_all_categories_records(
                 category_totals[category_id] = 0
             category_totals[category_id] += record_amount
 
-        # Filter out categories with zero amounts and sort by net amount
         categories = (
-            db.session.query(Category)
+            session.query(Category)
             .filter(
                 Category.id.in_(category_totals.keys()), Category.deletedAt.is_(None)
             )
@@ -156,38 +146,52 @@ def get_all_categories_records(
         categories.sort(key=lambda cat: cat.amount, reverse=True)
 
         return categories
+    finally:
+        session.close()
 
 
 # region Create
 def create_category(data):
-    with app.app_context():
+    """Create a new category."""
+    session = Session()
+    try:
         new_category = Category(**data)
-        db.session.add(new_category)
-        db.session.commit()
-        db.session.refresh(new_category)
-        db.session.expunge(new_category)
+        session.add(new_category)
+        session.commit()
+        session.refresh(new_category)
+        session.expunge(new_category)
         return new_category
+    finally:
+        session.close()
 
 
 # region Update
 def update_category(category_id, data):
-    with app.app_context():
-        category = Category.query.get(category_id)
+    """Update a category by its ID."""
+    session = Session()
+    try:
+        category = session.query(Category).get(category_id)
         if category:
             for key, value in data.items():
                 setattr(category, key, value)
-            db.session.commit()
+            session.commit()
         return category
+    finally:
+        session.close()
 
 
 # region Delete
 def delete_category(category_id):
-    with app.app_context():
-        category = Category.query.get(category_id)
+    """Delete a category by marking it as deleted."""
+    session = Session()
+    try:
+        category = session.query(Category).get(category_id)
         if category:
             category.deletedAt = datetime.now()
-            db.session.commit()
-            db.session.refresh(category)
-            db.session.expunge(category)
+            session.commit()
+            session.refresh(category)
+            session.expunge(category)
             return True
         return False
+    finally:
+        session.close()

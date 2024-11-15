@@ -3,14 +3,14 @@ from pathlib import Path
 import yaml
 
 from bagels.models.account import Account
-from bagels.models.database.app import get_app
-from bagels.models.database.db import db
+from bagels.models.database.app import db_engine
 from bagels.models.person import Person
 from bagels.models.record import Record
 from bagels.models.record_template import RecordTemplate
 from bagels.models.split import Split
+from sqlalchemy.orm import sessionmaker
 
-app = get_app()
+Session = sessionmaker(bind=db_engine)
 
 
 def create_sample_entries():
@@ -19,21 +19,22 @@ def create_sample_entries():
     with open(yaml_path, "r") as file:
         sample_entries = yaml.safe_load(file)
 
-    with app.app_context():
+    session = Session()
+    try:
         # Create accounts
         accounts = {}
         for account_data in sample_entries["accounts"]:
             account = Account(**account_data)
-            db.session.add(account)
-            db.session.flush()
+            session.add(account)
+            session.flush()
             accounts[account.id] = account
 
         # Create people
         people = {}
         for person_data in sample_entries["people"]:
             person = Person(**person_data)
-            db.session.add(person)
-            db.session.flush()
+            session.add(person)
+            session.flush()
             people[person.id] = person
 
         # Create records
@@ -43,18 +44,20 @@ def create_sample_entries():
 
             # Create record
             record = Record(**record_data)
-            db.session.add(record)
-            db.session.flush()
+            session.add(record)
+            session.flush()
 
             # Create splits if any
             if splits_data:
                 for split_data in splits_data:
                     split = Split(recordId=record.id, **split_data)
-                    db.session.add(split)
+                    session.add(split)
 
         # Create record templates
         for template_data in sample_entries["record_templates"]:
             template = RecordTemplate(**template_data)
-            db.session.add(template)
+            session.add(template)
 
-        db.session.commit()
+        session.commit()
+    finally:
+        session.close()

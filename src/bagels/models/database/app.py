@@ -1,7 +1,7 @@
 import yaml
-from flask import Flask
-from flask_migrate import Migrate
 from pathlib import Path
+from sqlalchemy import create_engine, inspect
+from sqlalchemy.orm import sessionmaker
 
 from bagels.models.category import Nature
 from bagels.locations import database_file
@@ -14,21 +14,14 @@ from bagels.models.record import Record
 from bagels.models.record_template import RecordTemplate
 from bagels.models.split import Split
 
-from .db import db
+from .db import Base
+
+db_engine = create_engine(f"sqlite:///{database_file().resolve()}")
+Session = sessionmaker(bind=db_engine)
 
 
-def create_app():
-    """Create Flask app with dynamic database URI"""
-    app = Flask(__name__)
-    app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{database_file().resolve()}"
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    db.init_app(app)
-    migrate = Migrate(app, db)
-    return app
-
-
-def _create_outside_source_account():
-    outside_account = Account.query.filter_by(name="Outside source").first()
+def _create_outside_source_account(session):
+    outside_account = session.query(Account).filter_by(name="Outside source").first()
     if not outside_account:
         outside_account = Account(
             name="Outside source",
@@ -36,15 +29,15 @@ def _create_outside_source_account():
             beginningBalance=0.0,
             hidden=True,
         )
-        db.session.add(outside_account)
-        db.session.commit()
+        session.add(outside_account)
+        session.commit()
 
 
-def _create_default_categories():
-    category_count = Category.query.count()
+def _create_default_categories(session):
+    category_count = session.query(Category).count()
     if category_count > 0:
         return
-    # Get the path to the YAML file
+
     yaml_path = (
         Path(__file__).parent.parent.parent / "static" / "default_categories.yaml"
     )
@@ -59,8 +52,8 @@ def _create_default_categories():
             color=category["color"],
             parentCategoryId=None,
         )
-        db.session.add(parent)
-        db.session.commit()
+        session.add(parent)
+        session.commit()
 
         for subcategory in category["subcategories"]:
             child = Category(
@@ -69,66 +62,50 @@ def _create_default_categories():
                 color=category["color"],
                 parentCategoryId=parent.id,
             )
-            db.session.add(child)
-            db.session.commit()
+            session.add(child)
+            session.commit()
 
 
-def _sync_database_schema(app):
-    """Attempt to automatically sync database schema"""
+def _sync_database_schema():
     try:
-        with app.app_context():
-            # Get all existing tables
-            inspector = db.inspect(db.engine)
-            existing_tables = inspector.get_table_names()
+        inspector = inspect(db_engine)
+        existing_tables = inspector.get_table_names()
 
-            # Create tables that don't exist
-            for table in db.Model.metadata.tables.values():
-                if table.name not in existing_tables:
-                    table.create(db.engine)
-                else:
-                    # Get existing columns
-                    existing_columns = {
-                        col["name"] for col in inspector.get_columns(table.name)
-                    }
-                    # Get model columns
-                    model_columns = {col.name for col in table.columns}
+        for table in Base.metadata.tables.values():
+            if table.name not in existing_tables:
+                table.create(db_engine)
+            else:
+                existing_columns = {
+                    col["name"] for col in inspector.get_columns(table.name)
+                }
+                model_columns = {col.name for col in table.columns}
 
-                    # Add missing columns
-                    for column_name in model_columns - existing_columns:
-                        column = table.columns[column_name]
-                        # Create new column with nullable=True to handle existing rows
-                        with db.engine.connect() as conn:
-                            conn.execute(
-                                db.text(
-                                    f'ALTER TABLE {table.name} ADD COLUMN "{column_name}" {column.type}'
-                                )
-                            )
-                            conn.commit()
+                for column_name in model_columns - existing_columns:
+                    column = table.columns[column_name]
+                    with db_engine.connect() as conn:
+                        conn.execute(
+                            f'ALTER TABLE {table.name} ADD COLUMN "{column_name}" {column.type}'
+                        )
+                        conn.commit()
 
     except Exception as e:
         raise Exception(f"Failed to sync database schema: {str(e)}")
 
 
 def init_db():
-    global app
-    app = create_app()
-    with app.app_context():
-        _sync_database_schema(app)
-        db.create_all()
-        _create_outside_source_account()
-        _create_default_categories()
-
-
-def get_app():
-    return app
+    _sync_database_schema()
+    Base.metadata.create_all(db_engine)
+    session = Session()
+    _create_outside_source_account(session)
+    _create_default_categories(session)
+    session.close()
 
 
 def wipe_database():
-    global app
-    app = create_app()
-    with app.app_context():
-        db.drop_all()
-        _sync_database_schema(app)
-        db.create_all()
-        _create_outside_source_account()
-        _create_default_categories()
+    Base.metadata.drop_all(db_engine)
+    _sync_database_schema()
+    Base.metadata.create_all(db_engine)
+    session = Session()
+    _create_outside_source_account(session)
+    _create_default_categories(session)
+    session.close()

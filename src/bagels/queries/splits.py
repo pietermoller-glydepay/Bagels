@@ -1,48 +1,68 @@
-from bagels.models.database.app import get_app
-from bagels.models.database.db import db
+from sqlalchemy.orm import sessionmaker
 from bagels.models.split import Split
+from bagels.models.database.app import db_engine
 
-app = get_app()
+Session = sessionmaker(bind=db_engine)
 
 
 def create_split(data):
-    with app.app_context():
+    session = Session()
+    try:
         new_split = Split(**data)
-        db.session.add(new_split)
-        db.session.commit()
+        session.add(new_split)
+        session.commit()
+        session.refresh(new_split)
+        session.expunge(new_split)
         return new_split
+    finally:
+        session.close()
 
 
 def get_splits_by_record_id(record_id):
-    with app.app_context():
-        return Split.query.filter_by(recordId=record_id).all()
+    session = Session()
+    try:
+        return session.query(Split).filter_by(recordId=record_id).all()
+    finally:
+        session.close()
 
 
 def get_split_by_id(split_id):
-    with app.app_context():
-        return Split.query.get(split_id)
+    session = Session()
+    try:
+        return session.query(Split).get(split_id)
+    finally:
+        session.close()
 
 
 def update_split(split_id, updated_data):
-    with app.app_context():
-        split = Split.query.get(split_id)
+    session = Session()
+    try:
+        split = session.query(Split).get(split_id)
         if split:
             for key, value in updated_data.items():
                 setattr(split, key, value)
-            db.session.commit()
+            session.commit()
         return split
+    finally:
+        session.close()
 
 
 def delete_split(split_id):
-    with app.app_context():
-        split = Split.query.get(split_id)
+    session = Session()
+    try:
+        split = session.query(Split).get(split_id)
         if split:
-            db.session.delete(split)
-            db.session.commit()
+            session.delete(split)
+            session.commit()
         return split
+    finally:
+        session.close()
 
 
 def delete_splits_by_record_id(record_id):
-    with app.app_context():
-        Split.query.filter_by(recordId=record_id).delete()
-        db.session.commit()
+    session = Session()
+    try:
+        session.query(Split).filter_by(recordId=record_id).delete()
+        session.commit()
+    finally:
+        session.close()

@@ -1,65 +1,79 @@
-from bagels.models.database.app import get_app
-from bagels.models.database.db import db
+from sqlalchemy.orm import sessionmaker, joinedload
+from sqlalchemy import func, desc
+from bagels.models.database.app import db_engine
 from bagels.models.record import Record
 from bagels.models.split import Split
 from bagels.queries.splits import create_split, get_splits_by_record_id, update_split
 from bagels.queries.utils import get_start_end_of_period
 
-app = get_app()
+Session = sessionmaker(bind=db_engine)
 
 
 # region Create
 def create_record(record_data: dict):
-    with app.app_context():
+    session = Session()
+    try:
         record = Record(**record_data)
-        db.session.add(record)
-        db.session.commit()
-        db.session.refresh(record)
-        db.session.expunge(record)
+        session.add(record)
+        session.commit()
+        session.refresh(record)
+        session.expunge(record)
         return record
+    finally:
+        session.close()
 
 
 def create_record_and_splits(record_data: dict, splits_data: list[dict]):
-    with app.app_context():
+    session = Session()
+    try:
         record = create_record(record_data)
         for split in splits_data:
             split["recordId"] = record.id
             create_split(split)
         return record
+    finally:
+        session.close()
 
 
 # region Get
 def get_record_by_id(record_id: int, populate_splits: bool = False):
-    with app.app_context():
-        query = Record.query.options(
-            db.joinedload(Record.category), db.joinedload(Record.account)
+    session = Session()
+    try:
+        query = session.query(Record).options(
+            joinedload(Record.category), joinedload(Record.account)
         )
 
         if populate_splits:
             query = query.options(
-                db.joinedload(Record.splits).options(
-                    db.joinedload(Split.account), db.joinedload(Split.person)
+                joinedload(Record.splits).options(
+                    joinedload(Split.account), joinedload(Split.person)
                 )
             )
 
         record = query.get(record_id)
         return record
+    finally:
+        session.close()
 
 
 def get_record_total_split_amount(record_id: int):
-    with app.app_context():
+    session = Session()
+    try:
         splits = get_splits_by_record_id(record_id)
         return sum(split.amount for split in splits)
+    finally:
+        session.close()
 
 
 def get_records(offset: int = 0, offset_type: str = "month"):
-    with app.app_context():
-        query = Record.query.options(
-            db.joinedload(Record.category),
-            db.joinedload(Record.account),
-            db.joinedload(Record.transferToAccount),
-            db.joinedload(Record.splits).options(
-                db.joinedload(Split.account), db.joinedload(Split.person)
+    session = Session()
+    try:
+        query = session.query(Record).options(
+            joinedload(Record.category),
+            joinedload(Record.account),
+            joinedload(Record.transferToAccount),
+            joinedload(Record.splits).options(
+                joinedload(Split.account), joinedload(Split.person)
             ),
         )
 
@@ -69,48 +83,62 @@ def get_records(offset: int = 0, offset_type: str = "month"):
         )
 
         createdAt_column = getattr(Record, "createdAt")
-        date_column = db.func.date(getattr(Record, "date"))
+        date_column = func.date(getattr(Record, "date"))
         query = query.order_by(date_column.desc(), createdAt_column.desc())
 
         records = query.all()
         return records
+    finally:
+        session.close()
 
 
 def is_record_all_splits_paid(record_id: int):
-    with app.app_context():
+    session = Session()
+    try:
         splits = get_splits_by_record_id(record_id)
         return all(split.isPaid for split in splits)
+    finally:
+        session.close()
 
 
 # region Update
 def update_record(record_id: int, updated_data: dict):
-    with app.app_context():
-        record = Record.query.get(record_id)
+    session = Session()
+    try:
+        record = session.query(Record).get(record_id)
         if record:
             for key, value in updated_data.items():
                 setattr(record, key, value)
-            db.session.commit()
-            db.session.refresh(record)
-            db.session.expunge(record)
+            session.commit()
+            session.refresh(record)
+            session.expunge(record)
         return record
+    finally:
+        session.close()
 
 
 def update_record_and_splits(
     record_id: int, record_data: dict, splits_data: list[dict]
 ):
-    with app.app_context():
+    session = Session()
+    try:
         record = update_record(record_id, record_data)
         record_splits = get_splits_by_record_id(record_id)
         for index, split in enumerate(record_splits):
             update_split(split.id, splits_data[index])
         return record
+    finally:
+        session.close()
 
 
 # region Delete
 def delete_record(record_id: int):
-    with app.app_context():
-        record = Record.query.get(record_id)
+    session = Session()
+    try:
+        record = session.query(Record).get(record_id)
         if record:
-            db.session.delete(record)
-            db.session.commit()
+            session.delete(record)
+            session.commit()
         return record
+    finally:
+        session.close()

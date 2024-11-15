@@ -1,12 +1,11 @@
 from datetime import datetime, timedelta
 
 from bagels.config import CONFIG
-from bagels.models.database.app import get_app
-from bagels.models.database.db import db
+from bagels.models.database.app import db_engine
 from bagels.models.record import Record
-from bagels.models.split import Split
+from sqlalchemy.orm import sessionmaker
 
-app = get_app()
+Session = sessionmaker(bind=db_engine)
 
 
 # region period
@@ -90,8 +89,9 @@ def get_period_figures(accountId=None, offset_type=None, offset=None, isIncome=N
         offset (int): The offset from the current period.
         isIncome (bool): Whether to filter by income or expense.
     """
-    with app.app_context():
-        query = db.session.query(Record)
+    session = Session()
+    try:
+        query = session.query(Record)
 
         # Filter by account if specified
         if accountId is not None:
@@ -137,6 +137,8 @@ def get_period_figures(accountId=None, offset_type=None, offset=None, isIncome=N
                     total -= record_amount
 
         return abs(round(total, 2))
+    finally:
+        session.close()
 
 
 # region average

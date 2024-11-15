@@ -5,7 +5,6 @@ import yaml
 
 from bagels.config import Config
 from bagels.locations import config_file, database_file, set_custom_root
-from bagels.models.database.app import init_db
 
 
 def create_config_file() -> None:
@@ -34,8 +33,8 @@ def cli(ctx, at: click.Path | None):
         set_custom_root(at)
     if ctx.invoked_subcommand is None:
 
-        # Perform initialization
-        create_config_file()
+        from bagels.models.database.app import init_db
+
         init_db()
 
         from bagels.app import App

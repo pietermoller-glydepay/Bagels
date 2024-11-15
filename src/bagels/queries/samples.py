@@ -1,5 +1,4 @@
 from pathlib import Path
-
 import yaml
 
 from bagels.models.account import Account
@@ -9,6 +8,7 @@ from bagels.models.record import Record
 from bagels.models.record_template import RecordTemplate
 from bagels.models.split import Split
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy import select, func
 
 Session = sessionmaker(bind=db_engine)
 
@@ -39,15 +39,11 @@ def create_sample_entries():
 
         # Create records
         for record_data in sample_entries["records"]:
-            # Handle splits if present
             splits_data = record_data.pop("splits", None)
-
-            # Create record
             record = Record(**record_data)
             session.add(record)
             session.flush()
 
-            # Create splits if any
             if splits_data:
                 for split_data in splits_data:
                     split = Split(recordId=record.id, **split_data)
@@ -55,6 +51,17 @@ def create_sample_entries():
 
         # Create record templates
         for template_data in sample_entries["record_templates"]:
+            # Find the current maximum order
+            max_order = (
+                session.execute(
+                    select(func.max(RecordTemplate.order))
+                ).scalar_one_or_none()
+                or 0
+            )
+
+            # Increment and set the order
+            max_order += 1
+            template_data["order"] = max_order
             template = RecordTemplate(**template_data)
             session.add(template)
 

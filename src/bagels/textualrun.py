@@ -2,11 +2,14 @@
 
 from pathlib import Path
 from bagels.locations import set_custom_root
-from bagels.models.database.app import init_db
 
 if __name__ == "__main__":
-    set_custom_root(Path("./instance/"))
+    # set_custom_root(Path("./instance/"))
+
+    from bagels.models.database.app import init_db
+
     init_db()
+
     from bagels.app import App
 
     app = App()

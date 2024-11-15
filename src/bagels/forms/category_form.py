@@ -6,7 +6,7 @@ from rich.text import Text
 from bagels.constants import COLORS
 from bagels.models.category import Nature
 from bagels.queries.categories import get_category_by_id
-from bagels.static.forms.form import Form, FormField, Option, Options
+from bagels.forms.form import Form, FormField, Option, Options
 
 
 class CategoryForm:

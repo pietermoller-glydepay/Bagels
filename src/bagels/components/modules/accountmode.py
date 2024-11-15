@@ -13,7 +13,7 @@ from bagels.queries.accounts import (
     get_all_accounts_with_balance,
     update_account,
 )
-from bagels.static.forms.account_forms import AccountForm
+from bagels.forms.account_forms import AccountForm
 
 
 class AccountMode(ScrollableContainer):

@@ -3,7 +3,7 @@ from typing import Tuple, Dict, Any
 
 from textual.widget import Widget
 
-from bagels.static.forms.form import Form, FormField
+from bagels.forms.form import Form, FormField
 
 
 def _validate_number(

@@ -17,7 +17,7 @@ from bagels.queries.record_templates import (
     update_template,
 )
 from bagels.queries.records import create_record
-from bagels.static.forms.recordtemplate_forms import RecordTemplateForm
+from bagels.forms.recordtemplate_forms import RecordTemplateForm
 
 
 class Templates(Static):

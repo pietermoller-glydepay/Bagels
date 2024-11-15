@@ -4,7 +4,7 @@ from rich.text import Text
 from bagels.queries.accounts import get_all_accounts_with_balance
 from bagels.queries.categories import get_all_categories_by_freq
 from bagels.queries.record_templates import get_template_by_id
-from bagels.static.forms.form import Form, FormField, Option, Options
+from bagels.forms.form import Form, FormField, Option, Options
 
 
 class RecordTemplateForm:

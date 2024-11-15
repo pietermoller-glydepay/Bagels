@@ -1,6 +1,6 @@
 import copy
 from bagels.queries.persons import get_person_by_id
-from bagels.static.forms.form import Form, FormField, Option, Options
+from bagels.forms.form import Form, FormField, Option, Options
 
 
 class PersonForm:

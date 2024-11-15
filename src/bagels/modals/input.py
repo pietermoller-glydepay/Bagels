@@ -7,7 +7,7 @@ from textual.widgets import (
 
 from bagels.components.fields import Fields
 from bagels.modals.base_widget import ModalContainer
-from bagels.static.forms.form import Form
+from bagels.forms.form import Form
 from bagels.utils.validation import validateForm
 
 

@@ -1,18 +1,41 @@
 # Bagels - TUI Expense Tracker
 
-[[HEAVY WIP]] Powerful expense tracker that lives in your terminal.
+Powerful expense tracker that lives in your terminal.
 
-<img width="1637" alt="Screenshot 2024-11-09 at 8 55 41 PM" src="https://github.com/user-attachments/assets/1813fec6-55ae-412b-8e36-69d3de587f69">
+Bagels expense tracker is a TUI application where you can track and analyse your money flow, with convenience oriented features and a complete interface.
 
-## Install
+Some notable features include:
+
+- accounts, (sub)categories, splits, transfers, records
+- templates for recurring transactions
+- add templated record with number keys
+- clear table layout with toggable splits
+- transfer to and from outside tracked accounts
+- "jump mode" navigation
+- less and less fields to enter per transaction, powered by transactions and input modes
+- insights
+- customizable keybindings and defaults, such as first day of week
+
+## Installation
 
 ```bash
 # install uv (package manager)
 curl -LsSf https://astral.sh/uv/install.sh | sh
-# add bin to PATH
+
+# restart your terminal, or run the following command:
 source $HOME/.local/bin/env # or follow instructions
-# install bagels
+
+# install bagels through uv
 uv tool install --python 3.13 bagels
+```
+
+Usage:
+
+```bash
+bagels # start bagels
+bagels --at "./" # start bagels with data stored at cd
+bagels locate database # find database file path
+bagels locate config # find config file path
 ```
 
 ## Development setup
@@ -29,3 +52,9 @@ uv run textual console -x SYSTEM -x EVENT -x DEBUG -x INFO # for logging
 ```
 
 - Please use the black formatter to format the code.
+
+## Attributions
+
+- Heavily inspired by [posting](https://github.com/darrenburns/posting)
+- Bagels is built with [textual](https://https://textual.textualize.io/)
+- It's called bagels because I like bagels

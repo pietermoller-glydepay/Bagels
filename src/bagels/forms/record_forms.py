@@ -8,7 +8,7 @@ from bagels.queries.accounts import get_all_accounts_with_balance
 from bagels.queries.categories import get_all_categories_by_freq
 from bagels.queries.persons import create_person, get_all_persons
 from bagels.queries.records import get_record_by_id, get_record_total_split_amount
-from bagels.static.forms.form import Form, FormField, Option, Options
+from bagels.forms.form import Form, FormField, Option, Options
 
 
 class RecordForm:

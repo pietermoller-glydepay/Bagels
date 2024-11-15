@@ -20,7 +20,7 @@ from bagels.queries.categories import (
     get_category_by_id,
     update_category,
 )
-from bagels.static.forms.category_form import CategoryForm
+from bagels.forms.category_form import CategoryForm
 
 
 class CategoriesModal(ModalScreen[str | Widget | None]):

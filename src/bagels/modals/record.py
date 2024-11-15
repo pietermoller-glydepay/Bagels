@@ -13,8 +13,8 @@ from bagels.config import CONFIG
 from bagels.modals.input import InputModal
 from bagels.queries.accounts import get_all_accounts_with_balance
 from bagels.queries.persons import create_person, get_all_persons
-from bagels.static.forms.form import Form, Option
-from bagels.static.forms.record_forms import RecordForm
+from bagels.forms.form import Form, Option
+from bagels.forms.record_forms import RecordForm
 from bagels.utils.validation import validateForm
 from bagels.modals.base_widget import ModalContainer
 

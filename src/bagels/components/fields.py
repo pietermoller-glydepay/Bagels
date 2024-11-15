@@ -3,7 +3,7 @@ from textual.containers import Container
 from textual.widgets import Input, Label, Static, Switch
 
 from bagels.components.autocomplete import AutoComplete, Dropdown, DropdownItem
-from bagels.static.forms.form import Form, FormField
+from bagels.forms.form import Form, FormField
 
 
 class Fields(Static):

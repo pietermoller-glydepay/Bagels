@@ -75,7 +75,7 @@ def get_start_end_of_period(offset: int = 0, offset_type: str = "month"):
 # -------------- figure -------------- #
 
 
-def get_period_figures(accountId=None, offset_type=None, offset=None, isIncome=None):
+def get_period_figures(accountId=None, offset_type=None, offset=None, isIncome=None, session=None):
     """Returns the income / expense for a given period.
 
     Rules:
@@ -88,8 +88,14 @@ def get_period_figures(accountId=None, offset_type=None, offset=None, isIncome=N
         offset_type (str): The type of period to filter by.
         offset (int): The offset from the current period.
         isIncome (bool): Whether to filter by income or expense.
+        session (Session, optional): SQLAlchemy session to use. If None, creates a new session.
     """
-    session = Session()
+    if session is None:
+        session = Session()
+        should_close = True
+    else:
+        should_close = False
+
     try:
         query = session.query(Record)
 
@@ -138,7 +144,8 @@ def get_period_figures(accountId=None, offset_type=None, offset=None, isIncome=N
 
         return abs(round(total, 2))
     finally:
-        session.close()
+        if should_close:
+            session.close()
 
 
 # region average

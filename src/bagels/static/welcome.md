@@ -17,3 +17,7 @@ To begin, **add an account**!
 
 > Hint:
 > Focus on the accounts section and find the bindings to add an account.
+
+## Themes
+
+You can change the theme of Bagels with the `theme` command from the command palette!

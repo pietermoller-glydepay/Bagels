@@ -71,12 +71,3 @@ def receive_before_insert(mapper, connection, target):
         select(func.max(RecordTemplate.order))
     ).scalar_one_or_none()
     target.order = (max_order or 0) + 1
-
-
-@event.listens_for(RecordTemplate, "before_delete")
-def receive_before_delete(mapper, connection, target):
-    connection.execute(
-        update(RecordTemplate)
-        .where(RecordTemplate.order > target.order)
-        .values(order=RecordTemplate.order - 1)
-    )

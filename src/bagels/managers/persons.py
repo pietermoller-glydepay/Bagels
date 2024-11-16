@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import and_
+from sqlalchemy import and_, select
 from sqlalchemy.orm import joinedload, sessionmaker
 
 from bagels.models.database.app import db_engine
@@ -29,7 +29,7 @@ def get_all_persons():
     """Retrieve all persons from the database."""
     session = Session()
     try:
-        return session.query(Person).all()
+        return session.scalars(select(Person)).all()
     finally:
         session.close()
 
@@ -38,7 +38,7 @@ def get_person_by_id(person_id):
     """Retrieve a person by their ID."""
     session = Session()
     try:
-        return session.query(Person).get(person_id)
+        return session.get(Person, person_id)
     finally:
         session.close()
 
@@ -47,11 +47,13 @@ def update_person(person_id, data):
     """Update a person's information by their ID."""
     session = Session()
     try:
-        person = session.query(Person).get(person_id)
+        person = session.get(Person, person_id)
         if person:
             for key, value in data.items():
                 setattr(person, key, value)
             session.commit()
+            session.refresh(person)
+            session.expunge(person)
         return person
     finally:
         session.close()
@@ -61,7 +63,7 @@ def delete_person(person_id):
     """Delete a person from the database by their ID."""
     session = Session()
     try:
-        person = session.query(Person).get(person_id)
+        person = session.get(Person, person_id)
         if person:
             session.delete(person)
             session.commit()
@@ -77,19 +79,20 @@ def get_persons_with_splits(offset: int = 0, offset_type: str = "month"):
     try:
         start_of_period, end_of_period = get_start_end_of_period(offset, offset_type)
         return (
-            session.query(Person)
-            .options(
-                joinedload(Person.splits)
-                .joinedload(Split.record)
-                .joinedload(Record.category),
-                joinedload(Person.splits).joinedload(Split.account),
+            session.scalars(
+                select(Person)
+                .options(
+                    joinedload(Person.splits)
+                    .joinedload(Split.record)
+                    .joinedload(Record.category),
+                    joinedload(Person.splits).joinedload(Split.account),
+                )
+                .join(Person.splits)
+                .join(Split.record)
+                .filter(and_(Record.date >= start_of_period, Record.date < end_of_period))
+                .order_by(Record.date.asc())
+                .distinct()
             )
-            .join(Person.splits)
-            .join(Split.record)
-            .filter(and_(Record.date >= start_of_period, Record.date < end_of_period))
-            .order_by(Record.date.asc())
-            .distinct()
-            .all()
         )
     finally:
         session.close()

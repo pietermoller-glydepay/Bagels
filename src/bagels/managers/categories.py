@@ -1,6 +1,6 @@
 from datetime import datetime
 from rich.text import Text
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, select
 from sqlalchemy.orm import joinedload, sessionmaker
 
 from bagels.models.category import Category
@@ -11,12 +11,12 @@ from bagels.models.database.app import db_engine
 Session = sessionmaker(bind=db_engine)
 
 
-def _get_base_categories_query(session, include_deleted=False):
+def _get_base_categories_query(include_deleted=False):
     """Base query for categories with optional filtering of deleted entries."""
-    query = session.query(Category)
+    stmt = select(Category)
     if not include_deleted:
-        query = query.filter(Category.deletedAt.is_(None))
-    return query
+        stmt = stmt.filter(Category.deletedAt.is_(None))
+    return stmt
 
 
 # region Get
@@ -24,7 +24,8 @@ def get_categories_count():
     """Count all categories excluding deleted ones."""
     session = Session()
     try:
-        return _get_base_categories_query(session).count()
+        stmt = _get_base_categories_query()
+        return len(session.scalars(stmt).all())
     finally:
         session.close()
 
@@ -33,12 +34,12 @@ def get_all_categories_tree():
     """Retrieve all categories in a hierarchical tree format."""
     session = Session()
     try:
-        categories = (
-            _get_base_categories_query(session)
+        stmt = (
+            _get_base_categories_query()
             .options(joinedload(Category.parentCategory))
             .order_by(Category.id)
-            .all()
         )
+        categories = session.scalars(stmt).all()
 
         def build_category_tree(parent_id=None, depth=0):
             result = []
@@ -69,16 +70,15 @@ def get_all_categories_by_freq():
     """Retrieve all categories ordered by the frequency of their usage in records."""
     session = Session()
     try:
-        categories = (
-            session.query(Category, func.count(Category.records).label("record_count"))
+        stmt = (
+            select(Category, func.count(Category.records).label("record_count"))
             .outerjoin(Category.records)
             .group_by(Category.id)
             .order_by(desc("record_count"))
             .options(joinedload(Category.parentCategory))
             .filter(Category.deletedAt.is_(None))
-            .all()
         )
-        return categories
+        return session.execute(stmt).all()
     finally:
         session.close()
 
@@ -87,7 +87,8 @@ def get_category_by_id(category_id):
     """Retrieve a category by its ID."""
     session = Session()
     try:
-        return _get_base_categories_query(session).filter_by(id=category_id).first()
+        stmt = _get_base_categories_query().filter_by(id=category_id)
+        return session.scalars(stmt).first()
     finally:
         session.close()
 
@@ -106,17 +107,17 @@ def get_all_categories_records(
     try:
         start_of_period, end_of_period = get_start_end_of_period(offset, offset_type)
 
-        query = session.query(Record).options(joinedload(Record.category))
+        stmt = select(Record).options(joinedload(Record.category))
         if account_id is not None:
-            query = query.filter(Record.accountId == account_id)
-        query = query.filter(
+            stmt = stmt.filter(Record.accountId == account_id)
+        stmt = stmt.filter(
             Record.date >= start_of_period,
             Record.date < end_of_period,
             Record.isIncome == is_income,
         )
 
         category_totals = {}
-        records = query.all()
+        records = session.scalars(stmt).all()
         for record in records:
             split_total = sum(split.amount for split in record.splits)
             record_amount = record.amount - split_total
@@ -132,13 +133,14 @@ def get_all_categories_records(
                 category_totals[category_id] = 0
             category_totals[category_id] += record_amount
 
-        categories = (
-            session.query(Category)
+        stmt = (
+            select(Category)
             .filter(
                 Category.id.in_(category_totals.keys()), Category.deletedAt.is_(None)
             )
-            .all()
+            .options(joinedload(Category.parentCategory))
         )
+        categories = session.scalars(stmt).all()
         for category in categories:
             category.amount = category_totals[category.id]
 
@@ -170,11 +172,13 @@ def update_category(category_id, data):
     """Update a category by its ID."""
     session = Session()
     try:
-        category = session.query(Category).get(category_id)
+        category = session.get(Category, category_id)
         if category:
             for key, value in data.items():
                 setattr(category, key, value)
             session.commit()
+            session.refresh(category)
+            session.expunge(category)
         return category
     finally:
         session.close()
@@ -185,7 +189,7 @@ def delete_category(category_id):
     """Delete a category by marking it as deleted."""
     session = Session()
     try:
-        category = session.query(Category).get(category_id)
+        category = session.get(Category, category_id)
         if category:
             category.deletedAt = datetime.now()
             session.commit()

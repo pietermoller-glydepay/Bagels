@@ -1,6 +1,6 @@
 import yaml
 from pathlib import Path
-from sqlalchemy import create_engine, inspect
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import sessionmaker
 
 from bagels.models.category import Nature
@@ -82,12 +82,15 @@ def _sync_database_schema():
 
                 for column_name in model_columns - existing_columns:
                     column = table.columns[column_name]
-                    with db_engine.connect() as conn:
+                    with db_engine.begin() as conn:
                         conn.execute(
-                            f'ALTER TABLE {table.name} ADD COLUMN "{column_name}" {column.type}'
+                            text(
+                                f'ALTER TABLE {table.name} ADD COLUMN "{column_name}" '
+                                f"{column.type} "
+                                f"{'NOT NULL' if not column.nullable else ''} "
+                                f"{'DEFAULT ' + str(column.default.arg) if column.default is not None else ''}"
+                            )
                         )
-                        conn.commit()
-
     except Exception as e:
         raise Exception(f"Failed to sync database schema: {str(e)}")
 

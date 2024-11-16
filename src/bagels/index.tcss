@@ -365,8 +365,9 @@ Button {
 #empty-indicator {
   width: 1fr;
   hatch: right $primary-background;
-  text-align: center;
-  padding: 6 0;
+  content-align: center middle;
+  height: 12;
+  max-height: 1fr;
   color: $primary-background-lighten-1;
 }
 

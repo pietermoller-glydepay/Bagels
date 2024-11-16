@@ -14,6 +14,7 @@ from bagels.queries.accounts import (
     update_account,
 )
 from bagels.forms.account_forms import AccountForm
+from bagels.components.indicators import EmptyIndicator
 
 
 class AccountMode(ScrollableContainer):
@@ -173,7 +174,12 @@ class AccountMode(ScrollableContainer):
     # --------------- View --------------- #
 
     def compose(self) -> ComposeResult:
-        for account in get_all_accounts_with_balance():
+        accounts = get_all_accounts_with_balance()
+        if not accounts:
+            yield EmptyIndicator("No accounts")
+            return
+
+        for account in accounts:
             with Container(
                 id=f"account-{account.id}-container", classes="account-container"
             ):

@@ -3,8 +3,8 @@ from sqlalchemy import func, desc
 from bagels.models.database.app import db_engine
 from bagels.models.record import Record
 from bagels.models.split import Split
-from bagels.queries.splits import create_split, get_splits_by_record_id, update_split
-from bagels.queries.utils import get_start_end_of_period
+from bagels.managers.splits import create_split, get_splits_by_record_id, update_split
+from bagels.managers.utils import get_start_end_of_period
 
 Session = sessionmaker(bind=db_engine)
 

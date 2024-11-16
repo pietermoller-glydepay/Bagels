@@ -5,7 +5,7 @@ from textual.command import DiscoveryHit, Hit, Hits, Provider
 from textual.types import IgnoreReturnCallbackType
 
 from bagels.models.database.app import wipe_database
-from bagels.queries.samples import create_sample_entries
+from bagels.managers.samples import create_sample_entries
 
 if TYPE_CHECKING:
     from bagels.app import App

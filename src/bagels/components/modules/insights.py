@@ -7,8 +7,8 @@ from textual.widgets import Label, Static
 from bagels.components.barchart import Barchart, BarchartData
 from bagels.components.percentage_bar import PercentageBar, PercentageBarItem
 from bagels.config import CONFIG
-from bagels.queries.categories import get_all_categories_records
-from bagels.queries.utils import (
+from bagels.managers.categories import get_all_categories_records
+from bagels.managers.utils import (
     get_period_average,
     get_period_figures,
     get_start_end_of_period,

@@ -1,5 +1,5 @@
 import copy
-from bagels.queries.persons import get_person_by_id
+from bagels.managers.persons import get_person_by_id
 from bagels.forms.form import Form, FormField, Option, Options
 
 

@@ -6,7 +6,7 @@ from bagels.models.database.app import db_engine
 from bagels.models.person import Person
 from bagels.models.record import Record
 from bagels.models.split import Split
-from bagels.queries.utils import get_start_end_of_period
+from bagels.managers.utils import get_start_end_of_period
 
 Session = sessionmaker(bind=db_engine)
 

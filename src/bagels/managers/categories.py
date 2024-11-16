@@ -5,7 +5,7 @@ from sqlalchemy.orm import joinedload, sessionmaker
 
 from bagels.models.category import Category
 from bagels.models.record import Record
-from bagels.queries.utils import get_start_end_of_period
+from bagels.managers.utils import get_start_end_of_period
 from bagels.models.database.app import db_engine
 
 Session = sessionmaker(bind=db_engine)

@@ -317,7 +317,7 @@ Dropdown .autocomplete--right-column {
                 of dropdown items for the current input value and cursor position.
                 Function takes the current InputState as an argument, and returns a list of
                 `DropdownItem` which will be displayed in the dropdown list.
-            id: The ID of the widget, allowing you to directly refer to it using CSS and queries.
+            id: The ID of the widget, allowing you to directly refer to it using CSS and managers.
             classes: The classes of this widget, a space separated string.
         """
         super().__init__(

@@ -11,7 +11,7 @@ from textual.widgets import (
 )
 
 from bagels.components.fields import Fields
-from bagels.queries.accounts import get_all_accounts_with_balance
+from bagels.managers.accounts import get_all_accounts_with_balance
 from bagels.utils.validation import validateForm
 from bagels.modals.base_widget import ModalContainer
 from bagels.forms.form import Form, FormField

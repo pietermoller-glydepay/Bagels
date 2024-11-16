@@ -12,7 +12,7 @@ from bagels.modals.confirmation import ConfirmationModal
 from bagels.modals.input import InputModal
 
 from bagels.config import CONFIG
-from bagels.queries.categories import (
+from bagels.managers.categories import (
     create_category,
     delete_category,
     get_all_categories_tree,

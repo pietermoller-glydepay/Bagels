@@ -7,7 +7,7 @@ from textual.widgets import Label, Static
 from bagels.modals.confirmation import ConfirmationModal
 from bagels.modals.input import InputModal
 from bagels.config import CONFIG
-from bagels.queries.accounts import (
+from bagels.managers.accounts import (
     create_account,
     delete_account,
     get_all_accounts_with_balance,

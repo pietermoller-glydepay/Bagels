@@ -12,8 +12,8 @@ from bagels.components.modules.insights import Insights
 from bagels.components.modules.records import Records
 from bagels.components.modules.templates import Templates
 from bagels.config import CONFIG
-from bagels.queries.accounts import get_accounts_count, get_all_accounts
-from bagels.queries.categories import get_categories_count
+from bagels.managers.accounts import get_accounts_count, get_all_accounts
+from bagels.managers.categories import get_categories_count
 from bagels.utils.format import format_period_to_readable
 
 

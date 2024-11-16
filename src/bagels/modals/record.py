@@ -11,8 +11,8 @@ from bagels.components.autocomplete import AutoComplete, Dropdown, DropdownItem
 from bagels.components.fields import Fields
 from bagels.config import CONFIG
 from bagels.modals.input import InputModal
-from bagels.queries.accounts import get_all_accounts_with_balance
-from bagels.queries.persons import create_person, get_all_persons
+from bagels.managers.accounts import get_all_accounts_with_balance
+from bagels.managers.persons import create_person, get_all_persons
 from bagels.forms.form import Form, Option
 from bagels.forms.record_forms import RecordForm
 from bagels.utils.validation import validateForm

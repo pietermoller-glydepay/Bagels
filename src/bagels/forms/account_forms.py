@@ -1,5 +1,5 @@
 import copy
-from bagels.queries.accounts import get_account_by_id
+from bagels.managers.accounts import get_account_by_id
 from bagels.forms.form import Form, FormField, Option, Options
 
 

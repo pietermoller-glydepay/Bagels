@@ -8,7 +8,7 @@ from bagels.modals.confirmation import ConfirmationModal
 from bagels.modals.input import InputModal
 from bagels.config import CONFIG
 from bagels.models.record_template import RecordTemplate
-from bagels.queries.record_templates import (
+from bagels.managers.record_templates import (
     create_template,
     delete_template,
     get_adjacent_template,
@@ -16,7 +16,7 @@ from bagels.queries.record_templates import (
     swap_template_order,
     update_template,
 )
-from bagels.queries.records import create_record
+from bagels.managers.records import create_record
 from bagels.forms.recordtemplate_forms import RecordTemplateForm
 
 

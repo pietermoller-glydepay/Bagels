@@ -15,12 +15,12 @@ from bagels.modals.record import RecordModal
 from bagels.modals.transfer import TransferModal
 from bagels.modals.input import InputModal
 from bagels.config import CONFIG
-from bagels.queries.persons import (
+from bagels.managers.persons import (
     get_person_by_id,
     get_persons_with_splits,
     update_person,
 )
-from bagels.queries.records import (
+from bagels.managers.records import (
     create_record,
     create_record_and_splits,
     delete_record,
@@ -30,7 +30,7 @@ from bagels.queries.records import (
     update_record,
     update_record_and_splits,
 )
-from bagels.queries.splits import get_split_by_id, update_split
+from bagels.managers.splits import get_split_by_id, update_split
 from bagels.forms.form import Form
 from bagels.utils.format import format_date_to_readable
 from bagels.forms.person_forms import PersonForm

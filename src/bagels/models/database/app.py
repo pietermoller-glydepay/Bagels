@@ -14,7 +14,7 @@ from bagels.models.record import Record
 from bagels.models.record_template import RecordTemplate
 from bagels.models.split import Split
 
-from .db import Base
+from bagels.models.database.db import Base
 
 db_engine = create_engine(f"sqlite:///{database_file().resolve()}")
 Session = sessionmaker(bind=db_engine)

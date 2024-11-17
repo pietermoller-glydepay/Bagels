@@ -117,12 +117,17 @@ Button {
   height: auto;
   padding: 1 2;
 
-  .version {
-    color: $primary-background-lighten-3;
-    margin-left: 1;
+  .title {
+    color: $accent-lighten-1;
   }
 
+  .version {
+    color: $accent-lighten-1 60%;
+    margin-left: 1;
+  }
+  
   .user {
+    color: $primary-background-lighten-3;
     dock: right;
   }
 }

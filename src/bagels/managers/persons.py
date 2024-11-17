@@ -78,7 +78,7 @@ def get_persons_with_splits(offset: int = 0, offset_type: str = "month"):
     session = Session()
     try:
         start_of_period, end_of_period = get_start_end_of_period(offset, offset_type)
-        return (
+        result = (
             session.scalars(
                 select(Person)
                 .options(
@@ -94,5 +94,6 @@ def get_persons_with_splits(offset: int = 0, offset_type: str = "month"):
                 .distinct()
             )
         )
+        return result.unique().all()
     finally:
         session.close()

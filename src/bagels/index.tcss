@@ -25,6 +25,30 @@ Rule {
   color: $primary-background;
 }
 
+Button {
+  width: auto;
+  height: auto;
+  background: transparent;
+  color: $text;
+  min-width: 0;
+  border: none;
+  text-style: none;
+
+  &:focus {
+      text-style: bold reverse;
+  }
+
+  &:hover {
+      background: $panel-darken-2;
+      color: $text;
+  }
+
+  &.-active {
+      background: $panel;
+      tint: $background 30%;
+  }
+}
+
 .base-page {
   padding: 0 1;
 }

@@ -1,7 +1,7 @@
 from textual.app import ComposeResult
 from textual.widgets import Static
 
-from bagels.components.button import Button
+from textual.widgets import Button
 from bagels.config import CONFIG
 
 

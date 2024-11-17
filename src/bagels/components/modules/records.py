@@ -7,7 +7,7 @@ from textual.containers import Container
 from textual.reactive import reactive
 from textual.widgets import Static
 
-from bagels.components.button import Button
+from textual.widgets import Button
 from bagels.components.datatable import DataTable
 from bagels.components.indicators import EmptyIndicator
 from bagels.modals.confirmation import ConfirmationModal

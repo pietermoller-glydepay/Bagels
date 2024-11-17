@@ -194,7 +194,7 @@ requires-dist = [
     { name = "pyyaml", specifier = "==6.0.2" },
     { name = "rich", specifier = "==13.9.3" },
     { name = "sqlalchemy", specifier = "==2.0.36" },
-    { name = "textual", specifier = "==0.84.0" },
+    { name = "textual", specifier = ">=0.86.1" },
     { name = "textual-dev", specifier = "==1.6.1" },
     { name = "tomli", specifier = ">=2.0.2" },
     { name = "typing-extensions", specifier = "==4.12.2" },
@@ -761,7 +761,7 @@ wheels = [
 
 [[package]]
 name = "textual"
-version = "0.84.0"
+version = "0.86.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "markdown-it-py", extra = ["linkify", "plugins"] },
@@ -769,9 +769,9 @@ dependencies = [
     { name = "rich" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d6/86/525031f6bbfa4671fa66a4a5c088c3e9aa53f32d1b51a9bf2b900b3b1f32/textual-0.84.0.tar.gz", hash = "sha256:fb89717960fea7a539823fa264252f7be1c84844e4b8d27360e6d4edb36846a8", size = 1453120 }
+sdist = { url = "https://files.pythonhosted.org/packages/56/c6/435723343db6a65ed92950d1e20ded920c4c22e6e785ea0e369abd4ac1c7/textual-0.86.1.tar.gz", hash = "sha256:a6e68de5383415f222f26b4049c2a92ed204071fdfebe3d729f8dd373ca5f519", size = 1496752 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3a/d3/aea52dff6dc3a743d02b27d9ca921697da2589b722fa19407a8415408ed2/textual-0.84.0-py3-none-any.whl", hash = "sha256:1457d2cb66ba4ea46812355f31adbb4b693424a94e69d052e4affe1dc410ec96", size = 601740 },
+    { url = "https://files.pythonhosted.org/packages/fe/a3/2b7bfd8d0665072a77459f51b600445939aee8a9d25bc3d546c9ac879a19/textual-0.86.1-py3-none-any.whl", hash = "sha256:ebc2bfd92c2f1a451c12dcbcfda002598a2fc9793d1684be83514b5fba75f915", size = 646857 },
 ]
 
 [[package]]

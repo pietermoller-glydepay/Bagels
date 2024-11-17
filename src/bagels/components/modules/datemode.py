@@ -5,7 +5,7 @@ from textual.binding import Binding
 from textual.containers import Container, Horizontal
 from textual.widgets import Label, Static
 
-from bagels.components.button import Button
+from textual.widgets import Button
 from bagels.modals.input import InputModal
 from bagels.config import CONFIG
 

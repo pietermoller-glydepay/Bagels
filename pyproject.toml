@@ -48,7 +48,7 @@ dependencies = [
     "rich==13.9.3",
     "sqlalchemy==2.0.36",
     "textual-dev==1.6.1",
-    "textual==0.84.0",
+    "textual>=0.86.1",
     "tomli>=2.0.2",
     "typing-extensions==4.12.2",
     "uc-micro-py==1.0.3",

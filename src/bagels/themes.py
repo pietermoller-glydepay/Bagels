@@ -3,17 +3,21 @@ from textual.design import ColorSystem
 
 
 class Theme(BaseModel):
-    name: str = Field(exclude=True)
     primary: str
     secondary: str | None = None
-    background: str | None = None
-    surface: str | None = None
-    panel: str | None = None
     warning: str | None = None
     error: str | None = None
     success: str | None = None
     accent: str | None = None
+    foreground: str | None = None
+    background: str | None = None
+    surface: str | None = None
+    panel: str | None = None
+    boost: str | None = None
     dark: bool = True
+    luminosity_spread: float = 0.15
+    text_alpha: float = 0.95
+    variables: dict[str, str] = Field(default_factory=dict)
 
     def to_color_system(self) -> ColorSystem:
         """Convert this theme to a ColorSystem."""
@@ -21,44 +25,15 @@ class Theme(BaseModel):
 
 
 BUILTIN_THEMES: dict[str, Theme] = {
-    "posting": Theme(
-        name="posting",
-        primary="#004578",
-        secondary="#0178D4",
+    "dark": Theme(
+        name="textual-dark",
+        primary="#0178D4",
+        secondary="#004578",
+        accent="#ffa62b",
         warning="#ffa62b",
         error="#ba3c5b",
         success="#4EBF71",
-        accent="#ffa62b",
-        dark=True,
-        syntax="posting",
-    ),
-    "monokai": Theme(
-        name="monokai",
-        primary="#F92672",  # Pink
-        secondary="#66D9EF",  # Light Blue
-        warning="#FD971F",  # Orange
-        error="#F92672",  # Pink (same as primary for consistency)
-        success="#A6E22E",  # Green
-        accent="#AE81FF",  # Purple
-        background="#272822",  # Dark gray-green
-        surface="#3E3D32",  # Slightly lighter gray-green
-        panel="#3E3D32",  # Same as surface for consistency
-        dark=True,
-        syntax="monokai",
-    ),
-    "nautilus": Theme(
-        name="nautilus",
-        primary="#0077BE",  # Ocean Blue
-        secondary="#20B2AA",  # Light Sea Green
-        warning="#FFD700",  # Gold (like sunlight on water)
-        error="#FF6347",  # Tomato (like a warning buoy)
-        success="#32CD32",  # Lime Green (like seaweed)
-        accent="#FF8C00",  # Dark Orange (like a sunset over water)
-        dark=True,
-        background="#001F3F",  # Dark Blue (deep ocean)
-        surface="#003366",  # Navy Blue (shallower water)
-        panel="#005A8C",  # Steel Blue (water surface)
-        syntax="posting",
+        foreground="#e0e0e0",
     ),
     "galaxy": Theme(
         name="galaxy",
@@ -72,21 +47,6 @@ BUILTIN_THEMES: dict[str, Theme] = {
         background="#0F0F1F",  # Very Dark Blue, almost black
         surface="#1E1E3F",  # Dark Blue-Purple
         panel="#2D2B55",  # Slightly Lighter Blue-Purple
-        syntax="monokai",
-    ),
-    "nebula": Theme(
-        name="nebula",
-        primary="#4169E1",  # Royal Blue, more vibrant than Midnight Blue
-        secondary="#9400D3",  # Dark Violet, more vibrant than Indigo Dye
-        warning="#FFD700",  # Kept Gold for warnings
-        error="#FF1493",  # Deep Pink, more nebula-like than Crimson
-        success="#00FF7F",  # Spring Green, slightly more vibrant
-        accent="#FF00FF",  # Magenta, for a true neon accent
-        dark=True,
-        background="#0A0A23",  # Dark Navy, closer to a night sky
-        surface="#1C1C3C",  # Dark Blue-Purple
-        panel="#2E2E5E",  # Slightly Lighter Blue-Purple
-        syntax="dracula",
     ),
     "alpine": Theme(
         name="alpine",
@@ -97,7 +57,7 @@ BUILTIN_THEMES: dict[str, Theme] = {
         success="#A3BE8C",  # Alpine Meadow Green
         accent="#5E81AC",  # Mountain Lake Blue
         dark=True,
-        background="#2E3440",  # Dark Slate Grey
+        background="#262b35",  # Dark Slate Grey
         surface="#3B4252",  # Darker Blue-Grey
         panel="#434C5E",  # Lighter Blue-Grey
     ),
@@ -127,4 +87,172 @@ BUILTIN_THEMES: dict[str, Theme] = {
         surface="#1A1A1A",  # Very Dark Gray
         panel="#2A2A2A",  # Dark Gray
     ),
+    "nord": Theme(
+        name="nord",
+        primary="#88C0D0",
+        secondary="#81A1C1",
+        accent="#B48EAD",
+        foreground="#D8DEE9",
+        background="#2E3440",
+        success="#A3BE8C",
+        warning="#EBCB8B",
+        error="#BF616A",
+        surface="#3B4252",
+        panel="#434C5E",
+        variables={
+            "block-cursor-background": "#88C0D0",
+            "block-cursor-foreground": "#2E3440",
+            "block-cursor-text-style": "none",
+            "footer-key-foreground": "#88C0D0",
+            "input-selection-background": "#81a1c1 35%",
+            "button-color-foreground": "#2E3440",
+            "button-focus-text-style": "reverse",
+        },
+    ),
+    "gruvbox": Theme(
+        name="gruvbox",
+        primary="#85A598",
+        secondary="#A89A85",
+        warning="#fe8019",
+        error="#fb4934",
+        success="#b8bb26",
+        accent="#fabd2f",
+        foreground="#fbf1c7",
+        background="#282828",
+        surface="#3c3836",
+        panel="#504945",
+        variables={
+            "block-cursor-foreground": "#fbf1c7",
+            "input-selection-background": "#689d6a40",
+            "button-color-foreground": "#282828",
+        },
+    ),
+    "catppuccin-mocha": Theme(
+        name="catppuccin-mocha",
+        primary="#F5C2E7",
+        secondary="#cba6f7",
+        warning="#FAE3B0",
+        error="#F28FAD",
+        success="#ABE9B3",
+        accent="#fab387",
+        foreground="#cdd6f4",
+        background="#181825",
+        surface="#313244",
+        panel="#45475a",
+        variables={
+            "input-cursor-foreground": "#11111b",
+            "input-cursor-background": "#f5e0dc",
+            "input-selection-background": "#9399b2 30%",
+            "border": "#b4befe",
+            "border-blurred": "#585b70",
+            "footer-background": "#45475a",
+            "block-cursor-foreground": "#1e1e2e",
+            "block-cursor-text-style": "none",
+            "button-color-foreground": "#181825",
+        },
+    ),
+    "dracula": Theme(
+        name="dracula",
+        primary="#BD93F9",
+        secondary="#6272A4",
+        warning="#FFB86C",
+        error="#FF5555",
+        success="#50FA7B",
+        accent="#FF79C6",
+        background="#282A36",
+        surface="#2B2E3B",
+        panel="#313442",
+        foreground="#F8F8F2",
+        variables={
+            "button-color-foreground": "#282A36",
+        },
+    ),
+    "tokyo-night": Theme(
+        name="tokyo-night",
+        primary="#BB9AF7",
+        secondary="#7AA2F7",
+        warning="#E0AF68",  # Yellow
+        error="#F7768E",  # Red
+        success="#9ECE6A",  # Green
+        accent="#FF9E64",  # Orange
+        foreground="#a9b1d6",
+        background="#1A1B26",  # Background
+        surface="#24283B",  # Surface
+        panel="#414868",  # Panel
+        variables={
+            "button-color-foreground": "#24283B",
+        },
+    ),
+    "flexoki": Theme(
+        name="flexoki",
+        primary="#205EA6",  # blue
+        secondary="#24837B",  # cyan
+        warning="#AD8301",  # yellow
+        error="#AF3029",  # red
+        success="#66800B",  # green
+        accent="#9B76C8",  # purple light
+        background="#100F0F",  # base.black
+        surface="#1C1B1A",  # base.950
+        panel="#282726",  # base.900
+        foreground="#FFFCF0",  # base.paper
+        variables={
+            "input-cursor-foreground": "#5E409D",
+            "input-cursor-background": "#FFFCF0",
+            "input-selection-background": "#6F6E69 35%",  # base.600 with opacity
+            "button-color-foreground": "#FFFCF0",
+        },
+    ),
+    # "textual-light": Theme(
+    #     name="textual-light",
+    #     primary="#004578",
+    #     secondary="#0178D4",
+    #     accent="#ffa62b",
+    #     warning="#ffa62b",
+    #     error="#ba3c5b",
+    #     success="#4EBF71",
+    #     surface="#D8D8D8",
+    #     panel="#D0D0D0",
+    #     background="#E0E0E0",
+    #     dark=False,
+    #     variables={
+    #         "footer-key-foreground": "#0178D4",
+    #     },
+    # ),
+    # "catppuccin-latte": Theme(
+    #     name="catppuccin-latte",
+    #     secondary="#DC8A78",
+    #     primary="#8839EF",
+    #     warning="#DF8E1D",
+    #     error="#D20F39",
+    #     success="#40A02B",
+    #     accent="#FE640B",
+    #     foreground="#4C4F69",
+    #     background="#EFF1F5",
+    #     surface="#E6E9EF",
+    #     panel="#CCD0DA",
+    #     dark=False,
+    #     variables={
+    #         "button-color-foreground": "#EFF1F5",
+    #     },
+    # ),
+    # "solarized-light": Theme(
+    #     name="solarized-light",
+    #     primary="#268bd2",
+    #     secondary="#2aa198",
+    #     warning="#cb4b16",
+    #     error="#dc322f",
+    #     success="#859900",
+    #     accent="#6c71c4",
+    #     foreground="#586e75",
+    #     background="#fdf6e3",
+    #     surface="#eee8d5",
+    #     panel="#eee8d5",
+    #     dark=False,
+    #     variables={
+    #         "button-color-foreground": "#fdf6e3",
+    #         "footer-background": "#268bd2",
+    #         "footer-key-foreground": "#fdf6e3",
+    #         "footer-description-foreground": "#fdf6e3",
+    #     },
+    # ),
 }

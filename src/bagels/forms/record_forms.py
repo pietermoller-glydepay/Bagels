@@ -194,7 +194,7 @@ class RecordForm:
             match fieldKey:
                 case "amount":
                     field.default_value = str(
-                        value - get_record_total_split_amount(recordId)
+                        round(value - get_record_total_split_amount(recordId), 2)
                     )
                 case "date":
                     # if value is this month, simply set %d, else set %d %m %y

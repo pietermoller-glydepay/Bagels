@@ -203,7 +203,9 @@ class Records(Static):
             category_string = f"[{color_tag}]{CONFIG.symbols.category_color}[/{color_tag}] {record.category.name}"
 
             if record.splits and not self.show_splits:
-                amount_self = record.amount - get_record_total_split_amount(record.id)
+                amount_self = round(
+                    record.amount - get_record_total_split_amount(record.id)
+                )
                 amount_string = f"{flow_icon} {amount_self}"
             else:
                 amount_string = f"{flow_icon} {record.amount}"
@@ -215,11 +217,11 @@ class Records(Static):
     def _add_group_header_row(
         self, table: DataTable, string: str, key: str = None
     ) -> None:
-        table.add_row(">", string, "", "", "", style_name="group-header", key=key)
+        table.add_row("//", string, "", "", "", style_name="group-header", key=key)
 
     def _add_split_rows(self, table: DataTable, record, flow_icon: str) -> None:
         color = record.category.color.lower()
-        amount_self = record.amount - get_record_total_split_amount(record.id)
+        amount_self = round(record.amount - get_record_total_split_amount(record.id), 2)
         split_flow_icon = (
             f"[red]{CONFIG.symbols.amount_negative}[/red]"
             if record.isIncome

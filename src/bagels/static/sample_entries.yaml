@@ -1,16 +1,11 @@
 # Sample accounts
 accounts:
-  - name: Main Bank Account
+  - name: Bank
     description: ""
     beginningBalance: 5000.00
     repaymentDate: null
 
-  - name: Credit Card
-    description: Repay on 15th
-    beginningBalance: -123
-    repaymentDate: 15
-
-  - name: Transit card
+  - name: Card
     description: ""
     beginningBalance: 100
     repaymentDate: null
@@ -24,11 +19,35 @@ people:
 records:
   - label: Bagels
     amount: 2.50
-    accountId: 3
+    accountId: 2
     categoryId: 5 # Food & Drinks -> Snacks
     isIncome: false
     isTransfer: false
-    date: 2024-11-11T00:00:00Z
+    date: 2024-11-17T00:00:00Z
+  - label: Home -> School
+    amount: 10.00
+    accountId: 3
+    categoryId: 7 # Transport -> Public Transport
+    isIncome: false
+    isTransfer: false
+    date: 2024-11-17T00:00:00Z
+  - label: Lunch with John
+    amount: 35.00
+    accountId: 2
+    categoryId: 3 # Food & Drinks -> Restaurants
+    isIncome: false
+    isTransfer: false
+    date: 2024-11-17T00:00:00Z
+    splits:
+      - personId: 1
+        amount: 20
+  - label: School -> Home
+    amount: 10.00
+    accountId: 3
+    categoryId: 7 # Transport -> Public Transport
+    isIncome: false
+    isTransfer: false
+    date: 2024-11-17T00:00:00Z
 
 # Sample record templates for recurring transactions
 record_templates:

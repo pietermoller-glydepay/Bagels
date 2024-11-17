@@ -59,9 +59,8 @@ DataTable > .datatable--net-row {
 }
 
 DataTable > .datatable--group-header-row {
-  color: $primary-background-darken-3;
-  background: $secondary-lighten-3;
-  text-style: underline bold;
+  color: $foreground 50%;
+  text-style: italic;
 }
 
 Input {
@@ -395,7 +394,7 @@ Button {
   width: 1fr;
   hatch: right $primary-background;
   content-align: center middle;
-  height: 12;
+  height: 11;
   max-height: 1fr;
   color: $primary-background-lighten-1;
 }
@@ -664,8 +663,17 @@ Button {
       text-style: bold;
     }
 
+    Markdown {
+      background: $background;
+      
+      &:focus {
+        background-tint: transparent;
+      }
+    }
+    
     MarkdownViewer {
       width: 1fr;
+      background: $background;
     }
 
     MarkdownH1 {

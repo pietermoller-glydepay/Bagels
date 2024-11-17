@@ -7,6 +7,7 @@ from textual.app import App as TextualApp
 from textual.app import ComposeResult
 from textual.command import CommandPalette
 from textual.containers import Container
+from textual.content import Content
 from textual.css.query import NoMatches
 from textual.geometry import Size
 from textual.reactive import Reactive, reactive
@@ -34,7 +35,7 @@ class App(TextualApp):
     ]
     COMMANDS = {AppProvider}
 
-    theme: Reactive[str] = reactive(CONFIG.state.theme, init=False)
+    app_theme: Reactive[str] = reactive(CONFIG.state.theme, init=False)
     """The currently selected theme. Changing this reactive should
     trigger a complete refresh via the `watch_theme` method."""
     layout: Reactive[str] = reactive("h")
@@ -72,8 +73,8 @@ class App(TextualApp):
 
     # used by the textual app to get the theme variables
     def get_css_variables(self) -> dict[str, str]:
-        if self.theme:
-            theme = self.themes.get(self.theme)
+        if self.app_theme:
+            theme = self.themes.get(self.app_theme)
             if theme:
                 color_system = theme.to_color_system().generate()
             else:
@@ -83,7 +84,7 @@ class App(TextualApp):
         return {**super().get_css_variables(), **color_system}
 
     def command_theme(self, theme: str) -> None:
-        self.theme = theme
+        self.app_theme = theme
         self.notify(
             f"Theme is now [b]{theme!r}[/].", title="Theme updated", timeout=2.5
         )
@@ -91,7 +92,7 @@ class App(TextualApp):
 
     # region theme
     # --------------- theme -------------- #
-    def watch_theme(self, theme: str | None) -> None:
+    def watch_app_theme(self, theme: str | None) -> None:
         self.refresh_css(animate=False)
         self.screen._update_styles()
         if theme:
@@ -100,26 +101,23 @@ class App(TextualApp):
 
     @on(CommandPalette.Opened)
     def palette_opened(self) -> None:
-        self._original_theme = self.theme
+        self._original_theme = self.app_theme
 
     @on(CommandPalette.OptionHighlighted)
     def palette_option_highlighted(
         self, event: CommandPalette.OptionHighlighted
     ) -> None:
-        prompt: Group = event.highlighted_event.option.prompt
-        command_name = prompt.renderables[0]
-        if isinstance(command_name, Text):
-            command_name = command_name.plain
-        command_name = command_name.strip()
+        prompt: Content = event.highlighted_event.option.prompt
+        command_name = prompt.plain.split("\n")[0]
         if ":" in command_name:
             name, value = command_name.split(":", maxsplit=1)
             name = name.strip()
             value = value.strip()
             if name == "theme":
                 if value in self.themes:
-                    self.theme = value
+                    self.app_theme = value
             else:
-                self.theme = self._original_theme
+                self.app_theme = self._original_theme
 
     @on(CommandPalette.Closed)
     def palette_closed(self, event: CommandPalette.Closed) -> None:
@@ -129,7 +127,7 @@ class App(TextualApp):
         # if not self.settings.command_palette.theme_preview:
         #     return
         if not event.option_selected:
-            self.theme = self._original_theme
+            self.app_theme = self._original_theme
 
     # region jumper
     # -------------- jumper -------------- #

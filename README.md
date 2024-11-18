@@ -73,6 +73,6 @@ Please use the black formatter to format the code.
 
 ## Attributions
 
-- Heavily inspired by [posting](https://github.com/darrenburns/posting)
-- Bagels is built with [textual](https://https://textual.textualize.io/)
+- Heavily inspired by [posting](https://posting.sh/)
+- Bagels is built with [textual](https://textual.textualize.io/)
 - It's called bagels because I like bagels

@@ -90,10 +90,14 @@ def _validate_autocomplete(
             if item.text == value:
                 field_input_value = str(item.value)
                 break
-
         # Verify selected value matches entered text
         if field_input_value != str(held_value):
             print(field_input_value, held_value)
+            return False, "Invalid selection"
+    else:
+        # if can't find the held_value inside the values, it's invalid
+        print(held_value)
+        if held_value not in [str(item.value) for item in field.options.items]:
             return False, "Invalid selection"
 
     return True, None

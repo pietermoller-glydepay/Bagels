@@ -1,4 +1,4 @@
-from typing import Any, List, Union, Literal
+from typing import Any, List, Literal
 from pydantic import BaseModel, Field
 from rich.console import RenderableType
 
@@ -6,10 +6,10 @@ from rich.console import RenderableType
 class Option(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
 
-    text: Union[str, None] = None  # if not provided, the value will be used
+    text: str | None = None  # if not provided, the value will be used
     value: Any
-    prefix: Union[RenderableType, None] = None
-    postfix: Union[RenderableType, None] = None
+    prefix: RenderableType | None = None
+    postfix: RenderableType | None = None
 
 
 class Options(BaseModel):
@@ -20,8 +20,8 @@ class Options(BaseModel):
 
 
 class FormField(BaseModel):
-    placeholder: Union[str, None] = None
-    title: str
+    placeholder: str | None = None
+    title: str | None = None
     key: str
     type: Literal[
         "string",
@@ -33,13 +33,13 @@ class FormField(BaseModel):
         "hidden",
     ]
     is_required: bool = False
-    min: Union[float, int, None] = None
-    max: Union[float, int, None] = None
-    labels: Union[List[str], None] = None  # for type "boolean"
-    options: Union[Options, None] = None  # for type "autocomplete"
+    min: float | int | None = None
+    max: float | int | None = None
+    labels: List[str] | None = None  # for type "boolean"
+    options: Options | None = None  # for type "autocomplete"
     default_value: Any = None
-    default_value_text: Union[str, None] = None
-    create_action: Union[bool, None] = None  # for type "autocomplete"
+    default_value_text: str | None = None
+    create_action: bool | None = None  # for type "autocomplete"
 
 
 class Form(BaseModel):

@@ -47,6 +47,12 @@ bagels locate config # find config file path
 
 > It is recommended, but not required, to use "modern" terminals to run the app. MacOS users are recommended to use iTerm2, and Windows users are recommended to use Windows Terminal.
 
+To upgrade:
+
+```bash
+uv tool upgrade bagels
+```
+
 ## Development setup
 
 ```sh

@@ -318,6 +318,13 @@ Button {
         border-bottom: hkey $accent;
         # box-sizing: content-box;
       }
+
+        &:focus > ListItem.-highlight > Widget {
+          width: auto;
+          color: $accent;
+          background: $surface-lighten-2;
+          text-style: initial;            
+      }
       
       .item {
         height: 3;
@@ -326,10 +333,7 @@ Button {
         border-top: tall $surface-lighten-2;
         background: $surface;
 
-        # & > Widget :hover {
-        #     background: $boost;
-        # }
-        &.--highlight {
+        &.-highlight {
           border-left: outer $accent;
           padding: 1 1 1 1;
           border-top: none;

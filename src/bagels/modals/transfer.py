@@ -18,9 +18,10 @@ from bagels.forms.form import Form, FormField
 
 
 class Accounts(ListView):
-    def __init__(
-        self, accounts, initial_index: int = 0, type: str = "", *args, **kwargs
-    ):
+    def __init__(self, accounts, initial_id: int = 0, type: str = "", *args, **kwargs):
+        initial_index = accounts.index(
+            next((account for account in accounts if account.id == initial_id), None)
+        )
         super().__init__(
             *[
                 ListItem(
@@ -148,11 +149,9 @@ class TransferModal(ModalScreen):
             Container(
                 Fields(self.form),
                 Container(
-                    Accounts(
-                        self.accounts, initial_index=self.fromAccount, type="from"
-                    ),
+                    Accounts(self.accounts, initial_id=self.fromAccount, type="from"),
                     Label(">>>", classes="arrow"),
-                    Accounts(self.accounts, initial_index=self.toAccount, type="to"),
+                    Accounts(self.accounts, initial_id=self.toAccount, type="to"),
                     classes="transfer-accounts-container",
                 ),
                 Label(id="transfer-error"),

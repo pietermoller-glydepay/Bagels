@@ -2,23 +2,26 @@
 
 Powerful expense tracker that lives in your terminal.
 
-![Bagels](https://github.com/JaxxDev/bagels/raw/main/assets/preview.gif)
+![Bagels](./public/screenshots/thumb.png)
 
 Bagels expense tracker is a TUI application where you can track and analyse your money flow, with convenience oriented features and a complete interface.
 
+> **Why an expense tracker in the terminal?**
+> I found it easier to build a habit and keep an accurate track of my expenses if I do it at the end of the day, instead of on the go. So why not in the terminal where it's fast, and I can keep all my data locally?
+
+## Features
+
 Some notable features include:
 
-<details><summary>accounts, (sub)categories, splits, transfers, records</summary> You can track your money flow through different accounts, categories, and splits. You can also transfer money between your accounts and even outside tracked accounts.</details>
-<details><summary>templates for recurring transactions</summary> Create templates for frequently added transactions, so you can quickly add them without typing much.</details>
-<details><summary>add templated record with number keys</summary> Press a number key to quickly add a transaction based on a template.</details>
-<details><summary>clear table layout with toggable splits</summary> The clear table layout makes it easy to read and understand even the most complex transactions.</details>
-<details><summary>transfer to and from outside tracked accounts</summary> You can transfer money between your accounts and even outside tracked accounts.</details>
-<details><summary>"jump mode" navigation</summary> Quickly navigate between different parts of the application.</details>
-<details><summary>less and less fields to enter per transaction, powered by transactions and input modes</summary> The input mode system helps you quickly enter transactions by automatically selecting the right field for you to enter. And with the transaction history, you can quickly see what you entered before.</details>
-<details><summary>insights</summary> Bagels provides insights in the form of charts and tables, to help you understand your money flow.</details>
-<details><summary>customizable keybindings and defaults, such as first day of week</summary> You can customize the keybindings and defaults of the application to fit your needs.</details>
-
-> Who is this for?
+- Accounts, (Sub)Categories, Splits, Transfers, Records
+- Templates for Recurring Transactions
+- Add Templated Record with Number Keys
+- Clear Table Layout with Togglable Splits
+- Transfer to and from Outside Tracked Accounts
+- "Jump Mode" Navigation
+- Less and Less Fields to Enter per Transaction, Powered by Transactions and Input Modes
+- Insights
+- Customizable Keybindings and Defaults, such as First Day of Week
 
 ## Installation
 

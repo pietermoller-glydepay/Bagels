@@ -127,7 +127,7 @@
       nature: WANT
 
 - name: Housing # 50
-  color: orange_red3
+  color: medium_orchid3
   nature: MUST
   subcategories:
     - name: Rent # 51

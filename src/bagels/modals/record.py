@@ -17,6 +17,7 @@ from bagels.forms.form import Form, Option
 from bagels.forms.record_forms import RecordForm
 from bagels.utils.validation import validateForm
 from bagels.modals.base_widget import ModalContainer
+from datetime import datetime
 
 
 class RecordModal(InputModal):
@@ -50,6 +51,7 @@ class RecordModal(InputModal):
         form: Form = Form(),
         splitForm: Form = Form(),
         isEditing: bool = False,
+        date: datetime = datetime.now(),
         *args,
         **kwargs,
     ):
@@ -65,6 +67,7 @@ class RecordModal(InputModal):
         self.persons = get_all_persons()
         self.accounts = get_all_accounts_with_balance()
         self.total_amount = 0
+        self.date = date
         self.split_total = Label("", id="split-total")
 
     def on_mount(self):
@@ -90,11 +93,17 @@ class RecordModal(InputModal):
 
     def _update_split_total(self, update_new: bool = True):
         my_amount = self.query_one("#field-amount").value
-        total = float(my_amount) if my_amount else 0
+        try:
+            total = float(my_amount) if my_amount else 0
+        except ValueError:
+            total = 0
         if update_new:
             for i in range(0, self.splitCount):
                 amount = self.query_one(f"#field-amount-{i}").value
-                total += float(amount) if amount else 0
+                try:
+                    total += float(amount) if amount else 0
+                except ValueError:
+                    total += 0
         self.total_amount = total
         if self.splitCount > 0:
             self.split_total.update(
@@ -164,7 +173,9 @@ class RecordModal(InputModal):
     def action_add_split(self, paid: bool = False):
         splits_container = self.query_one("#splits-container", Container)
         current_split_index = self.splitCount
-        new_split_form = self.record_form.get_split_form(current_split_index, paid)
+        new_split_form = self.record_form.get_split_form(
+            current_split_index, paid, defaultPaidDate=self.date
+        )
         for field in new_split_form.fields:
             self.splitForm.fields.append(field)
         splits_container.mount(
@@ -185,6 +196,11 @@ class RecordModal(InputModal):
             self.query_one(
                 f"#dropdown-personId-{self.splitCount - 1}"
             ).remove()  # idk why this is needed
+            dropdown_accountId = self.query(
+                f"#dropdown-accountId-{self.splitCount - 1}"
+            )
+            if dropdown_accountId:
+                dropdown_accountId[0].remove()
             for i in range(self.splitFormOneLength):
                 self.splitForm.fields.pop()
             self.splitCount -= 1

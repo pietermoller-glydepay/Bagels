@@ -135,6 +135,10 @@ Button {
 /*             Input field            */
 /* ---------------------------------- */
 
+.hidden-field {
+  display: none;
+}
+
 .field-row {
   height: 3;
 

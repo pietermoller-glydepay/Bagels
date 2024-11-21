@@ -168,7 +168,9 @@ class RecordForm:
 
     # ------------- Builders ------------- #
 
-    def get_split_form(self, index: int, isPaid: bool = False) -> Form:
+    def get_split_form(
+        self, index: int, isPaid: bool = False, defaultPaidDate: datetime = None
+    ) -> Form:
         split_form = copy.deepcopy(self.SPLIT_FORM)
         for field in split_form.fields:
             fieldKey = field.key
@@ -179,7 +181,9 @@ class RecordForm:
                 field.type = "autocomplete"
             elif fieldKey == "paidDate" and isPaid:
                 field.type = "dateAutoDay"
-                field.default_value = datetime.now().strftime("%d")
+                field.default_value = (
+                    defaultPaidDate.strftime("%d %m %y") if defaultPaidDate else ""
+                )
         return split_form
 
     def get_filled_form(self, recordId: int) -> tuple[list, list]:

@@ -65,7 +65,7 @@ def get_record_total_split_amount(record_id: int):
         session.close()
 
 
-def get_records(offset: int = 0, offset_type: str = "month"):
+def get_records(offset: int = 0, offset_type: str = "month", account_id: int = None):
     session = Session()
     try:
         query = session.query(Record).options(
@@ -81,6 +81,9 @@ def get_records(offset: int = 0, offset_type: str = "month"):
         query = query.filter(
             Record.date >= start_of_period, Record.date < end_of_period
         )
+
+        if account_id is not None:
+            query = query.filter(Record.accountId == account_id)
 
         createdAt_column = getattr(Record, "createdAt")
         date_column = func.date(getattr(Record, "date"))

@@ -13,10 +13,6 @@ class Defaults(BaseModel):
     date_format: str = "%d/%m"
 
 
-class InsightsHotkeys(BaseModel):
-    toggle_use_account: str = "\\"
-
-
 class DatemodeHotkeys(BaseModel):
     go_to_day: str = "g"
 
@@ -31,7 +27,7 @@ class HomeHotkeys(BaseModel):
     toggle_income_mode: str = "/"
     select_prev_account: str = "["
     select_next_account: str = "]"
-    insights: InsightsHotkeys = InsightsHotkeys()
+    toggle_use_account: str = "\\"
     datemode: DatemodeHotkeys = DatemodeHotkeys()
 
 

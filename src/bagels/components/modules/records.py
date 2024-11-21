@@ -88,7 +88,7 @@ class Records(Static):
         table = self.table
         empty_indicator: EmptyIndicator = self.query_one("#empty-indicator")
         self._initialize_table(table)
-        records = get_records(**self.page_parent.filter)
+        records = self._fetch_records()
 
         match self.displayMode:
             case DisplayMode.PERSON:
@@ -102,6 +102,19 @@ class Records(Static):
         if hasattr(self, "current_row_index"):
             table.move_cursor(row=self.current_row_index)
         empty_indicator.display = not table.rows
+
+    def _fetch_records(self):
+        if self.page_parent.filter["byAccount"]:
+            return get_records(
+                offset=self.page_parent.filter["offset"],
+                offset_type=self.page_parent.filter["offset_type"],
+                account_id=self.page_parent.mode["accountId"]["default_value"],
+            )
+        else:
+            return get_records(
+                offset=self.page_parent.filter["offset"],
+                offset_type=self.page_parent.filter["offset_type"],
+            )
 
     def _initialize_table(self, table: DataTable) -> None:
         table.clear()
@@ -265,7 +278,10 @@ class Records(Static):
 
     # region Person view
     def _build_person_view(self, table: DataTable, _) -> None:
-        persons = get_persons_with_splits(**self.page_parent.filter)
+        persons = get_persons_with_splits(
+            offset=self.page_parent.filter["offset"],
+            offset_type=self.page_parent.filter["offset_type"],
+        )
 
         # Display each person and their splits
         for person in persons:
@@ -383,6 +399,7 @@ class Records(Static):
                 f"New {type} on {account_name} for {date}",
                 form=self.record_form.get_form(self.page_parent.mode),
                 splitForm=Form(),
+                date=self.page_parent.mode["date"],
             ),
             callback=check_result,
         )

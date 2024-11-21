@@ -17,14 +17,6 @@ from bagels.managers.utils import (
 
 class Insights(Static):
 
-    BINDINGS = [
-        (
-            CONFIG.hotkeys.home.insights.toggle_use_account,
-            "toggle_use_account",
-            "Toggle use account",
-        )
-    ]
-
     can_focus = True
 
     def __init__(self, parent: Static, *args, **kwargs) -> None:
@@ -32,8 +24,8 @@ class Insights(Static):
             *args, **kwargs, id="insights-container", classes="module-container"
         )
         super().__setattr__("border_title", "Insights")
+        super().__setattr__("border_subtitle", CONFIG.hotkeys.home.toggle_use_account)
         self.page_parent = parent
-        self.use_account = False  # insights of specific account if True
 
     def on_mount(self) -> None:
         self.rebuild()
@@ -42,6 +34,7 @@ class Insights(Static):
     # -------------- Builder ------------- #
 
     def rebuild(self) -> None:
+        self.use_account = self.page_parent.filter["byAccount"]
         period_net = self._update_labels()
         items = self.get_percentage_bar_items(period_net)
         self.percentage_bar.set_items(items)
@@ -69,15 +62,24 @@ class Insights(Static):
 
         if self.use_account:
             params = {
-                **self.page_parent.filter,
+                "offset": self.page_parent.filter["offset"],
+                "offset_type": self.page_parent.filter["offset_type"],
                 "accountId": self.page_parent.mode["accountId"]["default_value"],
                 "isIncome": mode_isIncome,
             }
         else:
-            params = {**self.page_parent.filter, "isIncome": mode_isIncome}
+            params = {
+                "offset": self.page_parent.filter["offset"],
+                "offset_type": self.page_parent.filter["offset_type"],
+                "isIncome": mode_isIncome,
+            }
 
         period_net = get_period_figures(**params)
-        period_average = get_period_average(period_net, **self.page_parent.filter)
+        period_average = get_period_average(
+            period_net,
+            offset=self.page_parent.filter["offset"],
+            offset_type=self.page_parent.filter["offset_type"],
+        )
         period_net_label.update(str(period_net))
         period_average_label.update(str(period_average))
 
@@ -90,13 +92,15 @@ class Insights(Static):
             return []
         if self.use_account:
             category_records = get_all_categories_records(
-                **self.page_parent.filter,
+                offset=self.page_parent.filter["offset"],
+                offset_type=self.page_parent.filter["offset_type"],
                 is_income=self.page_parent.mode["isIncome"],
                 account_id=self.page_parent.mode["accountId"]["default_value"],
             )
         else:
             category_records = get_all_categories_records(
-                **self.page_parent.filter,
+                offset=self.page_parent.filter["offset"],
+                offset_type=self.page_parent.filter["offset_type"],
                 is_income=self.page_parent.mode["isIncome"],
             )
 
@@ -178,12 +182,6 @@ class Insights(Static):
                     labels.append(current_date.strftime("%d"))
 
         return BarchartData(amounts=amounts, labels=labels)
-
-    # region Callbacks
-    # ------------- callbacks ------------ #
-    def action_toggle_use_account(self) -> None:
-        self.use_account = not self.use_account
-        self.rebuild()
 
     # region View
     # --------------- View --------------- #

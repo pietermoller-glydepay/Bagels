@@ -21,6 +21,7 @@ class Home(Static):
     filter = {
         "offset": 0,
         "offset_type": CONFIG.defaults.period,
+        "byAccount": False,
     }
 
     BINDINGS = [
@@ -28,6 +29,12 @@ class Home(Static):
         Binding("right", "inc_offset", "Next", show=False),
         Binding(
             CONFIG.hotkeys.home.cycle_offset_type, "cycle_offset_type", "", show=False
+        ),
+        Binding(
+            CONFIG.hotkeys.home.toggle_use_account,
+            "toggle_use_account",
+            "Use account",
+            show=True,
         ),
         Binding(
             CONFIG.hotkeys.home.toggle_income_mode,
@@ -212,12 +219,19 @@ class Home(Static):
             self.mode["accountId"]["default_value_text"] = self.accounts[new_index].name
             self.accounts_module.rebuild()
             self.insights_module.rebuild()
+            if self.filter["byAccount"]:
+                self.record_module.rebuild()
 
     def action_select_prev_account(self) -> None:
         self._select_account(-1)
 
     def action_select_next_account(self) -> None:
         self._select_account(1)
+
+    def action_toggle_use_account(self) -> None:
+        self.filter["byAccount"] = not self.filter["byAccount"]
+        self.insights_module.rebuild()
+        self.record_module.rebuild()
 
     # region Templates
     # ------------- Template ------------- #

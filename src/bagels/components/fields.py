@@ -5,6 +5,12 @@ from textual.widgets import Input, Label, Static, Switch
 from bagels.components.autocomplete import AutoComplete, Dropdown, DropdownItem
 from bagels.forms.form import Form, FormField
 
+_RESTRICT_TYPES = {
+    "any": None,
+    "integer": r"[-+]?(?:\d*|\d+_)*",
+    "number": r"(?:\d*|\d+_)*\.?(?:\d*|\d+_)*",  # disallow scientific notation and negative values by default.
+}
+
 
 class Fields(Static):
     """Container for multiple form fields"""
@@ -33,7 +39,7 @@ class Field(Static):
             case "hidden":
                 pass
             case "integer" | "number":
-                self.input.type = self.field.type
+                self.input.restrict = _RESTRICT_TYPES.get(self.field.type, None)
                 self.input.value = field.default_value or ""
 
             case "autocomplete":
@@ -58,7 +64,7 @@ class Field(Static):
     def compose(self) -> ComposeResult:
         if self.field.type == "hidden":
             # Hidden fields just need a static widget to hold the value
-            self.input = Static(id=f"field-{self.field.key}")
+            self.input = Static(id=f"field-{self.field.key}", classes="hidden-field")
             self.input.value = self.input.heldValue = self.field.default_value
             yield self.input
             return

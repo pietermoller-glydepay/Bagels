@@ -1,23 +1,10 @@
 from pathlib import Path
 
+# from venv import create
+
 import click
-import yaml
 
-from bagels.config import Config
 from bagels.locations import config_file, database_file, set_custom_root
-
-
-def create_config_file() -> None:
-    f = config_file()
-    if f.exists():
-        return
-
-    try:
-        f.touch()
-        with open(f, "w") as f:
-            yaml.dump(Config.get_default().model_dump(), f)
-    except OSError:
-        pass
 
 
 @click.group(invoke_without_command=True)
@@ -32,6 +19,10 @@ def cli(ctx, at: click.Path | None):
     if at:
         set_custom_root(at)
     if ctx.invoked_subcommand is None:
+
+        from bagels.config import load_config
+
+        load_config()
 
         from bagels.models.database.app import init_db
 

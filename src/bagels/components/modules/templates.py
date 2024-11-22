@@ -7,12 +7,14 @@ from textual.widgets import Label, Static
 from bagels.modals.confirmation import ConfirmationModal
 from bagels.modals.input import InputModal
 from bagels.config import CONFIG
+from bagels.modals.transfer import TransferModal
 from bagels.models.record_template import RecordTemplate
 from bagels.managers.record_templates import (
     create_template,
     delete_template,
     get_adjacent_template,
     get_all_templates,
+    get_template_by_id,
     swap_template_order,
     update_template,
 )
@@ -24,9 +26,12 @@ class Templates(Static):
     can_focus = True
 
     BINDINGS = [
-        Binding(CONFIG.hotkeys.new, "new_template", "New Template"),
-        Binding(CONFIG.hotkeys.edit, "edit_template", "Edit Template"),
-        Binding(CONFIG.hotkeys.delete, "delete_template", "Delete Template"),
+        Binding(CONFIG.hotkeys.new, "new_template", "New"),
+        Binding(
+            CONFIG.hotkeys.home.new_transfer, "new_transfer", "New Transfer Template"
+        ),
+        Binding(CONFIG.hotkeys.edit, "edit_template", "Edit"),
+        Binding(CONFIG.hotkeys.delete, "delete_template", "Delete"),
         Binding("left", "swap_previous", "Swap left"),
         Binding("right", "swap_next", "Swap right"),
     ]
@@ -56,15 +61,23 @@ class Templates(Static):
         for index, template in enumerate(self.templates):
             if index > 8:
                 break
-            color = template.category.color
-            widget = Container(
-                Label(
-                    f"[{color}]{CONFIG.symbols.category_color}[/{color}]", classes="dot"
-                ),
-                Label(f"{template.label}", classes="label"),
-                id=f"template-{template.id}",
-                classes="template-item",
-            )
+            if template.isTransfer:
+                widget = Container(
+                    Label(f"{template.label}", classes="label"),
+                    id=f"template-{template.id}",
+                    classes="template-item",
+                )
+            else:
+                color = template.category.color
+                widget = Container(
+                    Label(
+                        f"[{color}]{CONFIG.symbols.category_color}[/{color}]",
+                        classes="dot",
+                    ),
+                    Label(f"{template.label}", classes="label"),
+                    id=f"template-{template.id}",
+                    classes="template-item",
+                )
             widget.border_subtitle = str(index + 1)
             widget.can_focus = True
             container.compose_add_child(widget)
@@ -94,6 +107,7 @@ class Templates(Static):
             timeout=3,
         )
 
+    # region Callback
     # ------------- Callback ------------- #
 
     def on_descendant_focus(self, event: events.DescendantFocus):
@@ -123,16 +137,13 @@ class Templates(Static):
         )
         self.page_parent.rebuild()
 
+    # region CRUD
+    # ----------------- - ---------------- #
+
     def action_new_template(self) -> None:
         def check_result(result) -> None:
             if result:
                 create_template(result)
-                # try:
-                # except Exception as e:
-                #     self.app.notify(
-                #         title="Error", message=f"{e}", severity="error", timeout=10
-                #     )
-                # else:
                 self.app.notify(
                     title="Success",
                     message=f"Template created",
@@ -143,6 +154,23 @@ class Templates(Static):
 
         self.app.push_screen(
             InputModal("New Template", form=self.template_form.get_form()),
+            callback=check_result,
+        )
+
+    def action_new_transfer(self) -> None:
+        def check_result(result) -> None:
+            if result:
+                create_template(result)
+                self.app.notify(
+                    title="Success",
+                    message=f"Template created",
+                    severity="information",
+                    timeout=3,
+                )
+                self.rebuild()
+
+        self.app.push_screen(
+            TransferModal(title="New Transfer Template", isTemplate=True),
             callback=check_result,
         )
 
@@ -170,13 +198,24 @@ class Templates(Static):
                     self.rebuild()
 
         # ----------------- - ---------------- #
-        self.app.push_screen(
-            InputModal(
-                "Edit Template",
-                form=self.template_form.get_filled_form(self.selected_template_id),
-            ),
-            callback=check_result,
-        )
+        template = get_template_by_id(self.selected_template_id)
+        if template.isTransfer:
+            self.app.push_screen(
+                TransferModal(
+                    title="Edit Transfer Template",
+                    record=template,
+                    isTemplate=True,
+                ),
+                callback=check_result,
+            )
+        else:
+            self.app.push_screen(
+                InputModal(
+                    "Edit Template",
+                    form=self.template_form.get_filled_form(self.selected_template_id),
+                ),
+                callback=check_result,
+            )
 
     def action_delete_template(self) -> None:
         if not self.selected_template_id:

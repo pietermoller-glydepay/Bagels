@@ -48,7 +48,7 @@ class Accounts(ListView):
 
 
 class TransferModal(ModalScreen):
-    def __init__(self, record=None, *args, **kwargs):
+    def __init__(self, title="", record=None, isTemplate=False, *args, **kwargs):
         super().__init__(classes="modal-screen", *args, **kwargs)
         self.accounts = get_all_accounts_with_balance(get_hidden=True)
         self.form = Form(
@@ -70,6 +70,10 @@ class TransferModal(ModalScreen):
                     is_required=True,
                     default_value=str(record.amount) if record else "",
                 ),
+            ]
+        )
+        if not isTemplate:
+            self.form.fields.append(
                 FormField(
                     title="Date",
                     key="date",
@@ -80,15 +84,11 @@ class TransferModal(ModalScreen):
                         if record
                         else datetime.now().strftime("%d")
                     ),
-                ),
-            ]
-        )
+                )
+            )
         self.fromAccount = record.accountId if record else self.accounts[0].id
         self.toAccount = record.transferToAccountId if record else self.accounts[1].id
-        if record:
-            self.title = "Edit transfer"
-        else:
-            self.title = "New transfer"
+        self.title = title
         self.atAccountList = False
 
     def on_descendant_focus(self, event: events.DescendantFocus):

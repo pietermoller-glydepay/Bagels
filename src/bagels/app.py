@@ -96,7 +96,13 @@ class App(TextualApp):
         self.refresh_css(animate=False)
         self.screen._update_styles()
         if theme:
-            theme_object = self.themes[theme]
+            try:
+                theme_object = self.themes[theme]
+            except KeyError:
+                self.notify(
+                    f"Theme {theme!r} not found.", title="Theme Error", timeout=1
+                )
+                return
             self.theme_change_signal.publish(theme_object)
 
     @on(CommandPalette.Opened)

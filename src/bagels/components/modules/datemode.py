@@ -6,6 +6,7 @@ from textual.containers import Container, Horizontal
 from textual.widgets import Label, Static
 
 from textual.widgets import Button
+from bagels.forms.form import Form, FormField
 from bagels.modals.input import InputModal
 from bagels.config import CONFIG
 
@@ -18,14 +19,16 @@ class DateMode(Static):
         Binding(CONFIG.hotkeys.home.datemode.go_to_day, "go_to_day", "Go to Day"),
     ]
 
-    FORM = [
-        {
-            "type": "dateAutoDay",
-            "key": "date",
-            "title": "Date",
-            "default_value": datetime.now().strftime("%d"),
-        }
-    ]
+    FORM = Form(
+        fields=[
+            FormField(
+                type="dateAutoDay",
+                key="date",
+                title="Date",
+                default_value=datetime.now().strftime("%d"),
+            )
+        ]
+    )
 
     def __init__(self, parent: Static, *args, **kwargs) -> None:
         super().__init__(

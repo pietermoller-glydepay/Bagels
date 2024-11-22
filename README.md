@@ -25,14 +25,25 @@ Some notable features include:
 
 ## Installation
 
+MacOS:
+
 ```bash
-# install uv (package manager)
+# install uv (package manager):
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # restart your terminal, or run the following command:
 source $HOME/.local/bin/env # or follow instructions
 
 # install bagels through uv
+uv tool install --python 3.13 bagels
+```
+
+Windows:
+
+```bash
+# install uv:
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+# then follow instructions to add uv to path
 uv tool install --python 3.13 bagels
 ```
 

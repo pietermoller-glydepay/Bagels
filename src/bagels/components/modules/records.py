@@ -481,7 +481,8 @@ class Records(Static):
                     return
                 if record.isTransfer:
                     self.app.push_screen(
-                        TransferModal(record), callback=check_result_records
+                        TransferModal(title="Edit transfer", record=record),
+                        callback=check_result_records,
                     )
                 else:
                     filled_form, filled_splits = self.record_form.get_filled_form(
@@ -614,7 +615,7 @@ class Records(Static):
                     timeout=3,
                 )
 
-        self.app.push_screen(TransferModal(), callback=check_result)
+        self.app.push_screen(TransferModal(title="New transfer"), callback=check_result)
 
     # region View
     # --------------- View --------------- #

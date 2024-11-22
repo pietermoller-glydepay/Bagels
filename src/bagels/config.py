@@ -2,7 +2,7 @@ import warnings
 from typing import Any, Literal
 import yaml
 from pydantic import BaseModel, Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import SettingsConfigDict
 from pydantic_settings_yaml import YamlBaseSettings
 from bagels.locations import config_file
 
@@ -63,7 +63,7 @@ class Symbols(BaseModel):
 
 
 class State(BaseModel):
-    theme: str = "posting"
+    theme: str = "dark"
 
 
 class Config(YamlBaseSettings):
@@ -112,14 +112,23 @@ class Config(YamlBaseSettings):
         )
 
 
-# Only try to load from file if it exists
-config_path = config_file()
+CONFIG = None
 
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    CONFIG = (
-        Config.get_default() if not config_path.exists() else Config()
-    )  # ignore warnings about empty env file
+
+def load_config():
+    f = config_file()
+    if not f.exists():
+        try:
+            f.touch()
+            with open(f, "w") as f:
+                yaml.dump(Config.get_default().model_dump(), f)
+        except OSError:
+            pass
+
+    global CONFIG
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        CONFIG = Config()  # ignore warnings about empty env file
 
 
 def write_state(key: str, value: Any) -> None:

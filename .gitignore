@@ -4,3 +4,4 @@ __pycache__/
 dist/
 Bagels.egg-info/
 instance/
+snapshot_report.html

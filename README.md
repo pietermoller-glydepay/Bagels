@@ -81,15 +81,15 @@ Please use the black formatter to format the code.
 
 ## Roadmap
 
-- [] More insight displays and analysis (by nature etc.)
-- [] "Processing" bool on records for transactions in process
-- [] Record flags for future insights implementation
-- [] Repayment reminders
-- [] Code review
-- [] Daily check-ins
-- [] Budgets
-- [] Add tests
-- [] Bank sync
+- [ ] More insight displays and analysis (by nature etc.)
+- [ ] "Processing" bool on records for transactions in process
+- [ ] Record flags for future insights implementation
+- [ ] Repayment reminders
+- [ ] Code review
+- [ ] Daily check-ins
+- [ ] Budgets
+- [ ] Add tests
+- [ ] Bank sync
 
 ## Attributions
 

@@ -48,7 +48,15 @@ class Accounts(ListView):
 
 
 class TransferModal(ModalScreen):
-    def __init__(self, title="", record=None, isTemplate=False, *args, **kwargs):
+    def __init__(
+        self,
+        title="",
+        record=None,
+        isTemplate=False,
+        defaultDate=datetime.now().strftime("%d"),
+        *args,
+        **kwargs,
+    ):
         super().__init__(classes="modal-screen", *args, **kwargs)
         self.accounts = get_all_accounts_with_balance(get_hidden=True)
         self.form = Form(
@@ -80,9 +88,7 @@ class TransferModal(ModalScreen):
                     type="dateAutoDay",
                     placeholder="dd (mm) (yy)",
                     default_value=(
-                        record.date.strftime("%d")
-                        if record
-                        else datetime.now().strftime("%d")
+                        record.date.strftime("%d") if record else defaultDate
                     ),
                 )
             )

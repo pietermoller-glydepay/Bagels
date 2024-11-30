@@ -292,6 +292,7 @@ class Records(Static):
                 )
 
                 # Add splits for this person
+                total_unpaid = 0  # Initialize total unpaid amount for this person
                 for split in person.splits:
                     record = split.record
                     paid_icon = (
@@ -306,6 +307,14 @@ class Records(Static):
                     )
                     record_date = format_date_to_readable(record.date)
                     category = f"[{record.category.color.lower()}]{CONFIG.symbols.category_color}[/{record.category.color.lower()}] {record.category.name}"
+
+                    # Calculate amount and update total of unpaid amounts
+                    if not split.isPaid:
+                        split_amount = split.amount
+                        if record.isIncome:
+                            split_amount = -split_amount  # Negate income amounts
+                        total_unpaid += split_amount
+
                     amount = (
                         f"[red]{CONFIG.symbols.amount_negative}[/red] {split.amount}"
                         if record.isIncome
@@ -322,6 +331,23 @@ class Records(Static):
                         account,
                         key=f"s-{split.id}",
                     )
+
+                # Add total row for this person showing unpaid amount. We reverse the color indicator.
+                if total_unpaid == 0:
+                    total_display = "0.0"
+                elif total_unpaid < 0:
+                    total_display = f"[green]{abs(total_unpaid)}[/green]"
+                else:
+                    total_display = f"[red]{abs(total_unpaid)}[/red]"
+                table.add_row(
+                    " ",
+                    "[bold]Total Unpaid[/bold]",
+                    "",
+                    "",
+                    f"[bold]{total_display}[/bold]",
+                    "",
+                    key=f"t-{str(person.id)}",
+                )
 
     # region Helpers
     # -------------- Helpers ------------- #
@@ -615,7 +641,13 @@ class Records(Static):
                     timeout=3,
                 )
 
-        self.app.push_screen(TransferModal(title="New transfer"), callback=check_result)
+        self.app.push_screen(
+            TransferModal(
+                title="New transfer",
+                defaultDate=self.page_parent.mode["date"].strftime("%d"),
+            ),
+            callback=check_result,
+        )
 
     # region View
     # --------------- View --------------- #

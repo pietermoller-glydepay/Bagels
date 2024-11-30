@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.12
+
+- Added total amount in persons view
+- Fix: Transfers not using active date
+
 ## 0.1.11
 
 - Add transfers as templates.

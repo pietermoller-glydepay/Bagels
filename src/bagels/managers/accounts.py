@@ -31,7 +31,10 @@ def get_account_balance(accountId, session=None):
     try:
         # Initialize balance
         balance = (
-            session.query(Account).filter(Account.id == accountId).first().beginningBalance
+            session.query(Account)
+            .filter(Account.id == accountId)
+            .first()
+            .beginningBalance
         )
 
         # Get all records for this account
@@ -66,7 +69,10 @@ def get_account_balance(accountId, session=None):
         # Add paid splits (they represent money coming into this account)
         for split in splits:
             if split.isPaid:
-                balance += split.amount
+                if split.record.isIncome:
+                    balance -= split.amount
+                else:
+                    balance += split.amount
 
         return round(balance, 2)
     finally:

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.13
+
+- Fix: Income record split value should be subtracted, not added, to the account balance
+
 ## 0.1.12
 
 - Added total amount in persons view

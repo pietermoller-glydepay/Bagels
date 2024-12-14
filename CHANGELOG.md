@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.14
+
+- Fix: Lock textual version and defer upgrade to future
+
 ## 0.1.13
 
 - Fix: Income record split value should be subtracted, not added, to the account balance

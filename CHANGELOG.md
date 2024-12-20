@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.15
+
+- Fix: Deleted categories visible
+
 ## 0.1.14
 
 - Fix: Lock textual version and defer upgrade to future

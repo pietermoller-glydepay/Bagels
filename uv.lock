@@ -86,7 +86,7 @@ wheels = [
 
 [[package]]
 name = "bagels"
-version = "0.1.13"
+version = "0.1.15"
 source = { editable = "." }
 dependencies = [
     { name = "aiohappyeyeballs" },
@@ -173,7 +173,7 @@ requires-dist = [
     { name = "pyyaml", specifier = "==6.0.2" },
     { name = "rich", specifier = "==13.9.3" },
     { name = "sqlalchemy", specifier = "==2.0.36" },
-    { name = "textual", specifier = ">=0.86.1" },
+    { name = "textual", specifier = "==0.86.1" },
     { name = "tomli", specifier = ">=2.0.2" },
     { name = "typing-extensions", specifier = "==4.12.2" },
     { name = "uc-micro-py", specifier = "==1.0.3" },
@@ -187,10 +187,10 @@ dev = [
     { name = "jinja2", specifier = ">=3.1.4" },
     { name = "pytest", specifier = ">=8.3.1" },
     { name = "pytest-cov", specifier = ">=5.0.0" },
-    { name = "pytest-textual-snapshot", specifier = ">=1.0.0" },
+    { name = "pytest-textual-snapshot", specifier = "==1.0.0" },
     { name = "pytest-xdist", specifier = ">=3.6.1" },
     { name = "syrupy", specifier = ">=4.6.1" },
-    { name = "textual-dev", specifier = ">=1.6.1" },
+    { name = "textual-dev", specifier = "==1.6.1" },
 ]
 
 [[package]]

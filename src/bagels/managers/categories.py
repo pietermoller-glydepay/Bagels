@@ -11,20 +11,12 @@ from bagels.models.database.app import db_engine
 Session = sessionmaker(bind=db_engine)
 
 
-def _get_base_categories_query(include_deleted=False):
-    """Base query for categories with optional filtering of deleted entries."""
-    stmt = select(Category)
-    if not include_deleted:
-        stmt = stmt.filter(Category.deletedAt.is_(None))
-    return stmt
-
-
 # region Get
 def get_categories_count():
     """Count all categories excluding deleted ones."""
     session = Session()
     try:
-        stmt = _get_base_categories_query()
+        stmt = select(Category)
         return len(session.scalars(stmt).all())
     finally:
         session.close()
@@ -35,9 +27,10 @@ def get_all_categories_tree():
     session = Session()
     try:
         stmt = (
-            _get_base_categories_query()
+            select(Category)
             .options(joinedload(Category.parentCategory))
             .order_by(Category.id)
+            .filter(Category.deletedAt.is_(None))
         )
         categories = session.scalars(stmt).all()
 
@@ -87,7 +80,11 @@ def get_category_by_id(category_id):
     """Retrieve a category by its ID."""
     session = Session()
     try:
-        stmt = _get_base_categories_query().filter_by(id=category_id)
+        stmt = (
+            select(Category)
+            .filter_by(id=category_id)
+            .filter(Category.deletedAt.is_(None))
+        )
         return session.scalars(stmt).first()
     finally:
         session.close()
@@ -186,12 +183,20 @@ def update_category(category_id, data):
 
 # region Delete
 def delete_category(category_id):
-    """Delete a category by marking it as deleted."""
+    """Delete a category by marking it and its subcategories as deleted."""
     session = Session()
     try:
         category = session.get(Category, category_id)
         if category:
             category.deletedAt = datetime.now()
+
+            # Delete subcategories
+            subcategories = (
+                session.query(Category).filter_by(parentCategoryId=category_id).all()
+            )
+            for subcategory in subcategories:
+                subcategory.deletedAt = datetime.now()
+
             session.commit()
             session.refresh(category)
             session.expunge(category)

@@ -1,3 +1,4 @@
+from datetime import datetime
 import yaml
 from pathlib import Path
 from sqlalchemy import create_engine, inspect, text
@@ -66,6 +67,26 @@ def _create_default_categories(session):
             session.commit()
 
 
+def _fix_dangling_categories(session):
+    dangling_subcategories = (
+        session.query(Category)
+        .filter(
+            Category.parentCategoryId.isnot(None),
+            Category.deletedAt.is_(None),
+            Category.parentCategoryId.in_(
+                session.query(Category.id).filter(Category.deletedAt.isnot(None))
+            ),
+        )
+        .all()
+    )
+
+    for subcategory in dangling_subcategories:
+        subcategory.deletedAt = datetime.now()
+        session.add(subcategory)
+
+    session.commit()
+
+
 def _sync_database_schema():
     try:
         inspector = inspect(db_engine)
@@ -101,6 +122,7 @@ def init_db():
     session = Session()
     _create_outside_source_account(session)
     _create_default_categories(session)
+    _fix_dangling_categories(session)
     session.close()
 
 

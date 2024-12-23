@@ -191,7 +191,7 @@ class Templates(Static):
                 else:
                     self.app.notify(
                         title="Success",
-                        message=f"Template created",
+                        message=f"Template edited",
                         severity="information",
                         timeout=3,
                     )

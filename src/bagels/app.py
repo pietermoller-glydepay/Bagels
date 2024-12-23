@@ -44,11 +44,12 @@ class App(TextualApp):
     """True if 'jump mode' is currently active, otherwise False."""
 
     # region init
-    def __init__(self):
+    def __init__(self, is_testing=False) -> None:
         # Initialize available themes with a default
         available_themes: dict[str, Theme] = {"galaxy": BUILTIN_THEMES["galaxy"]}
         available_themes |= BUILTIN_THEMES
         self.themes = available_themes
+        self.is_testing = is_testing
         super().__init__()
 
         # Get package metadata directly
@@ -189,12 +190,16 @@ class App(TextualApp):
             self.mount(page_instance)
 
     def on_resize(self, event: events.Resize) -> None:
-        console_size: Size = self.console.size
+        console_size: Size = event.size
         aspect_ratio = (console_size.width / 2) / console_size.height
         if aspect_ratio < 1:
             self.layout = "v"
         else:
             self.layout = "h"
+        if self.is_testing:
+            self.query_one(".version").update(
+                "Layout: " + self.layout + " " + str(aspect_ratio)
+            )
 
     # region callbacks
     # --------------- Callbacks ------------ #
@@ -216,9 +221,11 @@ class App(TextualApp):
     # region view
     # --------------- View --------------- #
     def compose(self) -> ComposeResult:
+        version = self.project_info["version"] if not self.is_testing else "vt"
+        user_host = get_user_host_string() if not self.is_testing else "test"
         with Container(classes="header"):
-            yield Label(f"↪ {self.project_info['name']}", classes="title")
-            yield Label(self.project_info["version"], classes="version")
-            yield Label(get_user_host_string(), classes="user")
+            yield Label(f"↪ {self.project_info["name"]}", classes="title")
+            yield Label(version, classes="version")
+            yield Label(user_host, classes="user")
         yield Home(classes="content")
         yield Footer()

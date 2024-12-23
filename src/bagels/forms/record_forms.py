@@ -4,6 +4,7 @@ from datetime import datetime
 from rich.text import Text
 
 from bagels.components.autocomplete import Dropdown
+from bagels.config import CONFIG
 from bagels.managers.accounts import get_all_accounts_with_balance
 from bagels.managers.categories import get_all_categories_by_freq
 from bagels.managers.persons import create_person, get_all_persons
@@ -198,7 +199,10 @@ class RecordForm:
             match fieldKey:
                 case "amount":
                     field.default_value = str(
-                        round(value - get_record_total_split_amount(recordId), 2)
+                        round(
+                            value - get_record_total_split_amount(recordId),
+                            CONFIG.defaults.round_decimals,
+                        )
                     )
                 case "date":
                     # if value is this month, simply set %d, else set %d %m %y

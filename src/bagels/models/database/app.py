@@ -14,6 +14,7 @@ from bagels.models.person import Person
 from bagels.models.record import Record
 from bagels.models.record_template import RecordTemplate
 from bagels.models.split import Split
+from bagels.models.budget import Budget
 
 from bagels.models.database.db import Base
 

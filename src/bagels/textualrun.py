@@ -4,7 +4,11 @@ from pathlib import Path
 from bagels.locations import set_custom_root
 
 if __name__ == "__main__":
-    # set_custom_root(Path("./instance/"))
+    set_custom_root(Path("../../../bagels_instance/"))
+
+    from bagels.config import load_config
+
+    load_config()
 
     from bagels.models.database.app import init_db
 

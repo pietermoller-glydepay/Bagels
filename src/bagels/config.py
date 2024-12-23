@@ -11,6 +11,7 @@ class Defaults(BaseModel):
     period: Literal["day", "week", "month", "year"] = "week"
     first_day_of_week: int = Field(ge=0, le=6, default=6)
     date_format: str = "%d/%m"
+    round_decimals: int = 2
 
 
 class DatemodeHotkeys(BaseModel):
@@ -19,6 +20,7 @@ class DatemodeHotkeys(BaseModel):
 
 class HomeHotkeys(BaseModel):
     categories: str = "c"
+    budgets: str = "b"
     new_transfer: str = "t"
     toggle_splits: str = "s"
     display_by_date: str = "q"

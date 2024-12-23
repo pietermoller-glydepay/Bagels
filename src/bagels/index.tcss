@@ -535,11 +535,6 @@ Button {
   height: auto;
   width: 1fr;
   padding: 0 2;
-
-  &.v {
-    layout: vertical;
-
-  }
   
   &.h {
     layout: horizontal;
@@ -552,7 +547,10 @@ Button {
       width: 60%
     }
   }
-
+  
+  &.v {
+    layout: vertical;
+  }
 }
 
 .module-container {

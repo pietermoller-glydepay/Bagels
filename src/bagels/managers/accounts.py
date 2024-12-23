@@ -2,6 +2,7 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
 
+from bagels.config import CONFIG
 from bagels.models.account import Account
 from bagels.models.record import Record
 from bagels.models.split import Split
@@ -74,7 +75,7 @@ def get_account_balance(accountId, session=None):
                 else:
                     balance += split.amount
 
-        return round(balance, 2)
+        return round(balance, CONFIG.defaults.round_decimals)
     finally:
         if should_close:
             session.close()

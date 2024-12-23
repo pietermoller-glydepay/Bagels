@@ -217,7 +217,7 @@ class Records(Static):
 
             if record.splits and not self.show_splits:
                 amount_self = round(
-                    record.amount - get_record_total_split_amount(record.id)
+                    record.amount - get_record_total_split_amount(record.id), 2
                 )
                 amount_string = f"{flow_icon} {amount_self}"
             else:
@@ -234,7 +234,10 @@ class Records(Static):
 
     def _add_split_rows(self, table: DataTable, record, flow_icon: str) -> None:
         color = record.category.color.lower()
-        amount_self = round(record.amount - get_record_total_split_amount(record.id), 2)
+        amount_self = round(
+            record.amount - get_record_total_split_amount(record.id),
+            CONFIG.defaults.round_decimals,
+        )
         split_flow_icon = (
             f"[red]{CONFIG.symbols.amount_negative}[/red]"
             if record.isIncome

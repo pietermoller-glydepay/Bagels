@@ -137,8 +137,8 @@ class PercentageBar(Static):
                 width = "1fr"
 
             item_widget.styles.width = width
-            item_widget.styles.background = background_color
             if self.rounded:
+                item_widget.background = background_color
                 if i > 0:
                     prev_background_color = Color.from_rich_color(
                         RichColor.parse(self.items[i - 1].color)
@@ -146,6 +146,11 @@ class PercentageBar(Static):
                     item_widget.update(
                         f"[{prev_background_color} on {background_color}][/{prev_background_color} on {background_color}]"
                     )
+            else:
+                item_widget.styles.hatch = (
+                    "/",
+                    background_color,
+                )
 
             self.bar.mount(item_widget)
 

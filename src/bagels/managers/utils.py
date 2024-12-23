@@ -75,7 +75,9 @@ def get_start_end_of_period(offset: int = 0, offset_type: str = "month"):
 # -------------- figure -------------- #
 
 
-def get_period_figures(accountId=None, offset_type=None, offset=None, isIncome=None, session=None):
+def get_period_figures(
+    accountId=None, offset_type=None, offset=None, isIncome=None, session=None
+):
     """Returns the income / expense for a given period.
 
     Rules:
@@ -142,7 +144,7 @@ def get_period_figures(accountId=None, offset_type=None, offset=None, isIncome=N
                 else:
                     total -= record_amount
 
-        return abs(round(total, 2))
+        return abs(round(total, CONFIG.defaults.round_decimals))
     finally:
         if should_close:
             session.close()
@@ -160,4 +162,4 @@ def _get_days_in_period(offset: int = 0, offset_type: str = "month"):
 
 def get_period_average(net: int = 0, offset: int = 0, offset_type: str = "month"):
     days = _get_days_in_period(offset, offset_type)
-    return round(net / days, 2)
+    return round(net / days, CONFIG.defaults.round_decimals)

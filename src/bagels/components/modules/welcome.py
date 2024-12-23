@@ -17,7 +17,10 @@ class Welcome(Static):
             self.welcome_text = file.read()
 
     def on_mount(self) -> None:
-        self.set_interval(1 / 10, self.update_bagel)
+        if not self.app.is_testing:
+            self.set_interval(1 / 10, self.update_bagel)
+        else:
+            self.update_bagel()
 
     def update_bagel(self) -> None:
         bagel = self.query_one("#bagel")

@@ -55,6 +55,7 @@ class JumpOverlay(ModalScreen[str | Widget | None]):
             CONFIG.hotkeys.new,
             CONFIG.hotkeys.edit,
             CONFIG.hotkeys.delete,
+            CONFIG.hotkeys.home.new_transfer,
         ]:
             key_event.stop()
             key_event.prevent_default()

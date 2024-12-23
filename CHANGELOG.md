@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.16
+
+- Updated bar visuals for non-rounded variation
+- WIP Budgets
+- WIP Tests
+
 ## 0.1.15
 
 - Fix: Deleted categories visible

@@ -4,11 +4,12 @@ from textual.widgets import Input, Label, Static, Switch
 
 from bagels.components.autocomplete import AutoComplete, Dropdown, DropdownItem
 from bagels.forms.form import Form, FormField
+from bagels.utils.format import parse_formula_expression
 
 _RESTRICT_TYPES = {
     "any": None,
-    "integer": r"[-+]?(?:\d*|\d+_)*",
-    "number": r"(?:\d*|\d+_)*\.?(?:\d*|\d+_)*",  # disallow scientific notation and negative values by default.
+    "integer": r"^-?\d+$",
+    "number": r"^-?\d*\.?\d*(?:[+\-*\/]-?\d*\.?\d+)*[+\-*\/\.]?$",
 }
 
 
@@ -60,6 +61,11 @@ class Field(Static):
             if item_text == selected_dropdown_text:
                 self.input.heldValue = item.value
                 break
+
+    def on_input_changed(self, event: Input.Changed):
+        if self.field.type == "number":
+            num_val = parse_formula_expression(event.value)
+            self.query_one(".label").update(f"{self.field.title} - {num_val}")
 
     def compose(self) -> ComposeResult:
         if self.field.type == "hidden":

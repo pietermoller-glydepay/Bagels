@@ -66,14 +66,7 @@ class RecordModal(InputModal):
         self.splitCount = int(len(splitForm) / self.splitFormOneLength)
         self.persons = get_all_persons()
         self.accounts = get_all_accounts_with_balance()
-        self.total_amount = 0
         self.date = date
-        self.split_total = Label("", id="split-total")
-
-    def on_mount(self):
-        self._update_split_total()
-        if self.splitCount > 0:
-            self._update_split_total_visibility(True)
 
     # -------------- Helpers ------------- #
 
@@ -90,25 +83,6 @@ class RecordModal(InputModal):
                 }
             )
         return splits
-
-    def _update_split_total(self, update_new: bool = True):
-        my_amount = self.query_one("#field-amount").value
-        try:
-            total = float(my_amount) if my_amount else 0
-        except ValueError:
-            total = 0
-        if update_new:
-            for i in range(0, self.splitCount):
-                amount = self.query_one(f"#field-amount-{i}").value
-                try:
-                    total += float(amount) if amount else 0
-                except ValueError:
-                    total += 0
-        self.total_amount = total
-        if self.splitCount > 0:
-            self.split_total.update(
-                f"Total amount: [bold yellow]{total:.2f}[/bold yellow]"
-            )
 
     def _get_split_widget(self, index: int, fields: Form, isPaid: bool):
         widget = Container(Fields(fields), id=f"split-{index}", classes="split")
@@ -131,12 +105,6 @@ class RecordModal(InputModal):
                     break
             widgets.append(self._get_split_widget(i, oneSplitForm, isPaid))
         return widgets
-
-    def _update_split_total_visibility(self, mount: bool):
-        if mount:
-            self.query_one(".container").mount(self.split_total)
-        else:
-            self.split_total.remove()
 
     def _update_errors(self, errors: dict):
         previousErrors = self.query(".error")
@@ -163,10 +131,6 @@ class RecordModal(InputModal):
 
     # ------------- Callbacks ------------ #
 
-    def on_input_changed(self, event: Input.Changed):
-        if event.input.id.startswith("field-amount"):
-            self._update_split_total()
-
     def action_add_paid_split(self):
         self.action_add_split(paid=True)
 
@@ -186,9 +150,6 @@ class RecordModal(InputModal):
             lambda: self.query_one(f"#field-personId-{current_split_index}").focus()
         )
         self.splitCount += 1
-        if self.splitCount == 1:
-            self._update_split_total_visibility(True)
-            self._update_split_total(update_new=False)
 
     def action_delete_last_split(self):
         if self.splitCount > 0:
@@ -204,14 +165,8 @@ class RecordModal(InputModal):
             for i in range(self.splitFormOneLength):
                 self.splitForm.fields.pop()
             self.splitCount -= 1
-            if self.splitCount == 0:
-                self._update_split_total_visibility(False)
 
     def action_submit(self):
-        # We set the amount field to the total amount for the form to read the value
-        input: Input = self.query_one("#field-amount")
-        input.__setattr__("heldValue", str(self.total_amount))
-
         resultRecordForm, errors, isValid = validateForm(self, self.form)
         resultSplitForm, errorsSplit, isValidSplit = validateForm(self, self.splitForm)
         if isValid and isValidSplit:
@@ -219,8 +174,6 @@ class RecordModal(InputModal):
             self.dismiss({"record": resultRecordForm, "splits": resultSplits})
             return
         self._update_errors({**errors, **errorsSplit})
-        # Remove the custom value we set for the field if not valid
-        input.__setattr__("heldValue", None)
 
     # -------------- Compose ------------- #
 

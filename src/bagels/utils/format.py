@@ -3,6 +3,19 @@ from datetime import datetime, timedelta
 from bagels.config import CONFIG
 
 
+def parse_formula_expression(value: str) -> float:
+    # parse value formula expression. Assumes valid expression
+    # fix possible -+123.123 to -123.123
+    try:
+        value = value.replace("+-", "-")
+        # remove ending operators
+        if value[-1] in "+-*/.":
+            value = value[:-1]
+        return round(float(eval(value)), CONFIG.defaults.round_decimals)
+    except Exception:
+        return 0
+
+
 def format_date_to_readable(date) -> str:
     today = datetime.now().date()
     date = date.date() if isinstance(date, datetime) else date

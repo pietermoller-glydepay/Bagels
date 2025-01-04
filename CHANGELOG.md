@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.0
+
+- Added formula inputs in amount fields!
+
 ## 0.1.16
 
 - Updated bar visuals for non-rounded variation

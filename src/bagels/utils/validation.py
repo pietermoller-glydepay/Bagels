@@ -4,6 +4,7 @@ from typing import Tuple, Dict, Any
 from textual.widget import Widget
 
 from bagels.forms.form import Form, FormField
+from bagels.utils.format import parse_formula_expression
 
 
 def _validate_number(
@@ -12,40 +13,30 @@ def _validate_number(
     """Validate a number field and return (is_valid, error_message)"""
     if not value:
         if field.is_required:
-            return False, "Required"
-        return True, None
+            return False, "Required", None
+        return True, None, value
 
-    # Check if valid number
-    if is_float:
-        # Allow negative sign at start
-        test_value = value.lstrip("-").replace(".", "", 1)
-        is_valid = test_value.isdigit()
-        type_name = "number"
-    else:
-        # Allow negative sign at start
-        test_value = value.lstrip("-")
-        is_valid = test_value.isdigit()
-        type_name = "integer"
-
-    if not is_valid:
-        return False, f"Must be a {type_name}"
+    # Skip checking if numbers are valid as they are restricted
 
     # Convert to number for comparisons
-    num_val = float(value) if is_float else int(value)
+    if not is_float:
+        num_val = int(value)
+    else:
+        num_val = parse_formula_expression(value)
 
     # Check minimum
     if field.min is not None:
         min_val = float(field.min) if is_float else int(field.min)
         if num_val <= min_val:
-            return False, f"Must be greater than {field.min}"
+            return False, f"Must be greater than {field.min}", None
 
     # Check maximum
     if field.max is not None:
         max_val = float(field.max) if is_float else int(field.max)
         if num_val > max_val:
-            return False, f"Must be less than {field.max}"
+            return False, f"Must be less than {field.max}", None
 
-    return True, None
+    return True, None, num_val
 
 
 def _validate_date(
@@ -123,14 +114,16 @@ def validateForm(
 
         match field.type:
             case "integer":
-                is_valid, error = _validate_number(fieldValue, field)
-                if is_valid and fieldValue:
-                    result[fieldKey] = int(fieldValue)
+                is_valid, error, num_val = _validate_number(fieldValue, field)
+                if is_valid and fieldValue and num_val:
+                    result[fieldKey] = num_val
 
             case "number":
-                is_valid, error = _validate_number(fieldValue, field, is_float=True)
-                if is_valid and fieldValue:
-                    result[fieldKey] = float(fieldValue)
+                is_valid, error, num_val = _validate_number(
+                    fieldValue, field, is_float=True
+                )
+                if is_valid and fieldValue and num_val:
+                    result[fieldKey] = num_val
 
             case "date":
                 date, error = _validate_date(fieldValue, field)

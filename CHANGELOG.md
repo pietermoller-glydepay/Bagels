@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1
+
+- Lock dependencies, rookie mistake
+
 ## 0.2.0
 
 - Added formula inputs in amount fields!

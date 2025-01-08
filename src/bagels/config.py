@@ -2,9 +2,8 @@ import warnings
 from typing import Any, Literal
 import yaml
 from pydantic import BaseModel, Field
-from pydantic_settings import SettingsConfigDict
-from pydantic_settings_yaml import YamlBaseSettings
 from bagels.locations import config_file
+from pathlib import Path
 
 
 class Defaults(BaseModel):
@@ -68,29 +67,38 @@ class State(BaseModel):
     theme: str = "dark"
 
 
-class Config(YamlBaseSettings):
+class Config(BaseModel):
     hotkeys: Hotkeys = Hotkeys()
     symbols: Symbols = Symbols()
     defaults: Defaults = Defaults()
     state: State = State()
-    model_config = SettingsConfigDict(
-        yaml_file=str(config_file()),
-        yaml_file_encoding="utf-8",
-    )
 
     def __init__(self, **data):
-        super().__init__(**data)
+        config_data = self._load_yaml_config()
+        merged_data = {**self.model_dump(), **config_data, **data}
+        super().__init__(**merged_data)
         self.ensure_yaml_fields()
 
+    def _load_yaml_config(self) -> dict[str, Any]:
+        config_path = config_file()
+        if not config_path.is_file():
+            return {}
+
+        try:
+            with open(config_path, "r") as f:
+                config = yaml.safe_load(f)
+                return config if isinstance(config, dict) else {}
+        except Exception as e:
+            warnings.warn(f"Error loading config file: {e}")
+            return {}
+
     def ensure_yaml_fields(self):
-        # Load current config or create a new one if it doesn't exist
         try:
             with open(config_file(), "r") as f:
                 config = yaml.safe_load(f) or {}
         except FileNotFoundError:
             config = {}
 
-        # Update config with default values for missing fields
         def update_config(default, current):
             for key, value in default.items():
                 if isinstance(value, dict):
@@ -102,14 +110,12 @@ class Config(YamlBaseSettings):
         default_config = self.model_dump()
         config = update_config(default_config, config)
 
-        # Write back to the YAML file
         with open(config_file(), "w") as f:
             yaml.dump(config, f, default_flow_style=False)
 
     @classmethod
     def get_default(cls):
-        # Create a default instance without reading from file
-        return cls.model_construct(
+        return cls(
             hotkeys=Hotkeys(), symbols=Symbols(), defaults=Defaults(), state=State()
         )
 

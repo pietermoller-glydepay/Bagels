@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.2
+
+- Fix: remove obscure dependencies
+
 ## 0.2.1
 
 - Lock dependencies, rookie mistake

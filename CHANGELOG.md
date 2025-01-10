@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.3
+
+- Added amounts in insight bar legends
+- Autocomplete to create templates in label field
+- Auto update checks
+
 ## 0.2.2
 
 - Fix: remove obscure dependencies

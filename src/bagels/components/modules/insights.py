@@ -37,6 +37,7 @@ class Insights(Static):
         self.use_account = self.page_parent.filter["byAccount"]
         period_net = self._update_labels()
         items = self.get_percentage_bar_items(period_net)
+        self.percentage_bar.set_total(period_net, False)
         self.percentage_bar.set_items(items)
         data = self.get_period_barchart_data()
         self.period_barchart.set_data(data)
@@ -112,7 +113,7 @@ class Insights(Static):
                 items.append(
                     PercentageBarItem(
                         name=category.name,
-                        count=int(category.amount / period_net * 100),
+                        count=int(category.amount),
                         color=category.color,
                     )
                 )
@@ -122,16 +123,15 @@ class Insights(Static):
                 items.append(
                     PercentageBarItem(
                         name=category.name,
-                        count=int(category.amount / period_net * 100),
+                        count=int(category.amount),
                         color=category.color,
                     )
                 )
 
             # Sum up the amounts of remaining categories
-            others_amount = sum(cat.amount for cat in category_records[limit:])
-            others_percentage = int(others_amount / period_net * 100)
+            others_amount = int(sum(cat.amount for cat in category_records[limit:]))
             items.append(
-                PercentageBarItem(name="Others", count=others_percentage, color="white")
+                PercentageBarItem(name="Others", count=others_amount, color="white")
             )
 
         return items

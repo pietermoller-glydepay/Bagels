@@ -62,6 +62,7 @@ class PercentageBar(Static):
     """
 
     items: list[PercentageBarItem] = []
+    total: int = 0
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -69,6 +70,11 @@ class PercentageBar(Static):
 
     def on_mount(self) -> None:
         self.rebuild()
+
+    def set_total(self, total: int, rebuild: bool = False) -> None:
+        self.total = total
+        if rebuild:
+            self.rebuild()
 
     def set_items(self, items: list[PercentageBarItem]) -> None:
         self.items = items
@@ -104,7 +110,6 @@ class PercentageBar(Static):
             for i in range(to_remove_count):
                 labels[i + items_count].remove()
         # we calculate the appropriate width for each item, with last item taking remaining space
-        total = sum(item.count for item in self.items)
         for i, item in enumerate(self.items):
             item_widget = Static(" ", classes="bar-item")
             color = item.color
@@ -116,20 +121,20 @@ class PercentageBar(Static):
                 if i == len(self.items) - 1:
                     self.bar_end.styles.color = background_color
             # calculate percentage
-            percentage = round((item.count / total) * 100)
+            percentage = round((item.count / self.total) * 100)
             if (
                 i + 1 > labels_count
             ):  # if we have more items than labels, we create a new label
                 label_widget = Container(
                     Label(f"[{color}]●[/{color}] {item.name}", classes="name"),
-                    Label(f"{percentage}%", classes="percentage"),
+                    Label(f"{percentage}% ({item.count})", classes="percentage"),
                     classes="bar-label",
                 )
                 self.labels_container.mount(label_widget)
             else:
                 label = labels[i]
                 label.query_one(".name").update(f"[{color}]●[/{color}] {item.name}")
-                label.query_one(".percentage").update(f"{percentage}%")
+                label.query_one(".percentage").update(f"{percentage}% ({item.count})")
 
             width = f"{percentage}%"
             if i == len(self.items) - 1:

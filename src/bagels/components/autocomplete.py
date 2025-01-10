@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, ClassVar, Iterable, Mapping, cast
+from typing import Callable, ClassVar, Iterable, Literal, Mapping, cast
 
 from rich.console import Console, ConsoleOptions, RenderableType, RenderResult
 from rich.style import Style
@@ -128,19 +128,15 @@ class InputState:
     cursor_position: int
 
 
-CompletionStrategy = (
-    "Literal['append', 'replace', 'insert'] | Callable[[str, InputState], InputState]"
-)
-
-
 class AutoComplete(Widget):
 
     def __init__(
         self,
         input: Input,
         dropdown: Dropdown,
-        tab_moves_focus: bool = False,
-        completion_strategy: CompletionStrategy = "replace",
+        tab_moves_focus: bool = True,
+        completion_strategy: "Literal['append', 'replace', 'insert'] | Callable[[str, InputState], InputState]" = "replace",
+        backspace_clears: bool = True,
         create_action: Callable[[str], None] | None = None,
         *,
         id: str | None = None,
@@ -173,6 +169,7 @@ class AutoComplete(Widget):
         self.tab_moves_focus = tab_moves_focus
         self.completion_strategy = completion_strategy
         self.create_action = create_action
+        self.backspace_clears = backspace_clears
 
     def compose(self) -> ComposeResult:
         yield self.input
@@ -206,7 +203,10 @@ class AutoComplete(Widget):
                 if not self.tab_moves_focus:
                     event.stop()  # Prevent focus change
         elif key == "backspace":
-            self.input.action_delete_left_all()
+            if self.backspace_clears:
+                self.input.action_delete_left_all()
+            else:
+                self.input.action_delete_left()
 
     # def on_input_submitted(self, event: Input.Submitted) -> None:
     #     event.prevent_default()
@@ -242,12 +242,15 @@ class AutoComplete(Widget):
                 self.input.cursor_position = new_state.cursor_position
 
             self.dropdown.display = False
-            self.post_message(self.Selected(item=self.dropdown.selected_item))
+            self.post_message(
+                self.Selected(item=self.dropdown.selected_item, input=self.input)
+            )
 
     class Selected(Message):
-        def __init__(self, item: DropdownItem):
+        def __init__(self, item: DropdownItem, input: Input):
             super().__init__()
             self.item = item
+            self.input = input
 
     class Created(Message):
         def __init__(self, item: DropdownItem, input: Input):
@@ -306,6 +309,7 @@ Dropdown .autocomplete--right-column {
         items: list[DropdownItem] | Callable[[InputState], list[DropdownItem]],
         show_on_focus: bool = True,
         create_option: bool = False,
+        show_when_empty: bool = True,
         id: str | None = None,
         classes: str | None = None,
     ):
@@ -328,6 +332,7 @@ Dropdown .autocomplete--right-column {
         self.input_widget: Input
         self.show_on_focus = show_on_focus
         self.create_option = create_option
+        self.show_when_empty = show_when_empty
 
     def compose(self) -> ComposeResult:
         self.child = DropdownChild(self.input_widget)
@@ -419,7 +424,8 @@ Dropdown .autocomplete--right-column {
                 # Casting to Text, since we convert to Text object in
                 # the __post_init__ of DropdownItem.
                 text = cast(Text, item.main)
-                if value.lower() in text.plain.lower():
+                should_show = self.show_when_empty or value != ""
+                if should_show and value.lower() in text.plain.lower():
                     matches.append(
                         DropdownItem(
                             left_meta=cast(Text, item.left_meta).copy(),

@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, cast
 from textual.command import DiscoveryHit, Hit, Hits, Provider
 from textual.types import IgnoreReturnCallbackType
 
+from bagels.config import CONFIG, write_state
 from bagels.models.database.app import wipe_database
 from bagels.managers.samples import create_sample_entries
 
@@ -21,17 +22,23 @@ class AppProvider(Provider):
         commands_to_show: list[tuple[str, IgnoreReturnCallbackType, str, bool]] = [
             ("app: quit", app.action_quit, "Quit App", True),
             (
+                "config: toggle update check",
+                self._action_toggle_update_check,
+                "Toggle update check on startup",
+                True,
+            ),
+            (
                 "dev: create sample entries",
                 self._action_create_sample_entries,
                 "Create sample entries defined in static/sample_entries.yaml",
                 False,
             ),
-            (
-                "dev: wipe database",
-                self._action_wipe_database,
-                "Delete everything from the database",
-                False,
-            ),
+            # (
+            #     "dev: wipe database",
+            #     self._action_wipe_database,
+            #     "Delete everything from the database",
+            #     False,
+            # ),
             *self.get_theme_commands(),
         ]
 
@@ -102,3 +109,10 @@ class AppProvider(Provider):
         # self.app.push_screen(ConfirmationModal(
         #     message="Are you sure you want to wipe the database?",
         # ), callback=check_delete)
+
+    def _action_toggle_update_check(self) -> None:
+        cur = CONFIG.state.check_for_updates
+        write_state("check_for_updates", not cur)
+        self.app.notify(
+            f"Update check {'enabled' if not cur else 'disabled'} on startup"
+        )

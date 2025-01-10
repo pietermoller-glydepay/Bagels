@@ -229,8 +229,8 @@ Button {
   align: center top;
   background: $background 60%;
 
-  .max-width-60 {
-    max-width: 60;
+  .base-modal {
+    max-width: 80;
   }
 
   .max-width-80 {

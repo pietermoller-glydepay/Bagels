@@ -9,7 +9,7 @@ from bagels.components.header import Header
 
 class ModalContainer(ScrollableContainer, can_focus=False):
     # usage: ModalContainer(w1, w2, w3..... hotkeys=[])
-    def __init__(self, *content, custom_classes: str = "wrapper max-width-60"):
+    def __init__(self, *content, custom_classes: str = "wrapper base-modal"):
         super().__init__(classes=custom_classes)
         self.content = content
         # self.hotkeys = hotkeys

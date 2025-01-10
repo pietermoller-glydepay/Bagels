@@ -1,10 +1,13 @@
 from pathlib import Path
+from time import sleep
+
 
 # from venv import create
 
 import click
 
 from bagels.locations import config_file, database_file, set_custom_root
+from bagels.versioning import get_current_version, get_pypi_version, needs_update
 
 
 @click.group(invoke_without_command=True)
@@ -23,6 +26,27 @@ def cli(ctx, at: click.Path | None):
         from bagels.config import load_config
 
         load_config()
+
+        from bagels.config import CONFIG
+
+        if CONFIG.state.check_for_updates:
+            if needs_update():
+                new = get_pypi_version()
+                cur = get_current_version()
+                click.echo(
+                    click.style(
+                        f"New version available ({cur} -> {new})! Update with:",
+                        fg="yellow",
+                    )
+                )
+                click.echo(click.style("```uv tools upgrade bagels```", fg="cyan"))
+                click.echo(
+                    click.style(
+                        "You can disable this check in-app using the command palette.",
+                        fg="bright_black",
+                    )
+                )
+                sleep(2)
 
         from bagels.models.database.app import init_db
 

@@ -8,6 +8,7 @@ from bagels.config import CONFIG
 from bagels.managers.accounts import get_all_accounts_with_balance
 from bagels.managers.categories import get_all_categories_by_freq
 from bagels.managers.persons import create_person, get_all_persons
+from bagels.managers.record_templates import get_all_templates
 from bagels.managers.records import get_record_by_id, get_record_total_split_amount
 from bagels.forms.form import Form, FormField, Option, Options
 
@@ -26,9 +27,11 @@ class RecordForm:
         fields=[
             FormField(
                 placeholder="Label",
-                title="Label",
+                title="Label / Template name",
                 key="label",
-                type="string",
+                type="autocomplete",
+                options=Options(),
+                autocomplete_selector=False,
                 is_required=True,
             ),
             FormField(
@@ -118,9 +121,22 @@ class RecordForm:
     def __init__(self):
         self._populate_form_options()
 
+    # region Helpers
     # -------------- Helpers ------------- #
 
     def _populate_form_options(self):
+        templates = get_all_templates()
+        self.FORM.fields[0].options = Options(
+            items=[
+                Option(
+                    text=template.label,
+                    value=template.id,
+                    postfix=Text(f"{template.amount}", style="yellow"),
+                )
+                for template in templates
+            ]
+        )
+
         accounts = get_all_accounts_with_balance()
         self.FORM.fields[3].options = Options(
             items=[
@@ -167,6 +183,7 @@ class RecordForm:
             items=[Option(text=account.name, value=account.id) for account in accounts]
         )
 
+    # region Builders
     # ------------- Builders ------------- #
 
     def get_split_form(
@@ -218,6 +235,9 @@ class RecordForm:
                 case "accountId":
                     field.default_value = record.account.id
                     field.default_value_text = record.account.name
+                case "label":
+                    field.default_value = str(value) if value is not None else ""
+                    field.type = "string"  # disable autocomplete
                 case _:
                     field.default_value = str(value) if value is not None else ""
 

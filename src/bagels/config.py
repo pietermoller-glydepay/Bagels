@@ -65,6 +65,7 @@ class Symbols(BaseModel):
 
 class State(BaseModel):
     theme: str = "dark"
+    check_for_updates: bool = True
 
 
 class Config(BaseModel):

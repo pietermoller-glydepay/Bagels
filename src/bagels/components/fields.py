@@ -1,4 +1,5 @@
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.containers import Container
 from textual.widgets import Input, Label, Static, Switch
 
@@ -28,6 +29,11 @@ class Fields(Static):
 class Field(Static):
     """Individual form field that can be text, number, boolean, or autocomplete"""
 
+    BINDINGS = [
+        Binding("tab", "focus_next", "Focus next", False),
+        Binding("shift+tab", "focus_prev", "Focus previous", False),
+    ]
+
     def __init__(self, field: FormField):
         super().__init__()
         self.field = field
@@ -52,7 +58,7 @@ class Field(Static):
 
     def on_auto_complete_selected(self, event: AutoComplete.Selected) -> None:
         """Handle autocomplete selection"""
-        self.screen.focus_next()
+        # self.screen.focus_next()
 
         # Find matching option and set held value
         for item in self.field.options.items:
@@ -66,6 +72,12 @@ class Field(Static):
         if self.field.type == "number":
             num_val = parse_formula_expression(event.value)
             self.query_one(".label").update(f"{self.field.title} - {num_val}")
+
+    def action_focus_next(self):
+        self.screen.focus_next()
+
+    def action_focus_prev(self):
+        self.screen.focus_previous()
 
     def compose(self) -> ComposeResult:
         if self.field.type == "hidden":
@@ -94,6 +106,7 @@ class Field(Static):
                     show_on_focus=True,
                     id=f"dropdown-{self.field.key}",
                     create_option=self.field.create_action,
+                    show_when_empty=self.field.autocomplete_selector,
                 )
 
                 yield AutoComplete(
@@ -101,6 +114,7 @@ class Field(Static):
                     dropdown,
                     classes="field-autocomplete",
                     create_action=self.field.create_action,
+                    backspace_clears=self.field.autocomplete_selector,
                 )
 
             elif self.field.type == "boolean":

@@ -10,6 +10,7 @@ from textual.widgets import Static
 from textual.widgets import Button
 from bagels.components.datatable import DataTable
 from bagels.components.indicators import EmptyIndicator
+from bagels.managers.record_templates import create_template_from_record
 from bagels.modals.confirmation import ConfirmationModal
 from bagels.modals.record import RecordModal
 from bagels.modals.transfer import TransferModal
@@ -73,7 +74,6 @@ class Records(Static):
         )
         super().__setattr__("border_title", "Records")
         self.page_parent = parent
-        self.record_form = RecordForm()
         self.person_form = PersonForm()
 
     def on_mount(self) -> None:
@@ -407,6 +407,8 @@ class Records(Static):
             if result:
                 try:
                     create_record_and_splits(result["record"], result["splits"])
+                    if result["createTemplate"]:
+                        create_template_from_record(result["record"])
                 except Exception as e:
                     self.app.notify(
                         title="Error", message=f"{e}", severity="error", timeout=10
@@ -414,7 +416,7 @@ class Records(Static):
                 else:
                     self.app.notify(
                         title="Success",
-                        message=f"Record created",
+                        message=f"Record created {"and template created" if result["createTemplate"] else ""}",
                         severity="information",
                         timeout=3,
                     )
@@ -426,7 +428,7 @@ class Records(Static):
         self.app.push_screen(
             RecordModal(
                 f"New {type} on {account_name} for {date}",
-                form=self.record_form.get_form(self.page_parent.mode),
+                form=RecordForm().get_form(self.page_parent.mode),
                 splitForm=Form(),
                 date=self.page_parent.mode["date"],
             ),
@@ -514,9 +516,7 @@ class Records(Static):
                         callback=check_result_records,
                     )
                 else:
-                    filled_form, filled_splits = self.record_form.get_filled_form(
-                        record.id
-                    )
+                    filled_form, filled_splits = RecordForm().get_filled_form(record.id)
                     self.app.push_screen(
                         RecordModal(
                             "Edit Record",

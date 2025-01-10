@@ -32,6 +32,9 @@ class FormField(BaseModel):
         "dateAutoDay",
         "hidden",
     ]
+    autocomplete_selector: bool = (
+        True  # autocomplete fields as a selector field. If false, acts as regular optional autocomplete
+    )
     is_required: bool = False
     min: float | int | None = None
     max: float | int | None = None

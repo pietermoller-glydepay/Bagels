@@ -31,6 +31,9 @@ class InputModal(ModalScreen):
 
     # ------------- Callbacks ------------ #
 
+    def set_title(self, title: str):
+        self.title = title
+
     def action_submit(self):
         resultForm, errors, isValid = validateForm(self, self.form)
         if isValid:

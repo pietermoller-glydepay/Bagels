@@ -3,8 +3,10 @@
 ## 0.2.3
 
 - Added amounts in insight bar legends
-- Autocomplete to create templates in label field
+- Autocomplete to use templates in label field
+- Shift enter to create templates along with a non-transfer record
 - Auto update checks
+- Fixed: Inconsistent tab behaviors
 
 ## 0.2.2
 

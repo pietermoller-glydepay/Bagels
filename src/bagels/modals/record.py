@@ -10,7 +10,7 @@ from textual.widgets import (
 from bagels.components.autocomplete import AutoComplete, Dropdown, DropdownItem
 from bagels.components.fields import Fields
 from bagels.config import CONFIG
-from bagels.managers.record_templates import get_template_by_id
+from bagels.managers.record_templates import get_template_by_id, create_template
 from bagels.modals.input import InputModal
 from bagels.managers.accounts import get_all_accounts_with_balance
 from bagels.managers.persons import create_person, get_all_persons
@@ -30,20 +30,23 @@ class RecordModal(InputModal):
         Binding(
             CONFIG.hotkeys.record_modal.new_split,
             "add_split",
-            "Add split",
+            "+split",
             priority=True,
         ),
         Binding(
             CONFIG.hotkeys.record_modal.new_paid_split,
             "add_paid_split",
-            "Add paid split",
+            "+paid split",
             priority=True,
         ),
         Binding(
             CONFIG.hotkeys.record_modal.delete_last_split,
             "delete_last_split",
-            "Delete last split",
+            "-last split",
             priority=True,
+        ),
+        Binding(
+            "shift+enter", "submit_and_template", "Submit & Template", priority=True
         ),
     ]
 
@@ -69,6 +72,7 @@ class RecordModal(InputModal):
         self.persons = get_all_persons()
         self.accounts = get_all_accounts_with_balance()
         self.date = date
+        self.shift_pressed = False
 
     # -------------- Helpers ------------- #
 
@@ -190,12 +194,23 @@ class RecordModal(InputModal):
                 self.splitForm.fields.pop()
             self.splitCount -= 1
 
+    def action_submit_and_template(self) -> None:
+        """Handle shift+enter submission"""
+        self.shift_pressed = True
+        self.action_submit()
+
     def action_submit(self):
         resultRecordForm, errors, isValid = validateForm(self, self.form)
         resultSplitForm, errorsSplit, isValidSplit = validateForm(self, self.splitForm)
         if isValid and isValidSplit:
             resultSplits = self._get_splits_from_result(resultSplitForm)
-            self.dismiss({"record": resultRecordForm, "splits": resultSplits})
+            self.dismiss(
+                {
+                    "record": resultRecordForm,
+                    "splits": resultSplits,
+                    "createTemplate": self.shift_pressed,
+                }
+            )
             return
         self._update_errors({**errors, **errorsSplit})
 

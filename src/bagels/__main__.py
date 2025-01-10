@@ -7,7 +7,7 @@ from time import sleep
 import click
 
 from bagels.locations import config_file, database_file, set_custom_root
-from bagels.versioning import needs_update
+from bagels.versioning import get_current_version, get_pypi_version, needs_update
 
 
 @click.group(invoke_without_command=True)
@@ -31,9 +31,11 @@ def cli(ctx, at: click.Path | None):
 
         if CONFIG.state.check_for_updates:
             if needs_update():
+                new = get_pypi_version()
+                cur = get_current_version()
                 click.echo(
                     click.style(
-                        "New version available! Update with:",
+                        f"New version available ({cur} -> {new})! Update with:",
                         fg="yellow",
                     )
                 )

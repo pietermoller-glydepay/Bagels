@@ -20,6 +20,14 @@ def create_template(data):
         session.close()
 
 
+def create_template_from_record(record):
+    data = {}
+    for x in ["label", "amount", "accountId", "categoryId", "isIncome"]:
+        data[x] = record[x]
+
+    return create_template(data)
+
+
 # region r
 def get_all_templates():
     session = Session()
@@ -40,17 +48,18 @@ def get_all_templates():
 def get_template_by_id(recordtemplate_id):
     session = Session()
     try:
-        stmt = (
-            select(RecordTemplate)
-            .options(
-                joinedload(RecordTemplate.category),
-                joinedload(RecordTemplate.account),
-            )
-        )
-        return session.get(RecordTemplate, recordtemplate_id, options=[
+        stmt = select(RecordTemplate).options(
             joinedload(RecordTemplate.category),
             joinedload(RecordTemplate.account),
-        ])
+        )
+        return session.get(
+            RecordTemplate,
+            recordtemplate_id,
+            options=[
+                joinedload(RecordTemplate.category),
+                joinedload(RecordTemplate.account),
+            ],
+        )
     finally:
         session.close()
 
@@ -64,14 +73,12 @@ def get_adjacent_template(recordtemplate_id, direction):
 
         current_order = recordtemplate.order
         if direction == "next":
-            stmt = (
-                select(RecordTemplate)
-                .filter(RecordTemplate.order == current_order + 1)
+            stmt = select(RecordTemplate).filter(
+                RecordTemplate.order == current_order + 1
             )
         else:  # direction == "previous"
-            stmt = (
-                select(RecordTemplate)
-                .filter(RecordTemplate.order == current_order - 1)
+            stmt = select(RecordTemplate).filter(
+                RecordTemplate.order == current_order - 1
             )
 
         adjacent_template = session.scalars(stmt).first()
@@ -106,14 +113,12 @@ def swap_template_order(recordtemplate_id, direction="next"):
         if recordtemplate:
             current_order = recordtemplate.order
             if direction == "next":
-                stmt = (
-                    select(RecordTemplate)
-                    .filter(RecordTemplate.order == current_order + 1)
+                stmt = select(RecordTemplate).filter(
+                    RecordTemplate.order == current_order + 1
                 )
             else:  # direction == "previous"
-                stmt = (
-                    select(RecordTemplate)
-                    .filter(RecordTemplate.order == current_order - 1)
+                stmt = select(RecordTemplate).filter(
+                    RecordTemplate.order == current_order - 1
                 )
 
             swap_template = session.scalars(stmt).first()
@@ -121,10 +126,10 @@ def swap_template_order(recordtemplate_id, direction="next"):
                 # Use negative order values to avoid unique constraint violations
                 recordtemplate.order = -current_order
                 session.flush()
-                
+
                 swap_template.order = -swap_template.order
                 session.flush()
-                
+
                 recordtemplate.order = -swap_template.order
                 swap_template.order = current_order
                 session.commit()
@@ -142,22 +147,26 @@ def delete_template(recordtemplate_id):
         recordtemplate = session.get(RecordTemplate, recordtemplate_id)
         if recordtemplate:
             # Get all templates with higher order
-            stmt = select(RecordTemplate).filter(RecordTemplate.order > recordtemplate.order).order_by(RecordTemplate.order)
+            stmt = (
+                select(RecordTemplate)
+                .filter(RecordTemplate.order > recordtemplate.order)
+                .order_by(RecordTemplate.order)
+            )
             templates = session.scalars(stmt).all()
-            
+
             # First update all orders to temporary negative values
             for i, template in enumerate(templates):
                 template.order = -(i + 1)
             session.flush()
-            
+
             # Delete the target template
             session.delete(recordtemplate)
             session.flush()
-            
+
             # Then update to final values
             for i, template in enumerate(templates):
                 template.order = recordtemplate.order + i
-            
+
             session.commit()
             return True
         return False

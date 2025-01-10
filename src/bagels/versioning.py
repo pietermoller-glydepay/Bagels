@@ -23,5 +23,4 @@ def needs_update():
     if not pypi_version:
         return False
 
-    return True
-    # return version.parse(pypi_version) > version.parse(current_version)
+    return version.parse(pypi_version) > version.parse(current_version)

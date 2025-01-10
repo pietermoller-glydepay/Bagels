@@ -30,8 +30,8 @@ class Field(Static):
     """Individual form field that can be text, number, boolean, or autocomplete"""
 
     BINDINGS = [
-        Binding("tab", "focus_next", "Focus next"),
-        Binding("shift+tab", "focus_prev", "Focus previous"),
+        Binding("tab", "focus_next", "Focus next", False),
+        Binding("shift+tab", "focus_prev", "Focus previous", False),
     ]
 
     def __init__(self, field: FormField):

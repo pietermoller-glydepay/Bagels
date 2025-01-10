@@ -102,6 +102,7 @@ class Home(Static):
         self.accounts_module.rebuild()
         self.income_mode_module.rebuild()
         self.date_mode_module.rebuild()
+        self.templates_module.rebuild()
 
     def get_filter_label(self) -> str:
         return format_period_to_readable(self.filter)

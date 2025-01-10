@@ -27,7 +27,7 @@ class RecordForm:
         fields=[
             FormField(
                 placeholder="Label",
-                title="Label",
+                title="Label / Template name",
                 key="label",
                 type="autocomplete",
                 options=Options(),
@@ -235,6 +235,9 @@ class RecordForm:
                 case "accountId":
                     field.default_value = record.account.id
                     field.default_value_text = record.account.name
+                case "label":
+                    field.default_value = str(value) if value is not None else ""
+                    field.type = "string"  # disable autocomplete
                 case _:
                     field.default_value = str(value) if value is not None else ""
 

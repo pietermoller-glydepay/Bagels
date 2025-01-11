@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.5
+
+- Fixed: Typo in update command
+
 ## 0.2.4
 
 - Fixed: Crash when changing offset without app being ready

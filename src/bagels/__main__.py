@@ -39,7 +39,7 @@ def cli(ctx, at: click.Path | None):
                         fg="yellow",
                     )
                 )
-                click.echo(click.style("```uv tools upgrade bagels```", fg="cyan"))
+                click.echo(click.style("```uv tool upgrade bagels```", fg="cyan"))
                 click.echo(
                     click.style(
                         "You can disable this check in-app using the command palette.",

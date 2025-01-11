@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from pprint import isreadable
 
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -97,12 +98,13 @@ class Home(Static):
     # -------------- Helpers ------------- #
 
     def rebuild(self) -> None:
-        self.record_module.rebuild()
         self.insights_module.rebuild()
         self.accounts_module.rebuild()
         self.income_mode_module.rebuild()
         self.date_mode_module.rebuild()
-        self.templates_module.rebuild()
+        if self.isReady:
+            self.record_module.rebuild()
+            self.templates_module.rebuild()
 
     def get_filter_label(self) -> str:
         return format_period_to_readable(self.filter)

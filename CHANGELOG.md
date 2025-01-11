@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.4
+
+- Fixed: Crash when changing offset without app being ready
+
 ## 0.2.3
 
 - Added amounts in insight bar legends

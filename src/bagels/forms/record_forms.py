@@ -197,8 +197,10 @@ class RecordForm:
                 field.default_value = isPaid
             elif fieldKey == "accountId" and isPaid:
                 field.type = "autocomplete"
+                field.is_required = True
             elif fieldKey == "paidDate" and isPaid:
                 field.type = "dateAutoDay"
+                field.is_required = True
                 field.default_value = (
                     defaultPaidDate.strftime("%d %m %y") if defaultPaidDate else ""
                 )

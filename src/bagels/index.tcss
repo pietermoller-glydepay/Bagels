@@ -469,6 +469,7 @@ Button {
       .month-selector {
         height: 2;
         layout: horizontal;
+        align: center middle;
 
         Button {
           width: auto;
@@ -478,8 +479,6 @@ Button {
           color: $primary-background-lighten-3;
         }
         .current-filter-label {
-          dock: left;
-          align: center middle;
         }
         #next-month {
           dock: right;

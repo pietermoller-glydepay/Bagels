@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.5
+
+- Bumped textual to 1.0.0
+- Fixed: Account field not required when creating paid split
+- Fixed: Beginning balance 0 will pass validation but does not pass non-null constraint
+
 ## 0.2.4
 
 - Fixed: Crash when changing offset without app being ready

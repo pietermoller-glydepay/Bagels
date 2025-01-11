@@ -86,7 +86,7 @@ wheels = [
 
 [[package]]
 name = "bagels"
-version = "0.2.3"
+version = "0.2.4"
 source = { editable = "." }
 dependencies = [
     { name = "aiohappyeyeballs" },
@@ -172,7 +172,7 @@ requires-dist = [
     { name = "requests", specifier = "==2.28.0" },
     { name = "rich", specifier = "==13.9.3" },
     { name = "sqlalchemy", specifier = "==2.0.36" },
-    { name = "textual", specifier = "==0.86.1" },
+    { name = "textual", specifier = "==1.0.0" },
     { name = "tomli", specifier = ">=2.0.2" },
     { name = "typing-extensions", specifier = "==4.12.2" },
     { name = "uc-micro-py", specifier = "==1.0.3" },
@@ -760,7 +760,7 @@ wheels = [
 
 [[package]]
 name = "textual"
-version = "0.86.1"
+version = "1.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "markdown-it-py", extra = ["linkify", "plugins"] },
@@ -768,9 +768,9 @@ dependencies = [
     { name = "rich" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/56/c6/435723343db6a65ed92950d1e20ded920c4c22e6e785ea0e369abd4ac1c7/textual-0.86.1.tar.gz", hash = "sha256:a6e68de5383415f222f26b4049c2a92ed204071fdfebe3d729f8dd373ca5f519", size = 1496752 }
+sdist = { url = "https://files.pythonhosted.org/packages/1f/b6/59b1de04bb4dca0f21ed7ba0b19309ed7f3f5de4396edf20cc2855e53085/textual-1.0.0.tar.gz", hash = "sha256:bec9fe63547c1c552569d1b75d309038b7d456c03f86dfa3706ddb099b151399", size = 1532733 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fe/a3/2b7bfd8d0665072a77459f51b600445939aee8a9d25bc3d546c9ac879a19/textual-0.86.1-py3-none-any.whl", hash = "sha256:ebc2bfd92c2f1a451c12dcbcfda002598a2fc9793d1684be83514b5fba75f915", size = 646857 },
+    { url = "https://files.pythonhosted.org/packages/ac/bb/5fb6656c625019cd653d5215237d7cd6e0b12e7eae4195c3d1c91b2136fc/textual-1.0.0-py3-none-any.whl", hash = "sha256:2d4a701781c05104925e463ae370c630567c70c2880e92ab838052e3e23c986f", size = 660456 },
 ]
 
 [[package]]

@@ -66,8 +66,6 @@ def _validate_autocomplete(
     value: str, held_value: str, field: FormField
 ) -> Tuple[bool, str | None]:
     """Validate an autocomplete field and return (is_valid, error_message)"""
-    if field.key == "label":
-        print(value, held_value, field)
     if not value and not held_value:
         if field.is_required:
             return False, "Must be selected"
@@ -114,17 +112,19 @@ def validateForm(
 
         error = None
 
+        # print(f"Validating {fieldKey} with value {fieldValue}")
+
         match field.type:
             case "integer":
                 is_valid, error, num_val = _validate_number(fieldValue, field)
-                if is_valid and fieldValue and num_val:
+                if is_valid and fieldValue is not None and num_val is not None:
                     result[fieldKey] = num_val
 
             case "number":
                 is_valid, error, num_val = _validate_number(
                     fieldValue, field, is_float=True
                 )
-                if is_valid and fieldValue and num_val:
+                if is_valid and fieldValue is not None and num_val is not None:
                     result[fieldKey] = num_val
 
             case "date":

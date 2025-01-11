@@ -487,7 +487,7 @@ Dropdown .autocomplete--right-column {
         line_below_cursor = y + 1 + scroll_target_adjust_y
 
         cursor_screen_position = x + (
-            input_cursor_position - self.input_widget.view_position
+            input_cursor_position - self.input_widget.cursor_position
         )
         self.styles.margin = (
             line_below_cursor,

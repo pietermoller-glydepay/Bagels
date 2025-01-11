@@ -154,3 +154,7 @@ def write_state(key: str, value: Any) -> None:
 
     with open(config_file(), "w") as f:
         yaml.dump(config, f, default_flow_style=False)
+
+    # update the global config object
+    global CONFIG
+    setattr(CONFIG.state, key, value)

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.6
+
+- Bumped textual to 1.0.0
+- Fixed: Account field not required when creating paid split
+- Fixed: Beginning balance 0 will pass validation but does not pass non-null constraint
+
 ## 0.2.5
 
 - Fixed: Typo in update command

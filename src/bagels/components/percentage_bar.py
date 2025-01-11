@@ -32,10 +32,9 @@ class PercentageBar(Static):
             
             .empty-bar {
                 hatch: right $panel-lighten-2;
+                align-horizontal: center;
                 
                 Label {
-                    dock: left;
-                    align-horizontal: center;
                     padding: 0 1 0 1;
                 }
             }

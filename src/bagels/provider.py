@@ -5,6 +5,7 @@ from textual.command import DiscoveryHit, Hit, Hits, Provider
 from textual.types import IgnoreReturnCallbackType
 
 from bagels.config import CONFIG, write_state
+from bagels.modals.confirmation import ConfirmationModal
 from bagels.models.database.app import wipe_database
 from bagels.managers.samples import create_sample_entries
 
@@ -33,12 +34,12 @@ class AppProvider(Provider):
                 "Create sample entries defined in static/sample_entries.yaml",
                 False,
             ),
-            # (
-            #     "dev: wipe database",
-            #     self._action_wipe_database,
-            #     "Delete everything from the database",
-            #     False,
-            # ),
+            (
+                "dev: wipe database",
+                self._action_wipe_database,
+                "Delete everything from the database",
+                False,
+            ),
             *self.get_theme_commands(),
         ]
 
@@ -104,11 +105,15 @@ class AppProvider(Provider):
     def _action_wipe_database(self) -> None:
         wipe_database()
         self.app.refresh(layout=True, recompose=True)
+
         # def check_delete(result) -> None:
 
-        # self.app.push_screen(ConfirmationModal(
-        #     message="Are you sure you want to wipe the database?",
-        # ), callback=check_delete)
+        # self.app.push_screen(
+        #     ConfirmationModal(
+        #         message="Are you sure you want to wipe the database?",
+        #     ),
+        #     callback=check_delete,
+        # )
 
     def _action_toggle_update_check(self) -> None:
         cur = CONFIG.state.check_for_updates

@@ -1,16 +1,15 @@
 from datetime import datetime
-import yaml
 from pathlib import Path
+
+import yaml
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import sessionmaker
 
-from bagels.models.category import Nature
 from bagels.locations import database_file
 
 # -------- create all imports -------- #
 from bagels.models.account import Account
-from bagels.models.category import Category
-
+from bagels.models.category import Category, Nature
 from bagels.models.database.db import Base
 
 db_engine = create_engine(f"sqlite:///{database_file().resolve()}")

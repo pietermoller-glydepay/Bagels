@@ -74,6 +74,7 @@ dev-dependencies = [
     "pytest-textual-snapshot==1.0.0",
     "time-machine==2.16.0",
     "ruff>=0.9.1",
+    "pre-commit>=4.0.1",
 ]
 
 [tool.hatch.metadata]
@@ -90,3 +91,7 @@ markers = [
 [tool.coverage.run]
 relative_files = true
 
+[tool.ruff.lint]
+select = ["E", "F"]
+ignore = ["E402", "E501"]
+exclude = ["**/tests/**"]

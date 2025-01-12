@@ -1,13 +1,9 @@
-from textual import on
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Container, Horizontal
-from textual.events import Focus
+from textual.containers import Container
 from textual.reactive import reactive
-from textual.widget import Widget
-from textual.widgets import Static, Switch
+from textual.widgets import Button, Input, Static, Switch
 
-from textual.widgets import Button, Input
 from bagels.components.datatable import DataTable
 from bagels.components.indicators import EmptyIndicator
 from bagels.components.modules.records._cud import RecordCUD

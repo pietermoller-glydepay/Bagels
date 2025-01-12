@@ -24,7 +24,6 @@ from bagels.utils.user_host import get_user_host_string
 
 
 class App(TextualApp):
-
     CSS_PATH = "index.tcss"
     BINDINGS = [
         (CONFIG.hotkeys.toggle_jump_mode, "toggle_jump_mode", "Jump Mode"),
@@ -222,7 +221,7 @@ class App(TextualApp):
         version = self.project_info["version"] if not self.is_testing else "vt"
         user_host = get_user_host_string() if not self.is_testing else "test"
         with Container(classes="header"):
-            yield Label(f"↪ {self.project_info["name"]}", classes="title")
+            yield Label(f"↪ {self.project_info['name']}", classes="title")
             yield Label(version, classes="version")
             yield Label(user_host, classes="user")
         yield Home(classes="content")

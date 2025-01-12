@@ -48,7 +48,7 @@ def get_all_templates():
 def get_template_by_id(recordtemplate_id):
     session = Session()
     try:
-        stmt = select(RecordTemplate).options(
+        select(RecordTemplate).options(
             joinedload(RecordTemplate.category),
             joinedload(RecordTemplate.account),
         )

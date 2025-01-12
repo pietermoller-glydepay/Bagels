@@ -129,7 +129,6 @@ class InputState:
 
 
 class AutoComplete(Widget):
-
     def __init__(
         self,
         input: Input,

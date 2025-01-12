@@ -24,7 +24,6 @@ from bagels.forms.category_form import CategoryForm
 
 
 class CategoriesModal(ModalScreen[str | Widget | None]):
-
     COLUMNS = ("", "Name", "Nature")
 
     BINDINGS = [
@@ -53,7 +52,7 @@ class CategoriesModal(ModalScreen[str | Widget | None]):
     # --------------- Hooks -------------- #
 
     def on_mount(self) -> None:
-        categories_is_empty = get_categories_count() == 0
+        get_categories_count() == 0
         self.rebuild()
 
     def on_key(self, event: events.Key) -> None:

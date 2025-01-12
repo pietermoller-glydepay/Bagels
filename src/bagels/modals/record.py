@@ -21,7 +21,6 @@ from datetime import datetime
 
 
 class RecordModal(InputModal):
-
     isEditing = False
 
     BINDINGS = [

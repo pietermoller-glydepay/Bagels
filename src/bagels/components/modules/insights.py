@@ -16,7 +16,6 @@ from bagels.managers.utils import (
 
 
 class Insights(Static):
-
     can_focus = True
 
     def __init__(self, parent: Static, *args, **kwargs) -> None:

@@ -21,7 +21,6 @@ class DisplayMode:
 
 
 class RecordTableBuilder:
-
     def rebuild(self) -> None:
         if not hasattr(self, "table"):
             return

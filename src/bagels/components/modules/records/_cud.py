@@ -25,7 +25,6 @@ from bagels.forms.record_forms import RecordForm
 
 
 class RecordCUD:
-
     def action_new(self) -> None:
         def check_result(result) -> None:
             if result:
@@ -40,7 +39,7 @@ class RecordCUD:
                 else:
                     self.app.notify(
                         title="Success",
-                        message=f"Record created {"and template created" if result["createTemplate"] else ""}",
+                        message=f"Record created {'and template created' if result['createTemplate'] else ''}",
                         severity="information",
                         timeout=3,
                     )

@@ -6,7 +6,6 @@ from bagels.bagel import get_string, render_frame, theta_spacing, phi_spacing
 
 
 class Welcome(Static):
-
     A = B = 1
     can_focus = True
 
@@ -29,7 +28,6 @@ class Welcome(Static):
         bagel.update(get_string(render_frame(self.A, 1)))
 
     def compose(self) -> ComposeResult:
-
         with Container(classes="text-container"):
             yield MarkdownViewer(self.welcome_text, show_table_of_contents=False)
         with Container(classes="bagel-container"):

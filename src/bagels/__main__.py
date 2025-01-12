@@ -22,7 +22,6 @@ def cli(ctx, at: click.Path | None):
     if at:
         set_custom_root(at)
     if ctx.invoked_subcommand is None:
-
         from bagels.config import load_config
 
         load_config()

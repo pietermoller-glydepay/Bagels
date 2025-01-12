@@ -77,21 +77,19 @@ def get_persons_with_splits(offset: int = 0, offset_type: str = "month"):
     session = Session()
     try:
         start_of_period, end_of_period = get_start_end_of_period(offset, offset_type)
-        result = (
-            session.scalars(
-                select(Person)
-                .options(
-                    joinedload(Person.splits)
-                    .joinedload(Split.record)
-                    .joinedload(Record.category),
-                    joinedload(Person.splits).joinedload(Split.account),
-                )
-                .join(Person.splits)
-                .join(Split.record)
-                .filter(and_(Record.date >= start_of_period, Record.date < end_of_period))
-                .order_by(Record.date.asc())
-                .distinct()
+        result = session.scalars(
+            select(Person)
+            .options(
+                joinedload(Person.splits)
+                .joinedload(Split.record)
+                .joinedload(Record.category),
+                joinedload(Person.splits).joinedload(Split.account),
             )
+            .join(Person.splits)
+            .join(Split.record)
+            .filter(and_(Record.date >= start_of_period, Record.date < end_of_period))
+            .order_by(Record.date.asc())
+            .distinct()
         )
         return result.unique().all()
     finally:

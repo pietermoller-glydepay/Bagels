@@ -6,7 +6,6 @@ from bagels.config import CONFIG
 
 
 class IncomeMode(Static):
-
     def __init__(self, parent: Static, *args, **kwargs) -> None:
         super().__init__(
             *args, **kwargs, id="incomemode-container", classes="module-container"

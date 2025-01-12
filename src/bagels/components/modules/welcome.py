@@ -1,8 +1,8 @@
 from pathlib import Path
 from textual.app import ComposeResult
 from textual.containers import Container
-from textual.widgets import Label, MarkdownViewer, Rule, Static
-from bagels.bagel import get_string, pprint, render_frame, theta_spacing, phi_spacing
+from textual.widgets import Label, MarkdownViewer, Static
+from bagels.bagel import get_string, render_frame, theta_spacing, phi_spacing
 
 
 class Welcome(Static):

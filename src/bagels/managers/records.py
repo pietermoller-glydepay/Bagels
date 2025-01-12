@@ -1,5 +1,5 @@
 from sqlalchemy.orm import sessionmaker, joinedload
-from sqlalchemy import func, desc
+from sqlalchemy import func
 from bagels.models.database.app import db_engine
 from bagels.models.record import Record
 from bagels.models.split import Split

@@ -5,7 +5,6 @@ from textual.command import DiscoveryHit, Hit, Hits, Provider
 from textual.types import IgnoreReturnCallbackType
 
 from bagels.config import CONFIG, write_state
-from bagels.modals.confirmation import ConfirmationModal
 from bagels.models.database.app import wipe_database
 from bagels.managers.samples import create_sample_entries
 

@@ -85,7 +85,7 @@ class RecordCUD:
                 else:
                     self.app.notify(
                         title="Success",
-                        message=f"Record updated",
+                        message="Record updated",
                         severity="information",
                         timeout=3,
                     )
@@ -93,7 +93,7 @@ class RecordCUD:
             else:
                 self.app.notify(
                     title="Discarded",
-                    message=f"Record not updated",
+                    message="Record not updated",
                     severity="warning",
                     timeout=3,
                 )
@@ -109,7 +109,7 @@ class RecordCUD:
                 else:
                     self.app.notify(
                         title="Success",
-                        message=f"Person updated",
+                        message="Person updated",
                         severity="information",
                         timeout=3,
                     )
@@ -117,7 +117,7 @@ class RecordCUD:
             else:
                 self.app.notify(
                     title="Discarded",
-                    message=f"Person not updated",
+                    message="Person not updated",
                     severity="warning",
                     timeout=3,
                 )
@@ -157,7 +157,7 @@ class RecordCUD:
                     update_split(id, split_data)
                     self.app.notify(
                         title="Reverted split",
-                        message=f"Marked this split as unpaid",
+                        message="Marked this split as unpaid",
                         severity="information",
                         timeout=3,
                     )
@@ -222,7 +222,7 @@ class RecordCUD:
                 delete_record(id)
                 self.app.notify(
                     title="Success",
-                    message=f"Record deleted",
+                    message="Record deleted",
                     severity="information",
                     timeout=3,
                 )
@@ -255,7 +255,7 @@ class RecordCUD:
                 else:
                     self.app.notify(
                         title="Success",
-                        message=f"Record created",
+                        message="Record created",
                         severity="information",
                         timeout=3,
                     )
@@ -263,7 +263,7 @@ class RecordCUD:
             else:
                 self.app.notify(
                     title="Discarded",
-                    message=f"Record not updated",
+                    message="Record not updated",
                     severity="warning",
                     timeout=3,
                 )

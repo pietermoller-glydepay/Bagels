@@ -129,8 +129,8 @@ class RecordTableBuilder:
 
     def _get_flow_icon(self, recordHasSplits: bool, is_income: bool) -> str:
         if recordHasSplits and not self.show_splits:
-            flow_icon_positive = f"[green]=[/green]"
-            flow_icon_negative = f"[red]=[/red]"
+            flow_icon_positive = "[green]=[/green]"
+            flow_icon_negative = "[red]=[/red]"
         else:
             flow_icon_positive = f"[green]{CONFIG.symbols.amount_positive}[/green]"
             flow_icon_negative = f"[red]{CONFIG.symbols.amount_negative}[/red]"

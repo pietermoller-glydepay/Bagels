@@ -150,7 +150,7 @@ class AccountMode(ScrollableContainer):
                 delete_account(id)
                 self.app.notify(
                     title="Success",
-                    message=f"Archived account",
+                    message="Archived account",
                     severity="information",
                     timeout=3,
                 )

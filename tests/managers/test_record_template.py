@@ -1,8 +1,7 @@
 import pytest
-from sqlalchemy import create_engine, delete
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from bagels.models.database.db import Base
-from bagels.models.record_template import RecordTemplate
 from bagels.models.account import Account
 from bagels.models.category import Category, Nature
 from bagels.managers import record_templates

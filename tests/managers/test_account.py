@@ -1,9 +1,7 @@
 import pytest
-from datetime import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from bagels.models.database.db import Base
-from bagels.models.account import Account
 from bagels.managers import accounts
 
 @pytest.fixture(scope="function")

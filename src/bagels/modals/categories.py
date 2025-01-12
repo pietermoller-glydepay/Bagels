@@ -120,7 +120,7 @@ class CategoriesModal(ModalScreen[str | Widget | None]):
                 else:
                     self.app.notify(
                         title="Success",
-                        message=f"Category created",
+                        message="Category created",
                         severity="information",
                         timeout=3,
                     )
@@ -146,7 +146,7 @@ class CategoriesModal(ModalScreen[str | Widget | None]):
                 else:
                     self.app.notify(
                         title="Success",
-                        message=f"Subcategory created",
+                        message="Subcategory created",
                         severity="information",
                         timeout=3,
                     )

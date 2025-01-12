@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from pprint import isreadable
 
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -270,7 +269,7 @@ class Home(Static):
     # --------------- View --------------- #
 
     def compose(self) -> ComposeResult:
-        with Static(classes=f"home-modules-container v"):
+        with Static(classes="home-modules-container v"):
             with Static(classes="left"):
                 with Static(id="home-top-container"):
                     yield self.accounts_module

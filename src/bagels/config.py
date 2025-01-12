@@ -3,7 +3,6 @@ from typing import Any, Literal
 import yaml
 from pydantic import BaseModel, Field
 from bagels.locations import config_file
-from pathlib import Path
 
 
 class Defaults(BaseModel):

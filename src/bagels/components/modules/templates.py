@@ -1,7 +1,6 @@
 from textual import events
-from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Container, Horizontal, HorizontalScroll
+from textual.containers import Container, Horizontal
 from textual.widgets import Label, Static
 
 from bagels.modals.confirmation import ConfirmationModal
@@ -146,7 +145,7 @@ class Templates(Static):
                 create_template(result)
                 self.app.notify(
                     title="Success",
-                    message=f"Template created",
+                    message="Template created",
                     severity="information",
                     timeout=3,
                 )
@@ -163,7 +162,7 @@ class Templates(Static):
                 create_template(result)
                 self.app.notify(
                     title="Success",
-                    message=f"Template created",
+                    message="Template created",
                     severity="information",
                     timeout=3,
                 )
@@ -191,7 +190,7 @@ class Templates(Static):
                 else:
                     self.app.notify(
                         title="Success",
-                        message=f"Template edited",
+                        message="Template edited",
                         severity="information",
                         timeout=3,
                     )
@@ -228,7 +227,7 @@ class Templates(Static):
                 delete_template(self.selected_template_id)
                 self.app.notify(
                     title="Success",
-                    message=f"Template deleted",
+                    message="Template deleted",
                     severity="information",
                     timeout=3,
                 )

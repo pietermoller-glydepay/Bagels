@@ -2,7 +2,6 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from bagels.models.database.db import Base
-from bagels.models.person import Person
 from bagels.managers import persons
 
 @pytest.fixture(scope="function")

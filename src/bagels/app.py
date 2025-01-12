@@ -1,7 +1,5 @@
 from importlib.metadata import metadata
 
-from rich.console import Group
-from rich.text import Text
 from textual import events, log, on
 from textual.app import App as TextualApp
 from textual.app import ComposeResult

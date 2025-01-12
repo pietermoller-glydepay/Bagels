@@ -1,9 +1,8 @@
 import pytest
-from datetime import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from bagels.models.database.db import Base
-from bagels.models.category import Category, Nature
+from bagels.models.category import Nature
 from bagels.managers import categories
 
 @pytest.fixture(scope="function")

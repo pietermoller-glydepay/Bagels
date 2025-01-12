@@ -122,8 +122,8 @@ class Records(RecordCUD, RecordTableBuilder, Static):
     def compose(self) -> ComposeResult:
         with Container(classes="selectors"):
             with Container(id="display-selector"):
-                yield Button(f"Date", id="display-date")
-                yield Button(f"Person", id="display-person")
+                yield Button("Date", id="display-date")
+                yield Button("Person", id="display-person")
             with Container(classes="filtering", id="filter-container"):
                 yield Input(id="filter-category", placeholder="Filter category")
                 yield Input(

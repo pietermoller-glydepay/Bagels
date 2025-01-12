@@ -1,9 +1,11 @@
+import re
 from datetime import datetime, timedelta
+
+from sqlalchemy.orm import sessionmaker
 
 from bagels.config import CONFIG
 from bagels.models.database.app import db_engine
 from bagels.models.record import Record
-from sqlalchemy.orm import sessionmaker
 
 Session = sessionmaker(bind=db_engine)
 
@@ -163,3 +165,25 @@ def _get_days_in_period(offset: int = 0, offset_type: str = "month"):
 def get_period_average(net: int = 0, offset: int = 0, offset_type: str = "month"):
     days = _get_days_in_period(offset, offset_type)
     return round(net / days, CONFIG.defaults.round_decimals)
+
+
+# region filter process
+# ------------ filter process ------------ #
+
+
+def get_operator_amount(operator_amount: str = None):
+    # operators can be >=, >, =, <=, <
+    # first validate the string to have one of operators and a number.
+    # then split the string to get the operator and the number.
+    # then return the operator and amount.
+    if re.match(r"^(>=|>|=|<=|<)?\d+(\.\d+)?$", operator_amount):
+        if operator_amount[0].isdigit():
+            operator, amount = "=", operator_amount
+        elif operator_amount[1].isdigit():
+            operator, amount = operator_amount[:1], operator_amount[1:]
+        else:
+            operator, amount = operator_amount[:2], operator_amount[2:]
+        amount = float(amount)
+        return operator, amount
+    else:
+        return None, None

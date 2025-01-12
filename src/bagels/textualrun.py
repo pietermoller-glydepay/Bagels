@@ -2,8 +2,6 @@
 
 
 if __name__ == "__main__":
-    # set_custom_root(Path("../../../bagels_instance/"))
-
     from bagels.config import load_config
 
     load_config()

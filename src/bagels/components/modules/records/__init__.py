@@ -1,6 +1,9 @@
+from typing import ClassVar
+
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Container
+from textual.events import DescendantBlur, DescendantFocus
 from textual.reactive import reactive
 from textual.widgets import Button, Input, Static, Switch
 
@@ -18,6 +21,17 @@ class DisplayMode:
 
 
 class Records(RecordCUD, RecordTableBuilder, Static):
+    DEFAULT_CSS = """\
+Records .label-highlight-match {
+    color: $accent-lighten-2;
+    text-style: bold;
+}
+    """
+
+    COMPONENT_CLASSES: ClassVar[set[str]] = {
+        "label-highlight-match",
+    }
+
     BINDINGS = [
         (CONFIG.hotkeys.new, "new", "Add"),
         (CONFIG.hotkeys.delete, "delete", "Delete"),
@@ -42,6 +56,11 @@ class Records(RecordCUD, RecordTableBuilder, Static):
     show_splits = True
     displayMode = reactive(DisplayMode.DATE)
     FILTERS = {}
+    FILTER_LABEL_TIPS = {
+        "filter-category": "Shopping|Food|Dining",
+        "filter-amount": ">=123.45",
+        "filter-label": "Dinner with friends",
+    }
 
     def __init__(self, parent: Static, *args, **kwargs) -> None:
         super().__init__(
@@ -54,7 +73,7 @@ class Records(RecordCUD, RecordTableBuilder, Static):
             "category": lambda: self.query_one("#filter-category").value,
             "amount": lambda: self.query_one("#filter-amount").value,
             "label": lambda: self.query_one("#filter-label").value,
-            "enabled": lambda: self.query_one("#filter-toggle").value,
+            "enabled": lambda: self.query_one("#toggle-filter").value,
         }
 
     def on_mount(self) -> None:
@@ -107,10 +126,18 @@ class Records(RecordCUD, RecordTableBuilder, Static):
 
     def on_input_changed(self, event: Input.Changed) -> None:
         if self.FILTERS["enabled"]():
-            self.rebuild()
+            self.rebuild(focus=False)
 
     def on_switch_changed(self, event: Switch.Changed) -> None:
-        self.rebuild()
+        self.rebuild(focus=False)
+
+    def on_descendant_focus(self, event: DescendantFocus) -> None:
+        if event.widget.id.startswith("filter-"):
+            event.widget.placeholder = self.FILTER_LABEL_TIPS[event.widget.id]
+
+    def on_descendant_blur(self, event: DescendantBlur) -> None:
+        if event.widget.id.startswith("filter-"):
+            event.widget.placeholder = "Filter " + event.widget.id.split("-")[1]
 
     # region View
     # --------------- View --------------- #
@@ -128,7 +155,7 @@ class Records(RecordCUD, RecordTableBuilder, Static):
                     restrict=r"^(>=|>|=|<=|<)?\d*\.?\d*$",
                 )
                 yield Input(id="filter-label", placeholder="Filter label")
-                yield Switch(id="filter-toggle", animate=False)
+                yield Switch(id="toggle-filter", animate=False)
         self.table = DataTable(
             id="records-table",
             cursor_type="row",

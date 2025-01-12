@@ -1,11 +1,12 @@
 from sqlalchemy import and_, select
-from sqlalchemy.orm import joinedload, sessionmaker
+from sqlalchemy.orm import contains_eager, sessionmaker
 
+from bagels.managers.utils import get_operator_amount, get_start_end_of_period
+from bagels.models.category import Category
 from bagels.models.database.app import db_engine
 from bagels.models.person import Person
 from bagels.models.record import Record
 from bagels.models.split import Split
-from bagels.managers.utils import get_start_end_of_period
 
 Session = sessionmaker(bind=db_engine)
 
@@ -72,25 +73,57 @@ def delete_person(person_id):
         session.close()
 
 
-def get_persons_with_splits(offset: int = 0, offset_type: str = "month"):
+def get_persons_with_splits(
+    offset: int = 0,
+    offset_type: str = "month",
+    category_piped_names: str = None,
+    operator_amount: str = None,
+    label: str = None,
+):
     """Get all persons with their splits for the specified period."""
     session = Session()
     try:
         start_of_period, end_of_period = get_start_end_of_period(offset, offset_type)
-        result = session.scalars(
+
+        # Build the base query
+        stmt = (
             select(Person)
             .options(
-                joinedload(Person.splits)
-                .joinedload(Split.record)
-                .joinedload(Record.category),
-                joinedload(Person.splits).joinedload(Split.account),
+                contains_eager(Person.splits)
+                .contains_eager(Split.record)
+                .contains_eager(Record.category),
+                contains_eager(Person.splits).contains_eager(Split.account),
             )
             .join(Person.splits)
             .join(Split.record)
-            .filter(and_(Record.date >= start_of_period, Record.date < end_of_period))
-            .order_by(Record.date.asc())
-            .distinct()
+            .outerjoin(Record.category)
+            .outerjoin(Split.account)
         )
+
+        # Apply date filter
+        stmt = stmt.filter(
+            and_(Record.date >= start_of_period, Record.date < end_of_period)
+        )
+
+        # Apply category filter
+        if category_piped_names not in [None, ""]:
+            category_names = category_piped_names.split("|")
+            stmt = stmt.filter(Category.name.in_(category_names))
+
+        # Apply amount filter
+        if operator_amount not in [None, ""]:
+            operator, amount = get_operator_amount(operator_amount)
+            if operator and amount:
+                stmt = stmt.filter(Split.amount.op(operator)(amount))
+
+        # Apply label filter
+        if label not in [None, ""]:
+            stmt = stmt.filter(Record.label.ilike(f"%{label}%"))
+
+        # Apply ordering and distinct
+        stmt = stmt.order_by(Record.date.asc()).distinct()
+
+        result = session.scalars(stmt)
         return result.unique().all()
     finally:
         session.close()

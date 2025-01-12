@@ -1,10 +1,12 @@
-from sqlalchemy.orm import sessionmaker, joinedload
 from sqlalchemy import func
+from sqlalchemy.orm import joinedload, sessionmaker
+
+from bagels.managers.splits import create_split, get_splits_by_record_id, update_split
+from bagels.managers.utils import get_operator_amount, get_start_end_of_period
+from bagels.models.category import Category
 from bagels.models.database.app import db_engine
 from bagels.models.record import Record
 from bagels.models.split import Split
-from bagels.managers.splits import create_split, get_splits_by_record_id, update_split
-from bagels.managers.utils import get_start_end_of_period
 
 Session = sessionmaker(bind=db_engine)
 
@@ -65,7 +67,14 @@ def get_record_total_split_amount(record_id: int):
         session.close()
 
 
-def get_records(offset: int = 0, offset_type: str = "month", account_id: int = None):
+def get_records(
+    offset: int = 0,
+    offset_type: str = "month",
+    account_id: int = None,
+    category_piped_names: str = None,
+    operator_amount: str = None,
+    label: str = None,
+):
     session = Session()
     try:
         query = session.query(Record).options(
@@ -82,8 +91,19 @@ def get_records(offset: int = 0, offset_type: str = "month", account_id: int = N
             Record.date >= start_of_period, Record.date < end_of_period
         )
 
-        if account_id is not None:
+        if account_id not in [None, ""]:
             query = query.filter(Record.accountId == account_id)
+        if category_piped_names not in [None, ""]:
+            category_names = category_piped_names.split("|")
+            query = query.join(Record.category).filter(
+                Category.name.in_(category_names)
+            )
+        if operator_amount not in [None, ""]:
+            operator, amount = get_operator_amount(operator_amount)
+            if operator and amount:
+                query = query.filter(Record.amount.op(operator)(amount))
+        if label not in [None, ""]:
+            query = query.filter(Record.label.ilike(f"%{label}%"))
 
         createdAt_column = getattr(Record, "createdAt")
         date_column = func.date(getattr(Record, "date"))

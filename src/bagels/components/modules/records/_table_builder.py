@@ -21,7 +21,7 @@ class DisplayMode:
 
 
 class RecordTableBuilder:
-    def rebuild(self) -> None:
+    def rebuild(self, focus=True) -> None:
         if not hasattr(self, "table"):
             return
         table = self.table
@@ -37,23 +37,26 @@ class RecordTableBuilder:
             case _:
                 pass
 
-        table.focus()
+        if focus:
+            table.focus()
         if hasattr(self, "current_row_index"):
             table.move_cursor(row=self.current_row_index)
         empty_indicator.display = not table.rows
 
     def _fetch_records(self):
+        params = {
+            "offset": self.page_parent.filter["offset"],
+            "offset_type": self.page_parent.filter["offset_type"],
+        }
         if self.page_parent.filter["byAccount"]:
-            return get_records(
-                offset=self.page_parent.filter["offset"],
-                offset_type=self.page_parent.filter["offset_type"],
-                account_id=self.page_parent.mode["accountId"]["default_value"],
-            )
-        else:
-            return get_records(
-                offset=self.page_parent.filter["offset"],
-                offset_type=self.page_parent.filter["offset_type"],
-            )
+            params["account_id"] = self.page_parent.mode["accountId"]["default_value"]
+        if self.FILTERS["enabled"]():
+            params["category_piped_names"] = self.FILTERS["category"]()
+            params["operator_amount"] = self.FILTERS["amount"]()
+            params["label"] = self.FILTERS["label"]()
+        return get_records(
+            **params,
+        )
 
     def _initialize_table(self, table: DataTable) -> None:
         table.clear()
@@ -61,10 +64,27 @@ class RecordTableBuilder:
         match self.displayMode:
             case DisplayMode.PERSON:
                 table.add_columns(
-                    " ", "Date", "Record date", "Category", "Amount", "Paid to account"
+                    " ",
+                    "Date",
+                    "Record date",
+                    "Category",
+                    "Amount",
+                    "To account",
+                    "Label",
                 )
             case DisplayMode.DATE:
                 table.add_columns(" ", "Category", "Amount", "Label", "Account")
+
+    def _get_label_string(self, text) -> str:
+        if self.FILTERS["enabled"]():
+            highlight_style = self.get_component_rich_style("label-highlight-match")
+            text = Text(text)
+            text.highlight_words(
+                [self.FILTERS["label"]()],
+                style=highlight_style,
+                case_sensitive=False,
+            )
+        return text
 
     # region Date view
     def _build_date_view(self, table: DataTable, records: list) -> None:
@@ -75,7 +95,9 @@ class RecordTableBuilder:
             category_string, amount_string, account_string = self._format_record_fields(
                 record, flow_icon
             )
-            label_string = record.label if record.label else "-"
+
+            # Highlight label if filtering
+            label_string = self._get_label_string(record.label)
 
             # Add group header based on filter type
             group_string = None
@@ -219,11 +241,20 @@ class RecordTableBuilder:
             return f"[grey]{CONFIG.symbols.split_unpaid}[/grey]"
 
     # region Person view
+
+    def _fetch_person_records(self) -> list:
+        params = {
+            "offset": self.page_parent.filter["offset"],
+            "offset_type": self.page_parent.filter["offset_type"],
+        }
+        if self.FILTERS["enabled"]():
+            params["category_piped_names"] = self.FILTERS["category"]()
+            params["operator_amount"] = self.FILTERS["amount"]()
+            params["label"] = self.FILTERS["label"]()
+        return get_persons_with_splits(**params)
+
     def _build_person_view(self, table: DataTable, _) -> None:
-        persons = get_persons_with_splits(
-            offset=self.page_parent.filter["offset"],
-            offset_type=self.page_parent.filter["offset_type"],
-        )
+        persons = self._fetch_person_records()
 
         # Display each person and their splits
         for person in persons:
@@ -264,6 +295,8 @@ class RecordTableBuilder:
                     )
                     account = f"→ {split.account.name}" if split.account else "-"
 
+                    label_string = self._get_label_string(record.label)
+
                     table.add_row(
                         " ",
                         f"{paid_icon} {date}",
@@ -271,6 +304,7 @@ class RecordTableBuilder:
                         category,
                         amount,
                         account,
+                        label_string,
                         key=f"s-{split.id}",
                     )
 

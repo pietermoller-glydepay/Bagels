@@ -9,8 +9,13 @@ from bagels.locations import database_file
 
 # -------- create all imports -------- #
 from bagels.models.account import Account
+from bagels.models.budget import Budget  # noqa: F401
 from bagels.models.category import Category, Nature
 from bagels.models.database.db import Base
+from bagels.models.person import Person  # noqa: F401
+from bagels.models.record import Record  # noqa: F401
+from bagels.models.record_template import RecordTemplate  # noqa: F401
+from bagels.models.split import Split  # noqa: F401
 
 db_engine = create_engine(f"sqlite:///{database_file().resolve()}")
 Session = sessionmaker(bind=db_engine)

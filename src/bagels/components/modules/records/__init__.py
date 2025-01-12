@@ -145,8 +145,13 @@ Records .label-highlight-match {
     def compose(self) -> ComposeResult:
         with Container(classes="selectors"):
             with Container(id="display-selector"):
-                yield Button("Date", id="display-date")
-                yield Button("Person", id="display-person")
+                yield Button(
+                    f"Date ({CONFIG.hotkeys.home.display_by_date})", id="display-date"
+                )
+                yield Button(
+                    f"Person ({CONFIG.hotkeys.home.display_by_person})",
+                    id="display-person",
+                )
             with Container(classes="filtering", id="filter-container"):
                 yield Input(id="filter-category", placeholder="Filter category")
                 yield Input(

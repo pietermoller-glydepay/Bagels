@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.0
+
+- Label, amount and category filtering in the records module
+
 ## 0.2.6
 
 - Bumped textual to 1.0.0

@@ -1,10 +1,13 @@
+from textual import on
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Container
+from textual.containers import Container, Horizontal
+from textual.events import Focus
 from textual.reactive import reactive
+from textual.widget import Widget
 from textual.widgets import Static, Switch
 
-from textual.widgets import Button
+from textual.widgets import Button, Input
 from bagels.components.datatable import DataTable
 from bagels.components.indicators import EmptyIndicator
 from bagels.components.modules.records._cud import RecordCUD
@@ -42,6 +45,7 @@ class Records(RecordCUD, RecordTableBuilder, Static):
     can_focus = True
     show_splits = True
     displayMode = reactive(DisplayMode.DATE)
+    FILTERS = {}
 
     def __init__(self, parent: Static, *args, **kwargs) -> None:
         super().__init__(
@@ -50,6 +54,12 @@ class Records(RecordCUD, RecordTableBuilder, Static):
         super().__setattr__("border_title", "Records")
         self.page_parent = parent
         self.person_form = PersonForm()
+        self.FILTERS = {
+            "category": lambda: self.query_one("#filter-category").value,
+            "amount": lambda: self.query_one("#filter-amount").value,
+            "label": lambda: self.query_one("#filter-label").value,
+            "enabled": lambda: self.query_one("#filter-toggle").value,
+        }
 
     def on_mount(self) -> None:
         self.rebuild()
@@ -99,24 +109,30 @@ class Records(RecordCUD, RecordTableBuilder, Static):
             case _:
                 pass
 
+    def on_input_changed(self, event: Input.Changed) -> None:
+        if self.FILTERS["enabled"]():
+            self.rebuild()
+
+    def on_switch_changed(self, event: Switch.Changed) -> None:
+        self.rebuild()
+
     # region View
     # --------------- View --------------- #
 
     def compose(self) -> ComposeResult:
         with Container(classes="selectors"):
-            displayContainer = Container(classes="display-selector")
-            displayContainer.border_title = "Display by:"
-            displayContainer.border_subtitle = f"{CONFIG.hotkeys.home.display_by_date} {CONFIG.hotkeys.home.display_by_person}"
-            with displayContainer:
+            with Container(id="display-selector"):
                 yield Button(f"Date", id="display-date")
                 yield Button(f"Person", id="display-person")
-            filteringCotainer = Container(classes="filtering", id="filter-container")
-            filteringCotainer.border_title = "Filter:"
-            filteringCotainer.border_subtitle = f"{CONFIG.hotkeys.home.advance_filter}"
-            with filteringCotainer:
-                yield Button(f"Label")
-                yield Button(f"Amount")
-                yield Button(f"Category")
+            with Container(classes="filtering", id="filter-container"):
+                yield Input(id="filter-category", placeholder="Filter category")
+                yield Input(
+                    id="filter-amount",
+                    placeholder="Filter amount",
+                    restrict=r"^(>=|>|=|<=|<)?\d*\.?\d*$",
+                )
+                yield Input(id="filter-label", placeholder="Filter label")
+                yield Switch(id="filter-toggle", animate=False)
         self.table = DataTable(
             id="records-table",
             cursor_type="row",

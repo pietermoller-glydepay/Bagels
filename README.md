@@ -56,7 +56,7 @@ bagels locate database # find database file path
 bagels locate config # find config file path
 ```
 
-> It is recommended, but not required, to use "modern" terminals to run the app. MacOS users are recommended to use iTerm2, and Windows users are recommended to use Windows Terminal.
+> It is recommended, but not required, to use "modern" terminals to run the app. MacOS users are recommended to use Ghostty, and Windows users are recommended to use Windows Terminal.
 
 To upgrade:
 

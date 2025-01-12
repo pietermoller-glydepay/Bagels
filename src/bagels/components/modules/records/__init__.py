@@ -2,7 +2,7 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Container
 from textual.reactive import reactive
-from textual.widgets import Static
+from textual.widgets import Static, Switch
 
 from textual.widgets import Button
 from bagels.components.datatable import DataTable
@@ -110,6 +110,13 @@ class Records(RecordCUD, RecordTableBuilder, Static):
             with displayContainer:
                 yield Button(f"Date", id="display-date")
                 yield Button(f"Person", id="display-person")
+            filteringCotainer = Container(classes="filtering", id="filter-container")
+            filteringCotainer.border_title = "Filter:"
+            filteringCotainer.border_subtitle = f"{CONFIG.hotkeys.home.advance_filter}"
+            with filteringCotainer:
+                yield Button(f"Label")
+                yield Button(f"Amount")
+                yield Button(f"Category")
         self.table = DataTable(
             id="records-table",
             cursor_type="row",

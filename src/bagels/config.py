@@ -24,6 +24,7 @@ class HomeHotkeys(BaseModel):
     toggle_splits: str = "s"
     display_by_date: str = "q"
     display_by_person: str = "w"
+    advance_filter: str = "f"
     cycle_offset_type: str = "."
     toggle_income_mode: str = "/"
     select_prev_account: str = "["

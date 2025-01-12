@@ -30,8 +30,7 @@ class App(TextualApp):
     CSS_PATH = "index.tcss"
     BINDINGS = [
         (CONFIG.hotkeys.toggle_jump_mode, "toggle_jump_mode", "Jump Mode"),
-        (CONFIG.hotkeys.home.categories, "go_to_categories", "Categories"),
-        (CONFIG.hotkeys.home.budgets, "go_to_budgets", "Budgets"),
+        (CONFIG.hotkeys.home.categories, "go_to_categories", "Super manager"),
         ("ctrl+q", "quit", "Quit"),
     ]
     COMMANDS = {AppProvider}
@@ -215,9 +214,6 @@ class App(TextualApp):
 
     def action_go_to_categories(self) -> None:
         self.push_screen(CategoriesModal(), callback=self.on_categories_dismissed)
-
-    def action_go_to_budgets(self) -> None:
-        self.notify("Work in progress!", title="Budgets")
 
     def on_categories_dismissed(self, _) -> None:
         self.app.refresh(recompose=True)

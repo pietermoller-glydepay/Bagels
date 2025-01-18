@@ -5,6 +5,7 @@ from textual.widgets import Static
 from bagels.components.bagel import Bagel
 from bagels.components.modules.categories import Categories
 from bagels.components.modules.people import People
+from bagels.components.modules.spending import Spending
 from bagels.managers.accounts import get_accounts_count
 from bagels.managers.categories import get_categories_count
 
@@ -50,7 +51,7 @@ class Manager(Static):
         #         else:
         if self.isReady:
             with Static(classes="manager-modules-container"):
-                yield Static(id="budget-container", classes="module-container")
+                yield Spending()
                 yield Categories()
                 yield People()
         else:

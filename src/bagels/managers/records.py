@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload, sessionmaker
 
@@ -111,6 +113,46 @@ def get_records(
 
         records = query.all()
         return records
+    finally:
+        session.close()
+
+
+def get_spending_trend(weeks=1, week_offset=0) -> list[float]:
+    """Gets a list of spent amounts for the last x weeks, less split amounts of the records. Considers only isIncome=False"""
+    session = Session()
+    try:
+        # Get records for the specified weeks
+        start_date = datetime.now() - timedelta(weeks=weeks)
+        end_date = datetime.now() - timedelta(weeks=week_offset)
+        records = (
+            session.query(Record)
+            .filter(
+                Record.isIncome == False,  # noqa: E712
+                Record.date >= start_date,
+                Record.date <= end_date,
+                Record.isTransfer == False,  # noqa: E712
+            )
+            .options(joinedload(Record.splits))
+            .all()
+        )
+
+        # Calculate spending per day
+        daily_spending = {}
+        for record in records:
+            date_key = record.date.date()
+            splits_sum = sum(split.amount for split in record.splits)
+            actual_spend = record.amount - splits_sum
+
+            if date_key in daily_spending:
+                daily_spending[date_key] += actual_spend
+            else:
+                daily_spending[date_key] = actual_spend
+
+        # Create list of daily spending
+        sorted_dates = sorted(daily_spending.keys())
+        spending_trend = [daily_spending[date] for date in sorted_dates]
+
+        return spending_trend
     finally:
         session.close()
 

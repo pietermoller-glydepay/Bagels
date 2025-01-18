@@ -14,15 +14,6 @@ from bagels.managers.persons import (
 from bagels.modals.confirmation import ConfirmationModal
 from bagels.modals.input import InputModal
 
-# from bagels.forms.category_form import CategoryForm
-# from bagels.managers.categories import (
-#     create_category,
-#     delete_category,
-#     get_all_categories_tree,
-#     get_category_by_id,
-#     update_category,
-# )
-
 
 class People(Static):
     COLUMNS = ("Name", "Net due")

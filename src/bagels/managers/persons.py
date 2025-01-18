@@ -1,4 +1,6 @@
-from sqlalchemy import and_, select
+from dataclasses import dataclass
+
+from sqlalchemy import and_, func, select
 from sqlalchemy.orm import contains_eager, sessionmaker
 
 from bagels.managers.utils import get_operator_amount, get_start_end_of_period
@@ -9,6 +11,9 @@ from bagels.models.record import Record
 from bagels.models.split import Split
 
 Session = sessionmaker(bind=db_engine)
+
+
+# region Create
 
 
 def create_person(data):
@@ -25,50 +30,23 @@ def create_person(data):
         session.close()
 
 
-def get_all_persons():
-    """Retrieve all persons from the database."""
+# region Read
+
+
+def get_all_persons() -> list[Person]:
+    """Retrieve all undeleted persons from the database."""
     session = Session()
     try:
-        return session.scalars(select(Person)).all()
+        return session.scalars(select(Person).where(Person.deletedAt.is_(None))).all()
     finally:
         session.close()
 
 
-def get_person_by_id(person_id):
+def get_person_by_id(person_id) -> Person:
     """Retrieve a person by their ID."""
     session = Session()
     try:
         return session.get(Person, person_id)
-    finally:
-        session.close()
-
-
-def update_person(person_id, data):
-    """Update a person's information by their ID."""
-    session = Session()
-    try:
-        person = session.get(Person, person_id)
-        if person:
-            for key, value in data.items():
-                setattr(person, key, value)
-            session.commit()
-            session.refresh(person)
-            session.expunge(person)
-        return person
-    finally:
-        session.close()
-
-
-def delete_person(person_id):
-    """Delete a person from the database by their ID."""
-    session = Session()
-    try:
-        person = session.get(Person, person_id)
-        if person:
-            session.delete(person)
-            session.commit()
-            return True
-        return False
     finally:
         session.close()
 
@@ -125,5 +103,102 @@ def get_persons_with_splits(
 
         result = session.scalars(stmt)
         return result.unique().all()
+    finally:
+        session.close()
+
+
+@dataclass
+class PersonWithDue:
+    person: Person
+    due: float
+
+
+def get_persons_with_net_due() -> list[Person]:
+    """Retrieve all persons with their net due amount."""
+    session = Session()
+    try:
+        stmt = (
+            select(
+                Person,
+                (
+                    func.coalesce(
+                        select(func.sum(Split.amount))
+                        .select_from(Split)
+                        .join(Record)
+                        .where(Split.personId == Person.id, Record.isIncome == False)  # noqa: E712
+                        .correlate(Person)
+                        .scalar_subquery(),
+                        0,
+                    )
+                    - func.coalesce(
+                        select(func.sum(Split.amount))
+                        .select_from(Split)
+                        .join(Record)
+                        .where(Split.personId == Person.id, Record.isIncome == True)  # noqa: E712
+                        .correlate(Person)
+                        .scalar_subquery(),
+                        0,
+                    )
+                ).label("due"),
+            )
+            .select_from(Person)
+            .where(Person.deletedAt.is_(None))
+            .order_by(Person.name)
+        )
+
+        result = session.execute(stmt).all()
+        persons_with_due = []
+        for person, due in result:
+            person.due = due
+            persons_with_due.append(person)
+        return persons_with_due
+    finally:
+        session.close()
+
+
+# region Update
+
+
+def update_person(person_id, data) -> Person:
+    """Update a person's information by their ID."""
+    session = Session()
+    try:
+        person = session.get(Person, person_id)
+        if person:
+            for key, value in data.items():
+                setattr(person, key, value)
+            session.commit()
+            session.refresh(person)
+            session.expunge(person)
+        return person
+    finally:
+        session.close()
+
+
+# region Delete
+
+
+def delete_person(person_id) -> bool:
+    """Delete a person - if they have splits, soft delete by setting deletedAt, otherwise hard delete."""
+    session = Session()
+    try:
+        person = session.get(Person, person_id)
+        if person:
+            # Check if person has any splits
+            has_splits = (
+                session.query(Split).filter(Split.personId == person_id).first()
+                is not None
+            )
+
+            if has_splits:
+                # Soft delete if person has splits
+                person.deletedAt = func.now()
+            else:
+                # Hard delete if person has no splits
+                session.delete(person)
+
+            session.commit()
+            return True
+        return False
     finally:
         session.close()

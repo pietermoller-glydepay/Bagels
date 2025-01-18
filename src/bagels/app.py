@@ -11,7 +11,7 @@ from textual.geometry import Size
 from textual.reactive import Reactive, reactive
 from textual.signal import Signal
 from textual.widget import Widget
-from textual.widgets import ContentSwitcher, Footer, Label, Tab, Tabs
+from textual.widgets import Footer, Label, Tab, Tabs
 
 from bagels.components.jump_overlay import JumpOverlay
 from bagels.components.jumper import Jumper
@@ -23,13 +23,20 @@ from bagels.provider import AppProvider
 from bagels.themes import BUILTIN_THEMES, Theme
 
 PAGES = [
-    {"name": "Home", "class": Home},
     {"name": "Manager", "class": Manager},
+    {"name": "Home", "class": Home},
 ]
 
 
 class App(TextualApp):
-    CSS_PATH = "index.tcss"
+    CSS_PATH = [
+        "styles/index.tcss",
+        "styles/modals.tcss",
+        "styles/home.tcss",
+        "styles/home_modules.tcss",
+        "styles/manager.tcss",
+        "styles/manager_modules.tcss",
+    ]
     BINDINGS = [
         (CONFIG.hotkeys.toggle_jump_mode, "toggle_jump_mode", "Jump Mode"),
         (CONFIG.hotkeys.home.cycle_tabs, "cycle_tabs", "Cycle tabs"),
@@ -49,7 +56,7 @@ class App(TextualApp):
     # region init
     def __init__(self, is_testing=False) -> None:
         # Initialize available themes with a default
-        available_themes: dict[str, Theme] = {"galaxy": BUILTIN_THEMES["galaxy"]}
+        available_themes: dict[str, Theme] = {"cobalt": BUILTIN_THEMES["cobalt"]}
         available_themes |= BUILTIN_THEMES
         self.themes = available_themes
         self.is_testing = is_testing
@@ -182,10 +189,18 @@ class App(TextualApp):
 
     def on_tabs_tab_activated(self, event: Tabs.TabActivated) -> None:
         if event.tab.id.startswith("tab-"):
-            tab_name = event.tab.id[4:]
-            contentSwitcher = self.query_one(ContentSwitcher)
-            contentSwitcher.current = f"{tab_name}-page"
-            self.current_tab = [page["name"].lower() for page in PAGES].index(tab_name)
+            try:
+                currentContent = self.query_one(".content")
+                currentContent.remove()
+            except NoMatches:
+                pass
+            page_class = next(
+                page["class"]
+                for page in PAGES
+                if page["name"].lower() == event.tab.id.replace("tab-", "")
+            )
+            page_instance = page_class(classes="content")
+            self.mount(page_instance)
 
     def on_resize(self, event: events.Resize) -> None:
         console_size: Size = event.size
@@ -210,18 +225,11 @@ class App(TextualApp):
     def action_quit(self) -> None:
         self.exit()
 
-    # def action_go_to_categories(self) -> None:
-    #     self.push_screen(CategoriesModal(), callback=self.on_categories_dismissed)
-
     def action_cycle_tabs(self) -> None:
         self.current_tab = (self.current_tab + 1) % len(PAGES)
         tabs = self.query_one(Tabs)
-        contentSwitcher = self.query_one(ContentSwitcher)
-        current_tab_name_lower = PAGES[self.current_tab]["name"].lower()
-        tab_id = f"tab-{current_tab_name_lower}"
-        page_id = f"{current_tab_name_lower}-page"
+        tab_id = f"tab-{PAGES[self.current_tab]['name'].lower()}"
         tabs.active = tab_id
-        contentSwitcher.current = page_id
 
     def on_categories_dismissed(self, _) -> None:
         self.app.refresh(recompose=True)
@@ -242,7 +250,4 @@ class App(TextualApp):
                 classes="root-tabs",
             )
             yield Label(path, classes="path")
-        with ContentSwitcher(initial="home-page"):
-            for page in PAGES:
-                yield page["class"]()
         yield Footer()

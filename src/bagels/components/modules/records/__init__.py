@@ -166,7 +166,6 @@ Records .label-highlight-match {
             cursor_type="row",
             cursor_foreground_priority=True,
             zebra_stripes=True,
-            additional_classes=["datatable--net-row", "datatable--group-header-row"],
         )
         yield self.table
         yield EmptyIndicator("No entries")

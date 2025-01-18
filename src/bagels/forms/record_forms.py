@@ -216,13 +216,6 @@ class RecordForm:
             value = getattr(record, fieldKey)
 
             match fieldKey:
-                case "amount":
-                    field.default_value = str(
-                        round(
-                            value - get_record_total_split_amount(recordId),
-                            CONFIG.defaults.round_decimals,
-                        )
-                    )
                 case "date":
                     # if value is this month, simply set %d, else set %d %m %y
                     if value.month == datetime.now().month:

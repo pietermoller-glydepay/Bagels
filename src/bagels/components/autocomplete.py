@@ -205,8 +205,6 @@ class AutoComplete(Widget):
         elif key == "backspace":
             if self.backspace_clears:
                 self.input.action_delete_left_all()
-            else:
-                self.input.action_delete_left()
 
     # def on_input_submitted(self, event: Input.Submitted) -> None:
     #     event.prevent_default()

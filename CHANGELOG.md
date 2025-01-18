@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.7
+
+- Fix record module input and loading issues.
+
 ## 0.2.6
 
 - Bumped textual to 1.0.0

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.7
+
+- Fix record module input and loading issues.
+
 ## 0.3.0
 
 - Label, amount and category filtering in the records module

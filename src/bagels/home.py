@@ -91,8 +91,6 @@ class Home(Static):
 
     def on_mount(self) -> None:
         self.app.watch(self.app, "layout", self.on_layout_change)
-        if hasattr(self, "record_module"):
-            self.record_module.focus()
 
     # -------------- Helpers ------------- #
 
@@ -103,7 +101,7 @@ class Home(Static):
         self.date_mode_module.rebuild()
         if self.isReady:
             self.record_module.rebuild()
-            self.templates_module.rebuild()
+            self.templates_module.rebuild(reset_state=True)
 
     def get_filter_label(self) -> str:
         return format_period_to_readable(self.filter)

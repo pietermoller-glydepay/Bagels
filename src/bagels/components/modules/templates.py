@@ -82,7 +82,7 @@ class Templates(Static):
             container.compose_add_child(widget)
         return container
 
-    def rebuild(self) -> None:
+    def rebuild(self, reset_state=False) -> None:
         self.templates = get_all_templates()
         container = self.query(".templates")
         if len(container) > 0:
@@ -90,6 +90,8 @@ class Templates(Static):
         container = Horizontal(classes="templates")
         container = self._create_templates_widgets(container)
         self.mount(container)
+        if reset_state:
+            self.selected_template_id = None
         if self.selected_template_id:
             self.call_after_refresh(
                 lambda: self.query_one(f"#template-{self.selected_template_id}").focus()

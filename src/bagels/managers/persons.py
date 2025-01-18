@@ -125,7 +125,11 @@ def get_persons_with_net_due() -> list[Person]:
                         select(func.sum(Split.amount))
                         .select_from(Split)
                         .join(Record)
-                        .where(Split.personId == Person.id, Record.isIncome == False)  # noqa: E712
+                        .where(
+                            Split.personId == Person.id,
+                            Record.isIncome == False,  # noqa: E712
+                            Split.isPaid == False,  # noqa: E712
+                        )
                         .correlate(Person)
                         .scalar_subquery(),
                         0,
@@ -134,7 +138,11 @@ def get_persons_with_net_due() -> list[Person]:
                         select(func.sum(Split.amount))
                         .select_from(Split)
                         .join(Record)
-                        .where(Split.personId == Person.id, Record.isIncome == True)  # noqa: E712
+                        .where(
+                            Split.personId == Person.id,
+                            Record.isIncome == True,  # noqa: E712
+                            Split.isPaid == False,  # noqa: E712
+                        )
                         .correlate(Person)
                         .scalar_subquery(),
                         0,

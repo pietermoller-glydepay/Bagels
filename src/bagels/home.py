@@ -4,13 +4,13 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.widgets import Label, Static
 
-from bagels.components.modules.welcome import Welcome
 from bagels.components.modules.accountmode import AccountMode
 from bagels.components.modules.datemode import DateMode
 from bagels.components.modules.incomemode import IncomeMode
 from bagels.components.modules.insights import Insights
 from bagels.components.modules.records import Records
 from bagels.components.modules.templates import Templates
+from bagels.components.modules.welcome import Welcome
 from bagels.config import CONFIG
 from bagels.managers.accounts import get_accounts_count, get_all_accounts
 from bagels.managers.categories import get_categories_count

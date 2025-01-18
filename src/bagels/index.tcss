@@ -63,6 +63,11 @@ DataTable > .datatable--group-header-row {
   text-style: italic;
 }
 
+Center {
+  align: center middle;
+  height: 1fr;
+}
+
 Input {
   padding: 0 1;
   height: 1;
@@ -670,6 +675,15 @@ Button {
   }
 }
 
+.bagel-container {
+  height: 15;
+  width: 30;
+  
+  #bagel {
+    color: $accent-lighten-3;
+  }
+}
+
 #welcome-container {
   border: round $accent-darken-3;
   width: 100%;
@@ -680,14 +694,6 @@ Button {
     border: round $accent;
   }
 
-  .bagel-container {
-    height: 15;
-    width: 30;
-    
-    #bagel {
-      color: $accent-lighten-3;
-    }
-  }
   
   .text-container {
     padding: 1 0;

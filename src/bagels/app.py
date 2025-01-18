@@ -11,19 +11,20 @@ from textual.geometry import Size
 from textual.reactive import Reactive, reactive
 from textual.signal import Signal
 from textual.widget import Widget
-from textual.widgets import Footer, Label, Static, Tab, Tabs
+from textual.widgets import ContentSwitcher, Footer, Label, Tab, Tabs
 
 from bagels.components.jump_overlay import JumpOverlay
 from bagels.components.jumper import Jumper
 from bagels.config import CONFIG, write_state
 from bagels.home import Home
 from bagels.locations import data_directory
+from bagels.manager import Manager
 from bagels.provider import AppProvider
 from bagels.themes import BUILTIN_THEMES, Theme
 
 PAGES = [
     {"name": "Home", "class": Home},
-    {"name": "Manager", "class": Static},
+    {"name": "Manager", "class": Manager},
 ]
 
 
@@ -181,18 +182,10 @@ class App(TextualApp):
 
     def on_tabs_tab_activated(self, event: Tabs.TabActivated) -> None:
         if event.tab.id.startswith("tab-"):
-            try:
-                currentContent = self.query_one(".content")
-                currentContent.remove()
-            except NoMatches:
-                pass
-            page_class = next(
-                page["class"]
-                for page in PAGES
-                if page["name"].lower() == event.tab.id.replace("tab-", "")
-            )
-            page_instance = page_class(classes="content")
-            self.mount(page_instance)
+            tab_name = event.tab.id[4:]
+            contentSwitcher = self.query_one(ContentSwitcher)
+            contentSwitcher.current = f"{tab_name}-page"
+            self.current_tab = [page["name"].lower() for page in PAGES].index(tab_name)
 
     def on_resize(self, event: events.Resize) -> None:
         console_size: Size = event.size
@@ -223,8 +216,12 @@ class App(TextualApp):
     def action_cycle_tabs(self) -> None:
         self.current_tab = (self.current_tab + 1) % len(PAGES)
         tabs = self.query_one(Tabs)
-        tab_id = f"tab-{PAGES[self.current_tab]['name'].lower()}"
+        contentSwitcher = self.query_one(ContentSwitcher)
+        current_tab_name_lower = PAGES[self.current_tab]["name"].lower()
+        tab_id = f"tab-{current_tab_name_lower}"
+        page_id = f"{current_tab_name_lower}-page"
         tabs.active = tab_id
+        contentSwitcher.current = page_id
 
     def on_categories_dismissed(self, _) -> None:
         self.app.refresh(recompose=True)
@@ -245,4 +242,7 @@ class App(TextualApp):
                 classes="root-tabs",
             )
             yield Label(path, classes="path")
+        with ContentSwitcher(initial="home-page"):
+            for page in PAGES:
+                yield page["class"]()
         yield Footer()

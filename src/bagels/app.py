@@ -11,23 +11,27 @@ from textual.geometry import Size
 from textual.reactive import Reactive, reactive
 from textual.signal import Signal
 from textual.widget import Widget
-from textual.widgets import Footer, Label, Tabs
+from textual.widgets import Footer, Label, Static, Tab, Tabs
 
 from bagels.components.jump_overlay import JumpOverlay
 from bagels.components.jumper import Jumper
 from bagels.config import CONFIG, write_state
 from bagels.home import Home
-from bagels.modals.categories import CategoriesModal
+from bagels.locations import data_directory
 from bagels.provider import AppProvider
 from bagels.themes import BUILTIN_THEMES, Theme
-from bagels.utils.user_host import get_user_host_string
+
+PAGES = [
+    {"name": "Home", "class": Home},
+    {"name": "Manager", "class": Static},
+]
 
 
 class App(TextualApp):
     CSS_PATH = "index.tcss"
     BINDINGS = [
         (CONFIG.hotkeys.toggle_jump_mode, "toggle_jump_mode", "Jump Mode"),
-        (CONFIG.hotkeys.home.categories, "go_to_categories", "Super manager"),
+        (CONFIG.hotkeys.home.cycle_tabs, "cycle_tabs", "Cycle tabs"),
         ("ctrl+q", "quit", "Quit"),
     ]
     COMMANDS = {AppProvider}
@@ -39,6 +43,7 @@ class App(TextualApp):
     """The current layout of the app."""
     _jumping: Reactive[bool] = reactive(False, init=False, bindings=True)
     """True if 'jump mode' is currently active, otherwise False."""
+    current_tab = 0
 
     # region init
     def __init__(self, is_testing=False) -> None:
@@ -175,14 +180,17 @@ class App(TextualApp):
     # --------------- hooks -------------- #
 
     def on_tabs_tab_activated(self, event: Tabs.TabActivated) -> None:
-        if event.tab.id.startswith("t"):
-            activeIndex = int(event.tab.id.removeprefix("t")) - 1
+        if event.tab.id.startswith("tab-"):
             try:
                 currentContent = self.query_one(".content")
                 currentContent.remove()
             except NoMatches:
                 pass
-            page_class = self.PAGES[activeIndex]["class"]
+            page_class = next(
+                page["class"]
+                for page in PAGES
+                if page["name"].lower() == event.tab.id.replace("tab-", "")
+            )
             page_instance = page_class(classes="content")
             self.mount(page_instance)
 
@@ -209,8 +217,14 @@ class App(TextualApp):
     def action_quit(self) -> None:
         self.exit()
 
-    def action_go_to_categories(self) -> None:
-        self.push_screen(CategoriesModal(), callback=self.on_categories_dismissed)
+    # def action_go_to_categories(self) -> None:
+    #     self.push_screen(CategoriesModal(), callback=self.on_categories_dismissed)
+
+    def action_cycle_tabs(self) -> None:
+        self.current_tab = (self.current_tab + 1) % len(PAGES)
+        tabs = self.query_one(Tabs)
+        tab_id = f"tab-{PAGES[self.current_tab]['name'].lower()}"
+        tabs.active = tab_id
 
     def on_categories_dismissed(self, _) -> None:
         self.app.refresh(recompose=True)
@@ -219,10 +233,16 @@ class App(TextualApp):
     # --------------- View --------------- #
     def compose(self) -> ComposeResult:
         version = self.project_info["version"] if not self.is_testing else "vt"
-        user_host = get_user_host_string() if not self.is_testing else "test"
+        path = str(data_directory()) if not self.is_testing else "test"
         with Container(classes="header"):
             yield Label(f"↪ {self.project_info['name']}", classes="title")
             yield Label(version, classes="version")
-            yield Label(user_host, classes="user")
-        yield Home(classes="content")
+            yield Tabs(
+                *[
+                    Tab(name, id=f"tab-{name.lower()}")
+                    for name in [page["name"] for page in PAGES]
+                ],
+                classes="root-tabs",
+            )
+            yield Label(path, classes="path")
         yield Footer()

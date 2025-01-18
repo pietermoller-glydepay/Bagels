@@ -1,7 +1,9 @@
 import warnings
 from typing import Any, Literal
+
 import yaml
 from pydantic import BaseModel, Field
+
 from bagels.locations import config_file
 
 
@@ -17,7 +19,7 @@ class DatemodeHotkeys(BaseModel):
 
 
 class HomeHotkeys(BaseModel):
-    categories: str = "c"
+    cycle_tabs: str = "c"
     budgets: str = "b"
     new_transfer: str = "t"
     toggle_splits: str = "s"

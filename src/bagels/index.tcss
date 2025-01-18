@@ -124,8 +124,13 @@ Button {
     color: $accent-lighten-1 60%;
     margin-left: 1;
   }
+
+  .root-tabs {
+    width: 15;
+    margin-left: 2;
+  }
   
-  .user {
+  .path {
     color: $primary-background-lighten-3;
     dock: right;
   }

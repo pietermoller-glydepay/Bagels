@@ -9,7 +9,6 @@ from bagels.locations import database_file
 
 # -------- create all imports -------- #
 from bagels.models.account import Account
-from bagels.models.budget import Budget  # noqa: F401
 from bagels.models.category import Category, Nature
 from bagels.models.database.db import Base
 from bagels.models.person import Person  # noqa: F401

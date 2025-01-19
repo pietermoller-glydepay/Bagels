@@ -12,6 +12,25 @@ from bagels.models.split import Split
 Session = sessionmaker(bind=db_engine)
 
 
+# region Create
+
+
+def create_account(data):
+    session = Session()
+    try:
+        new_account = Account(**data)
+        session.add(new_account)
+        session.commit()
+        session.refresh(new_account)
+        session.expunge(new_account)
+        return new_account
+    finally:
+        session.close()
+
+
+# region Read
+
+
 def get_account_balance(accountId, session=None):
     """Returns the net balance of an account.
 
@@ -82,19 +101,6 @@ def get_account_balance(accountId, session=None):
             session.close()
 
 
-def create_account(data):
-    session = Session()
-    try:
-        new_account = Account(**data)
-        session.add(new_account)
-        session.commit()
-        session.refresh(new_account)
-        session.expunge(new_account)
-        return new_account
-    finally:
-        session.close()
-
-
 def _get_base_accounts_query(get_hidden=False):
     stmt = select(Account).filter(Account.deletedAt.is_(None))
     if not get_hidden:
@@ -150,6 +156,9 @@ def get_account_by_id(account_id):
         session.close()
 
 
+# region Update
+
+
 def update_account(account_id, data):
     session = Session()
     try:
@@ -163,6 +172,9 @@ def update_account(account_id, data):
         return account
     finally:
         session.close()
+
+
+# region Delete
 
 
 def delete_account(account_id):

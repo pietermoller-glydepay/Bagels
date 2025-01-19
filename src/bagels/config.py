@@ -66,9 +66,22 @@ class Symbols(BaseModel):
     amount_negative: str = "-"
 
 
+class BudgetingStates(BaseModel):
+    income_assess_metric: Literal["periodIncome", "fallback"] = (
+        "periodIncome"  # use the current period's income, or if less than threshold, use the past period's income
+    )
+    income_assess_threshold: float = (
+        100  # if income less than this, we assume has no income
+    )
+    income_assess_fallback: float = (
+        3500  # if income less than threshold, we use this as the income
+    )
+
+
 class State(BaseModel):
     theme: str = "dark"
     check_for_updates: bool = True
+    budgeting: BudgetingStates = BudgetingStates()
 
 
 class Config(BaseModel):

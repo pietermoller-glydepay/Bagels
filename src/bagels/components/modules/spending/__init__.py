@@ -8,24 +8,29 @@ from textual.reactive import Reactive, reactive
 from textual.widgets import Button, Label, Static
 
 from bagels.components.indicators import EmptyIndicator
+from bagels.components.modules.spending.plots import (
+    BalancePlot,
+    SpendingPlot,
+    SpendingTrajectoryPlot,
+)
 from bagels.components.tplot import PlotextPlot
 from bagels.components.tplot.plot import _rgbify
 from bagels.config import CONFIG
-from bagels.managers.records import get_spending_trend
 from bagels.managers.utils import get_start_end_of_period
+from bagels.utils.format import format_period_to_readable
 
 
 class Spending(Static):
-    can_focus = True
+    PLOT_TYPES = [SpendingPlot, SpendingTrajectoryPlot, BalancePlot]
 
-    number_of_weeks: Reactive[int] = reactive(2)
-    view_offset: Reactive[int] = reactive(0)
+    can_focus = True
+    offset: Reactive[int] = reactive(0)
+    periods: Reactive[int] = reactive(1)
+    current_plot: Reactive[int] = reactive(0)
 
     BINDINGS = [
         Binding("left", "dec_offset", "Shift back", show=True),
         Binding("right", "inc_offset", "Shfit front", show=True),
-        Binding("-", "inc_weekcount", "Zoom out", show=True),
-        Binding("+", "dec_weekcount", "Zoom in", show=True),
     ]
 
     def __init__(self, *args, **kwargs) -> None:
@@ -33,8 +38,7 @@ class Spending(Static):
             *args, **kwargs, id="spending-container", classes="module-container"
         )
         super().__setattr__("border_title", "Spending")
-
-    # --------------- Hooks -------------- #
+        self._plots = [plot_cls(self.app) for plot_cls in self.PLOT_TYPES]
 
     def on_mount(self) -> None:
         self.focus()
@@ -45,102 +49,104 @@ class Spending(Static):
             self.action_inc_offset()
         elif event.button.id == "dec-offset":
             self.action_dec_offset()
-        elif event.button.id == "inc-weekcount":
-            self.action_inc_weekcount()
-        elif event.button.id == "dec-weekcount":
-            self.action_dec_weekcount()
-
-    # region Builders
-    # ------------- Builders ------------- #
+        elif event.button.id.startswith("plot-"):
+            try:
+                plot_index = int(event.button.id.split("-")[1])
+                self.current_plot = plot_index
+                self.query_one(".selected").set_classes("")
+                event.button.set_classes("selected")
+                self.rebuild()
+            except ValueError:
+                pass
 
     def rebuild(self) -> None:
         empty = self.query_one(EmptyIndicator)
         plotext = self.query_one(PlotextPlot)
         label = self.query_one(".current-view-label")
-        plotext.display = False
+        plotext.display = False  # make plotext update by toggling display... for some reason. Maybe a bug? Who knows.
+        plot = self._plots[self.current_plot]
 
-        start_of_period, end_of_period = get_start_end_of_period(
-            self.view_offset, "week"
-        )
-        start_of_period = start_of_period - timedelta(weeks=self.number_of_weeks - 1)
+        start_of_period, end_of_period = get_start_end_of_period(self.offset, "month")
         self.app.log(
-            f'Getting spending trend from "{start_of_period}" to "{end_of_period} ({self.number_of_weeks} weeks, {self.view_offset} weeks ago)"'
+            f"The plot type {plot.name} has support for cross periods: {plot.supports_cross_periods}"
+        )
+        self.app.log(
+            f'Getting spending trend from "{start_of_period}" to "{end_of_period} ({self.offset} months ago)"'
         )
         label.update(
-            f"Period {start_of_period.strftime('%d/%m/%Y')} -> {end_of_period.strftime('%d/%m/%Y')} ({self.number_of_weeks} weeks, {-self.view_offset} weeks ago)"
+            format_period_to_readable({"offset": self.offset, "offset_type": "month"})
         )
-        spending = get_spending_trend(start_of_period, end_of_period)
-        if len(spending) == 0:
-            empty.display = True
-            return
-        else:
-            empty.display = False
-            plotext.display = True
 
         plt = self.query_one(PlotextPlot).plt
+        plt.clear_data()
+        plt.clear_figure()
+
+        # ------------- get data ------------- #
+
+        data = plot.get_data(start_of_period, end_of_period)
+        total_days = (
+            end_of_period - start_of_period
+        ).days + 1  # add one to include the end date
+        correct_data = len(data) == total_days
+        empty.display = not correct_data
+        plotext.display = correct_data
+        if not correct_data:
+            return
+
+        # --------------- plot --------------- #
 
         dates = [
             (end_of_period - timedelta(days=i)).strftime("%d/%m/%Y")
-            for i in range(len(spending))
+            for i in range(total_days)
         ]
 
-        self.app.log(f"Dates: {dates}")
-        self.app.log(f"Spending: {spending}")
-        self.app.log(self.app.themes[self.app.app_theme].accent)
-        plt.clear_data()
-        plt.clear_figure()
         plt.plot(
             dates,
-            spending,
+            data,
             marker=CONFIG.defaults.plot_marker,
             color=_rgbify(Color.parse(self.app.themes[self.app.app_theme].accent).rgb),
         )
+
+        # -------------- styling ------------- #
+
         plt.date_form(output_form="d")
-        plt.xfrequency(len(dates))
+        plt.xfrequency(total_days)
+
         line_color = _rgbify(Color.parse(self.app.themes[self.app.app_theme].panel).rgb)
         fdow_line_color = _rgbify(
             Color.parse(self.app.themes[self.app.app_theme].secondary).rgb
         )
+
         for d in dates:
-            fdow = CONFIG.defaults.first_day_of_week  # 6 is sunday
+            fdow = CONFIG.defaults.first_day_of_week
             d_datetime = datetime.strptime(d, "%d/%m/%Y")
             if d_datetime.weekday() == fdow:
                 plt.vline(d, fdow_line_color)
             else:
                 plt.vline(d, line_color)
+
         plt.xaxes(False)
         plt.yaxes(False)
 
-    # region Callbacks
-    # ------------- Callbacks ------------ #
+        plot.plot(plt, start_of_period, end_of_period, self.offset, data)
 
     def action_inc_offset(self) -> None:
-        if self.view_offset < 0:
-            self.view_offset += 1
+        if self.offset < 0:
+            self.offset += 1
             self.rebuild()
 
     def action_dec_offset(self) -> None:
-        self.view_offset -= 1
+        self.offset -= 1
         self.rebuild()
 
-    def action_inc_weekcount(self) -> None:
-        if self.number_of_weeks < 12:
-            self.number_of_weeks += 1
-            self.rebuild()
-
-    def action_dec_weekcount(self) -> None:
-        if self.number_of_weeks > 1:
-            self.number_of_weeks -= 1
-            self.rebuild()
-
-    # region View
-    # --------------- View --------------- #
     def compose(self) -> ComposeResult:
         with Horizontal(id="top-controls-container"):
-            yield Button("+", id="dec-weekcount")  # zoom in
             yield Button("<<<", id="dec-offset")
             yield Label("UPDATEME", classes="current-view-label")
             yield Button(">>>", id="inc-offset")
-            yield Button("-", id="inc-weekcount")  # zoom out
         yield PlotextPlot()
         yield EmptyIndicator("No data to display")
+        with Horizontal(id="bottom-controls-container"):
+            for i, plot in enumerate(self._plots):
+                button_classes = "selected" if i == self.current_plot else ""
+                yield Button(plot.name, id=f"plot-{i}", classes=button_classes)

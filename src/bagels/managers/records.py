@@ -5,6 +5,7 @@ from sqlalchemy.orm import joinedload, sessionmaker
 
 from bagels.managers.splits import create_split, get_splits_by_record_id, update_split
 from bagels.managers.utils import get_operator_amount, get_start_end_of_period
+from bagels.models.account import Account
 from bagels.models.category import Category
 from bagels.models.database.app import db_engine
 from bagels.models.record import Record
@@ -117,45 +118,65 @@ def get_records(
         session.close()
 
 
-def get_spending_trend(start_date, end_date) -> list[float]:
-    """Gets a list of spent amounts for each day in the period, less split amounts of the records. Uses 0 for days without records. Considers only isIncome=False"""
+def _get_spending_records(session, start_date, end_date):
+    """Common function to fetch records for spending calculations"""
+    return (
+        session.query(Record)
+        .filter(
+            Record.isIncome == False,  # noqa: E712
+            Record.date >= start_date,
+            Record.date < end_date,
+            Record.isTransfer == False,  # noqa: E712
+        )
+        .options(joinedload(Record.splits))
+        .all()
+    )
+
+
+def _calculate_daily_spending(records, start_date, end_date, cumulative=False):
+    """Calculate daily spending with optional cumulative sum"""
+    daily_spending = {}
+    for record in records:
+        date_key = record.date.date()
+        splits_sum = sum(split.amount for split in record.splits)
+        actual_spend = record.amount - splits_sum
+        daily_spending[date_key] = daily_spending.get(date_key, 0) + actual_spend
+
+    current_date = start_date.date()
+    end_date_normalized = end_date.date()
+    result = []
+    running_total = 0
+
+    while current_date <= end_date_normalized:
+        daily_amount = daily_spending.get(current_date, 0)
+        if cumulative:
+            running_total += daily_amount
+            result.insert(0, running_total)
+        else:
+            result.insert(0, daily_amount)
+        current_date += timedelta(days=1)
+
+    return result
+
+
+def get_spending(start_date, end_date) -> list[float]:
+    """Gets a list of spent amounts for each day in the period, less split amounts of the records"""
     session = Session()
     try:
-        # Get records for the specified weeks
-        records = (
-            session.query(Record)
-            .filter(
-                Record.isIncome == False,  # noqa: E712
-                Record.date >= start_date,
-                Record.date < end_date,
-                Record.isTransfer == False,  # noqa: E712
-            )
-            .options(joinedload(Record.splits))
-            .all()
+        records = _get_spending_records(session, start_date, end_date)
+        return _calculate_daily_spending(
+            records, start_date, end_date, cumulative=False
         )
+    finally:
+        session.close()
 
-        # Calculate spending per day
-        daily_spending = {}
-        for record in records:
-            date_key = record.date.date()
-            splits_sum = sum(split.amount for split in record.splits)
-            actual_spend = record.amount - splits_sum
 
-            if date_key in daily_spending:
-                daily_spending[date_key] += actual_spend
-            else:
-                daily_spending[date_key] = actual_spend
-
-        # Create list of daily spending for all days in period
-        current_date = start_date.date()
-        end_date_normalized = end_date.date()
-        spending_trend = []
-
-        while current_date <= end_date_normalized:
-            spending_trend.insert(0, daily_spending.get(current_date, 0))
-            current_date += timedelta(days=1)
-
-        return spending_trend
+def get_spending_trend(start_date, end_date) -> list[float]:
+    """Gets a cumulative list of spent amounts for each day in the period"""
+    session = Session()
+    try:
+        records = _get_spending_records(session, start_date, end_date)
+        return _calculate_daily_spending(records, start_date, end_date, cumulative=True)
     finally:
         session.close()
 
@@ -165,6 +186,112 @@ def is_record_all_splits_paid(record_id: int):
     try:
         splits = get_splits_by_record_id(record_id)
         return all(split.isPaid for split in splits)
+    finally:
+        session.close()
+
+
+def get_daily_balance(start_date, end_date) -> list[float]:
+    """Gets a list of account balances for each day in the period"""
+    session = Session()
+    try:
+        # Get all accounts to calculate total balance
+        accounts = session.query(Account).filter(Account.deletedAt.is_(None)).all()
+
+        # Initialize daily balances dict
+        daily_balances = {}
+        current_date = start_date.date()
+        end_date_normalized = end_date.date()
+
+        # For each day in range
+        while current_date <= end_date_normalized:
+            # Calculate total balance across all accounts for this day
+            total_balance = 0
+            for account in accounts:
+                # Start with beginning balance
+                balance = account.beginningBalance
+
+                # Get all records up to current date
+                records = (
+                    session.query(Record)
+                    .filter(
+                        Record.accountId == account.id,
+                        Record.date < current_date + timedelta(days=1),
+                    )
+                    .all()
+                )
+
+                # Calculate balance from records
+                for record in records:
+                    if record.isTransfer:
+                        balance -= record.amount
+                    elif record.isIncome:
+                        balance += record.amount
+                    else:
+                        balance -= record.amount
+
+                # Add transfers into this account
+                transfer_records = (
+                    session.query(Record)
+                    .filter(
+                        Record.transferToAccountId == account.id,
+                        Record.isTransfer == True,  # noqa: E712
+                        Record.date < current_date + timedelta(days=1),
+                    )
+                    .all()
+                )
+
+                for record in transfer_records:
+                    balance += record.amount
+
+                # Add paid splits
+                splits = (
+                    session.query(Split)
+                    .filter(
+                        Split.accountId == account.id,
+                        Split.isPaid == True,  # noqa: E712
+                        Split.paidDate < current_date + timedelta(days=1),
+                    )
+                    .all()
+                )
+
+                for split in splits:
+                    if split.record.isIncome:
+                        balance -= split.amount
+                    else:
+                        balance += split.amount
+
+                total_balance += balance
+
+            daily_balances[current_date] = total_balance
+            current_date += timedelta(days=1)
+
+        # Convert to list in reverse order like get_spending
+        result = []
+        current_date = start_date.date()
+        while current_date <= end_date_normalized:
+            result.insert(0, daily_balances[current_date])
+            current_date += timedelta(days=1)
+
+        return result
+    finally:
+        session.close()
+
+
+def get_net_income(offset: int = 0, offset_type: str = "month") -> float:
+    session = Session()
+    try:
+        start_of_period, end_of_period = get_start_end_of_period(offset, offset_type)
+        net_income = (
+            session.query(func.sum(Record.amount))
+            .filter(
+                Record.isIncome == True,  # noqa: E712
+                Record.date >= start_of_period,
+                Record.date < end_of_period,
+            )
+            .scalar()
+            or 0.0
+        )
+        return net_income
     finally:
         session.close()
 

@@ -92,7 +92,7 @@ class Spending(Static):
         plt.plot(
             dates,
             spending,
-            marker="braille",
+            marker=CONFIG.defaults.plot_marker,
             color=_rgbify(Color.parse(self.app.themes[self.app.app_theme].accent).rgb),
         )
         plt.date_form(output_form="d")

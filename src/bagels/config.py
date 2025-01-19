@@ -12,6 +12,7 @@ class Defaults(BaseModel):
     first_day_of_week: int = Field(ge=0, le=6, default=6)
     date_format: str = "%d/%m"
     round_decimals: int = 2
+    plot_marker: Literal["braille", "fhd", "hd", "dot"] = "braille"
 
 
 class DatemodeHotkeys(BaseModel):

@@ -1,9 +1,7 @@
 from pathlib import Path
 from time import sleep
 
-
 # from venv import create
-
 import click
 
 from bagels.locations import config_file, database_file, set_custom_root

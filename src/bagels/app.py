@@ -252,14 +252,14 @@ class App(TextualApp):
         with Container(classes="header"):
             yield Label(f"↪ {self.project_info['name']}", classes="title")
             yield Label(version, classes="version")
-            test = Tabs(
+            tabs = Tabs(
                 *[
                     Tab(name, id=f"tab-{name.lower()}")
                     for name in [page["name"] for page in PAGES]
                 ],
                 classes="root-tabs",
             )
-            test.can_focus = False
-            yield test
+            tabs.can_focus = False
+            yield tabs
             yield Label(path, classes="path")
         yield Footer()

@@ -1,3 +1,5 @@
+import platform
+import subprocess
 from functools import partial
 from typing import TYPE_CHECKING, cast
 
@@ -5,8 +7,9 @@ from textual.command import DiscoveryHit, Hit, Hits, Provider
 from textual.types import IgnoreReturnCallbackType
 
 from bagels.config import CONFIG, write_state
-from bagels.models.database.app import wipe_database
+from bagels.locations import config_file
 from bagels.managers.samples import create_sample_entries
+from bagels.models.database.app import wipe_database
 
 if TYPE_CHECKING:
     from bagels.app import App
@@ -25,6 +28,12 @@ class AppProvider(Provider):
                 "config: toggle update check",
                 self._action_toggle_update_check,
                 "Toggle update check on startup",
+                True,
+            ),
+            (
+                "config: open config file",
+                self._action_open_config_file,
+                "Open the config file in the default editor",
                 True,
             ),
             (
@@ -120,3 +129,18 @@ class AppProvider(Provider):
         self.app.notify(
             f"Update check {'enabled' if not cur else 'disabled'} on startup"
         )
+
+    def _action_open_config_file(self) -> None:
+        try:
+            file = config_file()
+            if platform.system() == "Darwin":  # macOS
+                subprocess.call(("open", file))
+            elif platform.system() == "Windows":  # Windows
+                subprocess.call(("start", file), shell=True)
+            else:  # Linux and other Unix-like systems
+                subprocess.call(("xdg-open", file))
+            self.app.exit(message="Opened config file in default editor!")
+        except Exception as e:
+            self.app.notify(
+                f"Failed to open config file: {e}", title="Error", severity="error"
+            )

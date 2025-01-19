@@ -112,11 +112,11 @@ Tabs {
 /*                Utils               */
 /* ---------------------------------- */
 
-#empty-indicator {
+.empty-indicator {
   width: 1fr;
   hatch: right $primary-background;
   content-align: center middle;
-  height: 11;
+  height: 1fr;
   max-height: 1fr;
   color: $primary-background-lighten-1;
 }

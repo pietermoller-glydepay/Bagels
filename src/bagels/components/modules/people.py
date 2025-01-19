@@ -45,7 +45,7 @@ class People(Static):
 
     def rebuild(self) -> None:
         table: DataTable = self.query_one("#people-table")
-        empty_indicator: Static = self.query_one("#empty-indicator")
+        empty_indicator: Static = self.query_one(".empty-indicator")
 
         table.clear()
         if not table.columns:

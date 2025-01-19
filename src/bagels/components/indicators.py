@@ -8,4 +8,4 @@ class EmptyIndicator(Static):
         self.message = message
 
     def compose(self) -> ComposeResult:
-        yield Static(self.message, id="empty-indicator")
+        yield Static(self.message, classes="empty-indicator")

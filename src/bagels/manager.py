@@ -1,5 +1,5 @@
 from textual.app import ComposeResult
-from textual.containers import Center
+from textual.containers import Center, Container
 from textual.widgets import Static
 
 from bagels.components.bagel import Bagel
@@ -47,10 +47,12 @@ class Manager(Static):
     def compose(self) -> ComposeResult:
         if self.isReady:
             with Static(classes="manager-modules-container"):
-                yield self.spending_module
-                yield self.categories_module
-                yield self.budgets_module
-                yield self.people_module
+                with Container(classes="left"):
+                    yield self.spending_module
+                    yield self.budgets_module
+                with Container(classes="right"):
+                    yield self.categories_module
+                    yield self.people_module
         else:
             with Center():
                 yield Bagel()

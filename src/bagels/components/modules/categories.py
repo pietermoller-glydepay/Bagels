@@ -58,7 +58,7 @@ class Categories(Static):
 
     def rebuild(self) -> None:
         table: DataTable = self.query_one("#categories-table")
-        # empty_indicator: Static = self.query_one("#empty-indicator")
+        # empty_indicator: Static = self.query_one(".empty-indicator")
 
         table.clear()
         if not table.columns:

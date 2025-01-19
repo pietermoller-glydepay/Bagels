@@ -1,145 +1,149 @@
 
 #home-top-container {
-    layout: horizontal;
+  layout: horizontal;
+  width: 1fr;
+  height: auto;
+
+  #accounts-container {
     width: 1fr;
-    height: auto;
-  
-    #accounts-container {
-      width: 1fr;
-      height: 100%;
-  
-      .account-container {
-        height: auto;
-        align-vertical: middle;
-        padding: 0 1 1 1;
-        border-top: tall $surface;
-        
-        .left-container {
-          height: auto;
-          # layout: horizontal;
-  
-          .name {
-            margin-right: 2;
-          }
-  
-          .description {
-            color: $primary-background-lighten-3;
-            
-          }
-          
-          .none {
-            display: none;
-          }
-        }
-        
-        &.selected {
-          border-left: outer $surface-lighten-2;
-          padding: 1 1 1 1;
-          border-top: none;
-          background: $surface;
-        }
-        
-        .balance {
-          dock: right;
-          color: $secondary;
-        }
-      }
-  
-    }
-  
-    #home-mode-container {
-      width: 30;
+    height: 100%;
+
+    .account-container {
+      height: auto;
+      align-vertical: middle;
+      padding: 0 1 1 1;
+      border-top: tall $surface;
       
-      #incomemode-container {
-        layout: horizontal;
-        width: 1fr;
+      .left-container {
+        height: auto;
+        # layout: horizontal;
+
+        .name {
+          margin-right: 2;
+        }
+
+        .description {
+          color: $primary-background-lighten-3;
+          
+        }
+        
+        .none {
+          display: none;
+        }
       }
-      #datemode-container {
-        width: 1fr;
-        height: 11;
-  
-        .month-selector {
-          height: 2;
-          layout: horizontal;
-          align: center middle;
-  
-          Button {
-            width: auto;
-          }
-          #prev-month {
-            dock: left;
-            color: $primary-background-lighten-3;
-          }
-          .current-filter-label {
-          }
-          #next-month {
-            dock: right;
-            color: $primary-background-lighten-3;
-          }
-        }
-        .calendar {
-          height: 6;
-          width: 20;
-          offset-x: 3;
-  
-          .calendar-row {
-            height: 1;
-  
-            Label {
-              width: 3;
-            }
-            .not_current_month {
-              color: $panel-lighten-1;
-            }
-          }
-  
-          .calendar-dotw-row {
-            height: 1;
-  
-            Label {
-              width: 3;
-              color: $primary-background-lighten-3;
-              text-style: italic;
-            }
-          }
-          
-          .target_month {
-            background: $accent 10%;
-          }
-  
-          .target_week, .target {
-            background: $accent 20%;
-          }
-  
-  
-          .today {
-            color: $accent;
-            text-style: bold underline;
-          }
-          
-        }
+      
+      &.selected {
+        border-left: outer $surface-lighten-2;
+        padding: 1 1 1 1;
+        border-top: none;
+        background: $surface;
+      }
+      
+      .balance {
+        dock: right;
+        color: $secondary;
       }
     }
+
   }
-  
-  .home-modules-container {
-    height: auto;
-    width: 1fr;
-    padding: 0 2;
+
+  #home-mode-container {
+    width: 30;
     
-    &.h {
+    #incomemode-container {
       layout: horizontal;
       width: 1fr;
-      
-      .left {
-        width: 40%;
-      }
-      .right {
-        width: 60%
-      }
     }
-    
-    &.v {
-      layout: vertical;
+    #datemode-container {
+      width: 1fr;
+      height: 11;
+
+      .month-selector {
+        height: 2;
+        layout: horizontal;
+        align: center middle;
+
+        Button {
+          width: auto;
+        }
+        #prev-month {
+          dock: left;
+          color: $primary-background-lighten-3;
+        }
+        .current-filter-label {
+        }
+        #next-month {
+          dock: right;
+          color: $primary-background-lighten-3;
+        }
+      }
+      .calendar {
+        height: 6;
+        width: 20;
+        offset-x: 3;
+
+        .calendar-row {
+          height: 1;
+
+          Label {
+            width: 3;
+          }
+          .not_current_month {
+            color: $panel-lighten-1;
+          }
+        }
+
+        .calendar-dotw-row {
+          height: 1;
+
+          Label {
+            width: 3;
+            color: $primary-background-lighten-3;
+            text-style: italic;
+          }
+        }
+        
+        .target_month {
+          background: $accent 10%;
+        }
+
+        .target_week, .target {
+          background: $accent 20%;
+        }
+
+
+        .today {
+          color: $accent;
+          text-style: bold underline;
+        }
+        
+      }
     }
   }
+}
+
+.home-modules-container {
+  height: auto;
+  width: 1fr;
+  padding: 0 2;
+}
+
+.h {
+  .home-modules-container {
+    layout: horizontal;
+    width: 1fr;
+    
+    .left {
+      width: 40%;
+    }
+    .right {
+      width: 60%
+    }
+  }
+}
+
+.v {
+  .home-modules-container {
+    layout: vertical;
+  }
+}

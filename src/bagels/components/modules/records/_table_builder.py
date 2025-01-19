@@ -25,7 +25,7 @@ class RecordTableBuilder:
         if not hasattr(self, "table"):
             return
         table = self.table
-        empty_indicator: EmptyIndicator = self.query_one("#empty-indicator")
+        empty_indicator: EmptyIndicator = self.query_one(".empty-indicator")
         self._initialize_table(table)
         records = self._fetch_records()
 
@@ -42,6 +42,7 @@ class RecordTableBuilder:
         if hasattr(self, "current_row_index"):
             table.move_cursor(row=self.current_row_index)
         empty_indicator.display = not table.rows
+        table.display = not not table.rows
 
     def _fetch_records(self):
         params = {

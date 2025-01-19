@@ -1,18 +1,23 @@
-#budgets-container {
-  row-span: 2;
-  height: 1fr;
+/* ------------ Spending ------------ */
 
+.h {
+  #spending-container {
+    height: 60%
+  }
+}
+
+.v {
+  #spending-container {
+    height: 70%
+  }
 }
 
 #spending-container {
-  row-span: 3;
-  height: 1fr;
-
   Button {
     width: auto;
   }
 
-  & > #empty-indicator {
+  & > .empty-indicator {
     height: 1fr;
   }
 
@@ -28,20 +33,49 @@
   }
 }
 
+/* ------------- Budgets ------------ */
+
+.h {
+  #budgets-container {
+    height: 1fr;
+  }
+}
+
+.v {
+  #budgets-container {
+    height: 1fr;
+  }
+}
+
+/* ----------- Categories ----------- */
+
+.h {
+  #categories-container {
+    height: 80%
+  }
+}
+
+.v {
+  #categories-container {
+    height: 1fr;
+    width: 50;
+  }
+}
+
 #categories-container {
-  width: 50;
-  row-span: 4;
-  
   #categories-table {
     width: 46;
   }
 }
 
-#people-container {
-  width: 50;
-  height: 1fr;
+/* ------------- People ------------- */
 
+.h {
   .person {
     width: 1fr;
   }
+}
+
+#people-container {
+  height: 1fr;
 }

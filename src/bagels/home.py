@@ -90,7 +90,7 @@ class Home(Static):
         self.templates_module = Templates(parent=self)
 
     def on_mount(self) -> None:
-        self.app.watch(self.app, "layout", self.on_layout_change)
+        pass
 
     # -------------- Helpers ------------- #
 
@@ -155,11 +155,6 @@ class Home(Static):
 
     # region Callbacks
     # ------------- Callbacks ------------ #
-
-    def on_layout_change(self, layout: str) -> None:
-        layout_container = self.query(".home-modules-container")
-        if len(layout_container) > 0:
-            layout_container[0].set_classes(f"home-modules-container {layout}")
 
     def action_dec_offset(self) -> None:
         self.filter["offset"] -= 1
@@ -267,7 +262,7 @@ class Home(Static):
     # --------------- View --------------- #
 
     def compose(self) -> ComposeResult:
-        with Static(classes="home-modules-container v"):
+        with Static(classes="home-modules-container"):
             with Static(classes="left"):
                 with Static(id="home-top-container"):
                     yield self.accounts_module

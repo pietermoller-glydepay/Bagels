@@ -1,5 +1,16 @@
+.h {
+  #records-container {
+    height: 1fr;
+
+    #records-table {
+      height: 1fr;
+    }
+  }
+}
 
 #records-container {
+
+
     .selectors {
       height: auto;
       
@@ -37,8 +48,16 @@
       }
     }
   }
+
+  .h {
+    #insights-container {
+      height: 1fr;
+    }
+  }
   
   #insights-container {
+
+
     .figures-container {
       height: auto;
       margin-bottom: 1;

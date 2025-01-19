@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -10,6 +10,7 @@ from textual.widgets import Button, Label, Static
 from bagels.components.indicators import EmptyIndicator
 from bagels.components.tplot import PlotextPlot
 from bagels.components.tplot.plot import _rgbify
+from bagels.config import CONFIG
 from bagels.managers.records import get_spending_trend
 from bagels.managers.utils import get_start_end_of_period
 
@@ -23,8 +24,8 @@ class Spending(Static):
     BINDINGS = [
         Binding("left", "dec_offset", "Shift back", show=True),
         Binding("right", "inc_offset", "Shfit front", show=True),
-        Binding("w", "inc_weekcount", "Widen view", show=True),
-        Binding("n", "dec_weekcount", "Narrow view", show=True),
+        Binding("-", "inc_weekcount", "Zoom out", show=True),
+        Binding("+", "dec_weekcount", "Zoom in", show=True),
     ]
 
     def __init__(self, *args, **kwargs) -> None:
@@ -94,13 +95,21 @@ class Spending(Static):
             marker="braille",
             color=_rgbify(Color.parse(self.app.themes[self.app.app_theme].accent).rgb),
         )
-        plt.date_form(output_form="d/m")
+        plt.date_form(output_form="d")
         plt.xfrequency(len(dates))
         line_color = _rgbify(Color.parse(self.app.themes[self.app.app_theme].panel).rgb)
+        fdow_line_color = _rgbify(
+            Color.parse(self.app.themes[self.app.app_theme].secondary).rgb
+        )
         for d in dates:
-            plt.vline(d, line_color)
-        # plt.xaxes(False)
-        # plt.yaxes(False)
+            fdow = CONFIG.defaults.first_day_of_week  # 6 is sunday
+            d_datetime = datetime.strptime(d, "%d/%m/%Y")
+            if d_datetime.weekday() == fdow:
+                plt.vline(d, fdow_line_color)
+            else:
+                plt.vline(d, line_color)
+        plt.xaxes(False)
+        plt.yaxes(False)
 
     # region Callbacks
     # ------------- Callbacks ------------ #

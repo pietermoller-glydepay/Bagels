@@ -191,7 +191,7 @@ class App(TextualApp):
     # region hooks
     # --------------- hooks -------------- #
 
-    def on_tabs_tab_activated(self, event: Tabs.TabActivated) -> None:
+    async def on_tabs_tab_activated(self, event: Tabs.TabActivated) -> None:
         if event.tab.id.startswith("tab-"):
             try:
                 currentContent = self.query_one(".content")
@@ -204,7 +204,8 @@ class App(TextualApp):
                 if page["name"].lower() == event.tab.id.replace("tab-", "")
             )
             page_instance = page_class(classes="content")
-            self.mount(page_instance)
+            await self.mount(page_instance)
+            self.query_one(".content").set_classes(f"content {self.layout}")
 
     def on_resize(self, event: events.Resize) -> None:
         console_size: Size = event.size
@@ -213,6 +214,11 @@ class App(TextualApp):
             self.layout = "v"
         else:
             self.layout = "h"
+        self.log(f"Aspect ratio: {aspect_ratio}, layout: {self.layout}")
+        try:
+            self.query_one(".content").set_classes(f"content {self.layout}")
+        except:  # noqa
+            pass
         if self.is_testing:
             self.query_one(".version").update(
                 "Layout: " + self.layout + " " + str(aspect_ratio)

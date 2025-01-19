@@ -61,6 +61,7 @@ class App(TextualApp):
         self.themes = available_themes
         self.is_testing = is_testing
         super().__init__()
+        self.theme_changed_signal2: Signal[Theme] = Signal(self, "theme-changed")
 
         # Get package metadata directly
         meta = metadata("bagels")
@@ -68,7 +69,6 @@ class App(TextualApp):
 
     def on_mount(self) -> None:
         # --------------- theme -------------- #
-        self.theme_change_signal = Signal[Theme](self, "theme-changed")
         # -------------- jumper -------------- #
         self.jumper = Jumper(
             {
@@ -76,8 +76,11 @@ class App(TextualApp):
                 "insights-container": "i",
                 "records-container": "r",
                 "templates-container": "t",
-                # "incomemode-container": "v",
                 "datemode-container": "p",
+                "categories-container": "a",
+                "people-container": "p",
+                "budgets-container": "b",
+                "spending-container": "s",
             },
             screen=self.screen,
         )
@@ -108,13 +111,14 @@ class App(TextualApp):
         self.screen._update_styles()
         if theme:
             try:
-                theme_object = self.themes[theme]
+                self.themes[theme]
             except KeyError:
                 self.notify(
                     f"Theme {theme!r} not found.", title="Theme Error", timeout=1
                 )
                 return
-            self.theme_change_signal.publish(theme_object)
+            print(f"Theme changed to {theme!r}")
+            self.theme_changed_signal2.publish(theme)
 
     @on(CommandPalette.Opened)
     def palette_opened(self) -> None:
@@ -242,12 +246,14 @@ class App(TextualApp):
         with Container(classes="header"):
             yield Label(f"↪ {self.project_info['name']}", classes="title")
             yield Label(version, classes="version")
-            yield Tabs(
+            test = Tabs(
                 *[
                     Tab(name, id=f"tab-{name.lower()}")
                     for name in [page["name"] for page in PAGES]
                 ],
                 classes="root-tabs",
             )
+            test.can_focus = False
+            yield test
             yield Label(path, classes="path")
         yield Footer()

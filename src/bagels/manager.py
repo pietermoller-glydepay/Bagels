@@ -3,6 +3,7 @@ from textual.containers import Center
 from textual.widgets import Static
 
 from bagels.components.bagel import Bagel
+from bagels.components.modules.budgets import Budgets
 from bagels.components.modules.categories import Categories
 from bagels.components.modules.people import People
 from bagels.components.modules.spending import Spending
@@ -14,6 +15,10 @@ class Manager(Static):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs, id="manager-page")
         self.isReady = get_accounts_count() and get_categories_count()
+        self.spending_module = Spending()
+        self.categories_module = Categories()
+        self.budgets_module = Budgets()
+        self.people_module = People()
 
     def on_mount(self) -> None:
         self.app.watch(self.app, "layout", self.on_layout_change)
@@ -21,7 +26,11 @@ class Manager(Static):
     # -------------- Helpers ------------- #
 
     def rebuild(self) -> None:
-        pass
+        if self.isReady:
+            self.spending_module.rebuild()
+            self.categories_module.rebuild()
+            self.budgets_module.rebuild()
+            self.people_module.rebuild()
 
     # region Callbacks
     # ------------- Callbacks ------------ #
@@ -36,24 +45,12 @@ class Manager(Static):
     # --------------- View --------------- #
 
     def compose(self) -> ComposeResult:
-        # with Static(classes="home-modules-container v"):
-        #     with Static(classes="left"):
-        #         with Static(id="home-top-container"):
-        #             yield self.accounts_module
-        #             with Static(id="home-mode-container"):
-        #                 yield self.income_mode_module
-        #                 yield self.date_mode_module
-        #         yield self.insights_module
-        #     with Static(classes="right"):
-        #         if self.isReady:
-        #             yield self.templates_module
-        #             yield self.record_module
-        #         else:
         if self.isReady:
             with Static(classes="manager-modules-container"):
-                yield Spending()
-                yield Categories()
-                yield People()
+                yield self.spending_module
+                yield self.categories_module
+                yield self.budgets_module
+                yield self.people_module
         else:
             with Center():
                 yield Bagel()

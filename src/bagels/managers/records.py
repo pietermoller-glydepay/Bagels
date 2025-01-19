@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload, sessionmaker
@@ -117,19 +117,17 @@ def get_records(
         session.close()
 
 
-def get_spending_trend(weeks=1, week_offset=0) -> list[float]:
-    """Gets a list of spent amounts for the last x weeks, less split amounts of the records. Considers only isIncome=False"""
+def get_spending_trend(start_date, end_date) -> list[float]:
+    """Gets a list of spent amounts for each day in the period, less split amounts of the records. Uses 0 for days without records. Considers only isIncome=False"""
     session = Session()
     try:
         # Get records for the specified weeks
-        start_date = datetime.now() - timedelta(weeks=weeks)
-        end_date = datetime.now() - timedelta(weeks=week_offset)
         records = (
             session.query(Record)
             .filter(
                 Record.isIncome == False,  # noqa: E712
                 Record.date >= start_date,
-                Record.date <= end_date,
+                Record.date < end_date,
                 Record.isTransfer == False,  # noqa: E712
             )
             .options(joinedload(Record.splits))
@@ -148,9 +146,14 @@ def get_spending_trend(weeks=1, week_offset=0) -> list[float]:
             else:
                 daily_spending[date_key] = actual_spend
 
-        # Create list of daily spending
-        sorted_dates = sorted(daily_spending.keys())
-        spending_trend = [daily_spending[date] for date in sorted_dates]
+        # Create list of daily spending for all days in period
+        current_date = start_date.date()
+        end_date_normalized = end_date.date()
+        spending_trend = []
+
+        while current_date <= end_date_normalized:
+            spending_trend.insert(0, daily_spending.get(current_date, 0))
+            current_date += timedelta(days=1)
 
         return spending_trend
     finally:

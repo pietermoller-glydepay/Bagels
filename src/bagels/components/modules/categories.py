@@ -17,6 +17,8 @@ from bagels.modals.input import InputModal
 
 
 class Categories(Static):
+    can_focus = True
+
     COLUMNS = ("", "Name", "Nature")
 
     BINDINGS = [

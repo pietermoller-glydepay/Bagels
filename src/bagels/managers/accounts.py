@@ -76,7 +76,7 @@ def get_account_balance(accountId, session=None):
         # Get all records where this account is the transfer destination
         transfer_to_records = (
             session.query(Record)
-            .filter(Record.transferToAccountId == accountId, Record.isTransfer is True)
+            .filter(Record.transferToAccountId == accountId, Record.isTransfer == True)  # noqa
             .all()
         )
 

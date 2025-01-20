@@ -52,8 +52,8 @@ class SpendingPlot(BasePlot):
         offset: int,
         data: list[float],
     ) -> None:
-        plt.ylim(lower=0)
-        pass
+        if min(data) >= 0:
+            plt.ylim(lower=0)
 
 
 class SpendingTrajectoryPlot(BasePlot):

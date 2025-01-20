@@ -82,13 +82,17 @@ Please use the black formatter to format the code.
 
 ## Roadmap
 
-- [ ] More insight displays and analysis (by nature etc.)
+- [x] Budgets (Major!)
+- [x] More insight displays and analysis (by nature etc.)
+- [ ] Daily check-ins
+- [ ] Pagination for records on monthly and yearly views.
+
+Backlog:
+
 - [ ] "Processing" bool on records for transactions in process
 - [ ] Record flags for future insights implementation
-- [ ] Repayment reminders
 - [ ] Code review
-- [ ] Daily check-ins
-- [ ] Budgets
+- [ ] Repayment reminders
 - [ ] Add tests
 - [ ] Bank sync
 

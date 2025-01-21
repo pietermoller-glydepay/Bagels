@@ -4,17 +4,17 @@ from textual.app import ComposeResult
 from textual.containers import Container, ScrollableContainer
 from textual.widgets import Label, Static
 
-from bagels.modals.confirmation import ConfirmationModal
-from bagels.modals.input import InputModal
+from bagels.components.indicators import EmptyIndicator
 from bagels.config import CONFIG
+from bagels.forms.account_forms import AccountForm
 from bagels.managers.accounts import (
     create_account,
     delete_account,
     get_all_accounts_with_balance,
     update_account,
 )
-from bagels.forms.account_forms import AccountForm
-from bagels.components.indicators import EmptyIndicator
+from bagels.modals.confirmation import ConfirmationModal
+from bagels.modals.input import InputModal
 
 
 class AccountMode(ScrollableContainer):
@@ -30,7 +30,6 @@ class AccountMode(ScrollableContainer):
         super().__init__(
             *args, **kwargs, id="accounts-container", classes="module-container"
         )
-        super().__setattr__("border_title", "Accounts (using)")
         super().__setattr__(
             "border_subtitle",
             f"{CONFIG.hotkeys.home.select_prev_account} {CONFIG.hotkeys.home.select_next_account}",
@@ -45,7 +44,9 @@ class AccountMode(ScrollableContainer):
     # -------------- Builder ------------- #
 
     def rebuild(self) -> None:
+        net_balance = 0
         for account in get_all_accounts_with_balance():
+            net_balance += account.balance
             # Update balance
             self.query_one(f"#account-{account.id}-balance").update(
                 str(account.balance)
@@ -75,6 +76,8 @@ class AccountMode(ScrollableContainer):
             # Scroll to selected account
             if selected:
                 self.scroll_to_widget(account_container)
+
+        super().__setattr__("border_title", f"Accounts @= {net_balance}")
 
     # region Callbacks
     # ------------- Callbacks ------------ #

@@ -128,8 +128,8 @@ class Spending(Static):
 
         def get_theme_color(key):
             return (
-                rgbify_hex(bagel_theme[key])
-                if key in bagel_theme
+                rgbify_hex(getattr(bagel_theme, key, None))
+                if getattr(bagel_theme, key, None) is not None
                 else rgbify_hex(self.app.theme_variables[key])
             )
 
@@ -161,28 +161,28 @@ class Spending(Static):
         plt.xfrequency(total_days)
         plt.xlim(dates[0], dates[-1])
 
-        # if bagel_theme.panel:
-        #     line_color = rgbify_hex(bagel_theme.panel)
-        # else:
-        #     line_color = rgbify_hex(self.app.theme_variables["panel"])
+        today = datetime.now()
         line_color = get_theme_color("panel")
         fdow_line_color = get_theme_color("secondary")
+        today_line_color = get_theme_color("success")
 
         if plot.supports_cross_periods and self.periods > 1:
-            for d in dates:
-                d_datetime = datetime.strptime(d, "%d/%m/%Y")
-                if d_datetime.day == 1:
-                    plt.vline(d, fdow_line_color)
-                else:
-                    plt.vline(d, line_color)
+
+            def compare_function(dd):
+                return dd.day == 1
         else:
-            for d in dates:
-                fdow = CONFIG.defaults.first_day_of_week
-                d_datetime = datetime.strptime(d, "%d/%m/%Y")
-                if d_datetime.weekday() == fdow:
-                    plt.vline(d, fdow_line_color)
-                else:
-                    plt.vline(d, line_color)
+
+            def compare_function(dd):
+                return dd.weekday() == CONFIG.defaults.first_day_of_week
+
+        for d in dates:
+            d_datetime = datetime.strptime(d, "%d/%m/%Y")
+            if d_datetime.date() == today.date():
+                plt.vline(d, today_line_color)
+            elif compare_function(d_datetime):
+                plt.vline(d, fdow_line_color)
+            else:
+                plt.vline(d, line_color)
 
         plt.xaxes(False)
         plt.yaxes(False)
@@ -231,3 +231,5 @@ class Spending(Static):
             for i, plot in enumerate(self._plots):
                 button_classes = "selected" if i == self.current_plot else ""
                 yield Button(plot.name, id=f"plot-{i}", classes=button_classes)
+                if i != len(self._plots) - 1:
+                    yield Label(" | ")

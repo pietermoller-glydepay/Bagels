@@ -238,7 +238,10 @@ def get_daily_balance(start_date, end_date) -> list[float]:
 
         results = []
         current = start_date
+        today = datetime.today()
         while current <= end_date:
+            if current > today:
+                break
             day_records = (
                 session.query(Record)
                 .filter(

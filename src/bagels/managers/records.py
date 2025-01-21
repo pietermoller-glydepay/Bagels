@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload, sessionmaker
@@ -144,16 +144,18 @@ def _calculate_daily_spending(records, start_date, end_date, cumulative=False):
 
     current_date = start_date.date()
     end_date_normalized = end_date.date()
+    today = datetime.today().date()
     result = []
     running_total = 0
 
     while current_date <= end_date_normalized:
-        daily_amount = daily_spending.get(current_date, 0)
-        if cumulative:
-            running_total += daily_amount
-            result.insert(0, running_total)
-        else:
-            result.insert(0, daily_amount)
+        if current_date <= today:
+            daily_amount = daily_spending.get(current_date, 0)
+            if cumulative:
+                running_total += daily_amount
+                result.append(running_total)
+            else:
+                result.append(daily_amount)
         current_date += timedelta(days=1)
 
     return result
@@ -192,87 +194,69 @@ def is_record_all_splits_paid(record_id: int):
 
 def get_daily_balance(start_date, end_date) -> list[float]:
     """Gets a list of account balances for each day in the period"""
+    # Calculating net beginning balance
+
+    # Handle records up till start_date, then process each day one by one.
+
+    # Records.isIncome ? add : subtract
+
+    # for Record.splits => Record.isIncome ? subtract Split.amount : add Split.amount
+
+    # Record.isTransfer ? Record.transferToAccount.name == "Outside source" ? subtract : Record.account.name == "Outside source" ? add : ignore
+
+    # return result
     session = Session()
     try:
-        # Get all accounts to calculate total balance
         accounts = session.query(Account).filter(Account.deletedAt.is_(None)).all()
+        total_balance = sum(a.beginningBalance for a in accounts)
+        old_records = (
+            session.query(Record)
+            .filter(
+                Record.date < start_date, Record.accountId.in_([a.id for a in accounts])
+            )
+            .options(
+                joinedload(Record.splits),
+                joinedload(Record.account),
+                joinedload(Record.transferToAccount),
+            )
+            .all()
+        )
 
-        # Initialize daily balances dict
-        daily_balances = {}
-        current_date = start_date.date()
-        end_date_normalized = end_date.date()
+        def adjust_balance(r):
+            if r.isTransfer:
+                if r.transferToAccount and r.transferToAccount.name == "Outside source":
+                    return -r.amount
+                if r.account and r.account.name == "Outside source":
+                    return r.amount
+                return 0
+            if r.isIncome:
+                return r.amount - sum(s.amount for s in r.splits)
+            return -r.amount + sum(s.amount for s in r.splits)
 
-        # For each day in range
-        while current_date <= end_date_normalized:
-            # Calculate total balance across all accounts for this day
-            total_balance = 0
-            for account in accounts:
-                # Start with beginning balance
-                balance = account.beginningBalance
+        for rec in old_records:
+            total_balance += adjust_balance(rec)
 
-                # Get all records up to current date
-                records = (
-                    session.query(Record)
-                    .filter(
-                        Record.accountId == account.id,
-                        Record.date < current_date + timedelta(days=1),
-                    )
-                    .all()
+        results = []
+        current = start_date
+        while current <= end_date:
+            day_records = (
+                session.query(Record)
+                .filter(
+                    func.date(Record.date) == current.date(),
+                    Record.accountId.in_([a.id for a in accounts]),
                 )
-
-                # Calculate balance from records
-                for record in records:
-                    if record.isTransfer:
-                        balance -= record.amount
-                    elif record.isIncome:
-                        balance += record.amount
-                    else:
-                        balance -= record.amount
-
-                # Add transfers into this account
-                transfer_records = (
-                    session.query(Record)
-                    .filter(
-                        Record.transferToAccountId == account.id,
-                        Record.isTransfer == True,  # noqa: E712
-                        Record.date < current_date + timedelta(days=1),
-                    )
-                    .all()
+                .options(
+                    joinedload(Record.splits),
+                    joinedload(Record.account),
+                    joinedload(Record.transferToAccount),
                 )
-
-                for record in transfer_records:
-                    balance += record.amount
-
-                # Add paid splits
-                splits = (
-                    session.query(Split)
-                    .filter(
-                        Split.accountId == account.id,
-                        Split.isPaid == True,  # noqa: E712
-                        Split.paidDate < current_date + timedelta(days=1),
-                    )
-                    .all()
-                )
-
-                for split in splits:
-                    if split.record.isIncome:
-                        balance -= split.amount
-                    else:
-                        balance += split.amount
-
-                total_balance += balance
-
-            daily_balances[current_date] = total_balance
-            current_date += timedelta(days=1)
-
-        # Convert to list in reverse order like get_spending
-        result = []
-        current_date = start_date.date()
-        while current_date <= end_date_normalized:
-            result.insert(0, daily_balances[current_date])
-            current_date += timedelta(days=1)
-
-        return result
+                .all()
+            )
+            day_effect = sum(adjust_balance(dr) for dr in day_records)
+            total_balance += day_effect
+            results.append(total_balance)
+            current += timedelta(days=1)
+        return results
     finally:
         session.close()
 

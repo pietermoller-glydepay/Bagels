@@ -123,10 +123,12 @@ class PlotextPlot(Widget):
         default_theme_variables = self.app.theme_variables
         _themes[plotext_theme_name] = _rgbify_theme(
             Color.parse(
-                app_theme_variables.background or default_theme_variables.get("surface")
+                app_theme_variables.background
+                or default_theme_variables.get("background")
             ).rgb,
             Color.parse(
-                app_theme_variables.background or default_theme_variables.get("surface")
+                app_theme_variables.background
+                or default_theme_variables.get("background")
             ).rgb,
             Color.parse(
                 app_theme_variables.foreground

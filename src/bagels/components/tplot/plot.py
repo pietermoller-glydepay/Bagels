@@ -10,14 +10,15 @@ from __future__ import annotations
 
 from typing import Any, Tuple, Union
 
-from typing_extensions import Literal, TypeAlias, get_args
-
 from plotext._dict import (
     themes as _themes,
+)
+from plotext._dict import (
     type1_to_type2_codes,
 )
 from plotext._utility import get_color_code
-
+from textual.color import Color as Tcolor
+from typing_extensions import Literal, TypeAlias, get_args
 
 from . import plotext
 from .plotext._figure import _figure_class as Figure
@@ -194,6 +195,19 @@ def themes() -> tuple[str, ...]:
 # where color_sequence is a sequence of colours that will be used as plots
 # are added (that is, if you plot 3 types of data and don't specify colours,
 # this sequence will be used).
+
+
+def rgbify_hex(hex: str) -> tuple[int, int, int] | str:
+    """Convert a hex colour into an RGB tuple.
+
+    Args:
+        hex: The hex colour to convert.
+
+    Returns:
+        The RGB tuple for the colour.
+    """
+
+    return _rgbify(Tcolor.parse(hex).rgb)
 
 
 def _rgbify(color: Color) -> tuple[int, int, int] | str:

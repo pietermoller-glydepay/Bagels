@@ -77,7 +77,10 @@ class AccountMode(ScrollableContainer):
             if selected:
                 self.scroll_to_widget(account_container)
 
-        super().__setattr__("border_title", f"Accounts @= {net_balance}")
+        super().__setattr__(
+            "border_title",
+            f"Accounts @= {round(net_balance, CONFIG.defaults.round_decimals)}",
+        )
 
     # region Callbacks
     # ------------- Callbacks ------------ #

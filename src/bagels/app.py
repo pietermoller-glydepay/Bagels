@@ -262,4 +262,5 @@ class App(TextualApp):
             tabs.can_focus = False
             yield tabs
             yield Label(path, classes="path")
-        yield Footer()
+        if CONFIG.state.footer_visibility:
+            yield Footer()

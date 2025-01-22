@@ -264,25 +264,6 @@ def get_daily_balance(start_date, end_date) -> list[float]:
         session.close()
 
 
-def get_net_income(offset: int = 0, offset_type: str = "month") -> float:
-    session = Session()
-    try:
-        start_of_period, end_of_period = get_start_end_of_period(offset, offset_type)
-        net_income = (
-            session.query(func.sum(Record.amount))
-            .filter(
-                Record.isIncome == True,  # noqa: E712
-                Record.date >= start_of_period,
-                Record.date < end_of_period,
-            )
-            .scalar()
-            or 0.0
-        )
-        return net_income
-    finally:
-        session.close()
-
-
 # region Update
 def update_record(record_id: int, updated_data: dict):
     session = Session()

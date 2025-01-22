@@ -24,23 +24,21 @@ class Spending(Static):
     PLOT_TYPES = [SpendingTrajectoryPlot, SpendingPlot, BalancePlot]
 
     can_focus = True
-    offset: Reactive[int] = reactive(0)
     periods: Reactive[int] = reactive(1)
     current_plot: Reactive[int] = reactive(0)
 
     BINDINGS = [
-        Binding("left", "dec_offset", "Shift back", show=True),
-        Binding("right", "inc_offset", "Shfit front", show=True),
         Binding("+", "zoom_in", "Zoom in", show=True),
         Binding("-", "zoom_out", "Zoom out", show=True),
     ]
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, page_parent: Static, *args, **kwargs) -> None:
         super().__init__(
             *args, **kwargs, id="spending-container", classes="module-container"
         )
         super().__setattr__("border_title", "Spending")
         self._plots = [plot_cls(self.app) for plot_cls in self.PLOT_TYPES]
+        self.page_parent = page_parent
 
     def on_mount(self) -> None:
         self.rebuild()
@@ -49,9 +47,9 @@ class Spending(Static):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "inc-offset":
-            self.action_inc_offset()
+            self.page_parent.action_inc_offset()
         elif event.button.id == "dec-offset":
-            self.action_dec_offset()
+            self.page_parent.action_dec_offset()
         elif event.button.id == "zoom-in":
             self.action_zoom_in()
         elif event.button.id == "zoom-out":
@@ -75,7 +73,9 @@ class Spending(Static):
         plotext.display = False  # make plotext update by toggling display... for some reason. Maybe a bug? Who knows.
         plot = self._plots[self.current_plot]
 
-        start_of_period, end_of_period = get_start_end_of_period(self.offset, "month")
+        start_of_period, end_of_period = get_start_end_of_period(
+            self.page_parent.offset, "month"
+        )
         self.app.log(
             f"The plot type {plot.name} has support for cross periods: {plot.supports_cross_periods}"
         )
@@ -83,10 +83,10 @@ class Spending(Static):
         # ----------- Cross period ----------- #
 
         self.app.log(
-            f'Getting spending trend from "{start_of_period}" to "{end_of_period} ({self.offset} months ago)"'
+            f'Getting spending trend from "{start_of_period}" to "{end_of_period} ({self.page_parent.offset} months ago)"'
         )
         string = format_period_to_readable(
-            {"offset": self.offset, "offset_type": "month"}
+            {"offset": self.page_parent.offset, "offset_type": "month"}
         )
 
         if plot.supports_cross_periods:
@@ -99,7 +99,7 @@ class Spending(Static):
                 label.update(string)
             else:
                 label.update(
-                    f"{string} to {format_period_to_readable({'offset': self.offset - self.periods + 1, 'offset_type': 'month'})}"
+                    f"{string} to {format_period_to_readable({'offset': self.page_parent.offset - self.periods + 1, 'offset_type': 'month'})}"
                 )
         else:
             zoom_in_button.display = False
@@ -142,7 +142,7 @@ class Spending(Static):
             plt,
             start_of_period,
             end_of_period,
-            self.offset,
+            self.page_parent.offset,
             data,
             dates,
             get_theme_color,
@@ -196,15 +196,6 @@ class Spending(Static):
             )
             return False
         return True
-
-    def action_inc_offset(self) -> None:
-        if self.offset < 0:
-            self.offset += 1
-            self.rebuild()
-
-    def action_dec_offset(self) -> None:
-        self.offset -= 1
-        self.rebuild()
 
     def action_zoom_in(self) -> None:
         if not self.check_supports_cross_periods():

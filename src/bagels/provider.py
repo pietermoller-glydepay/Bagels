@@ -31,6 +31,12 @@ class AppProvider(Provider):
                 True,
             ),
             (
+                "config: toggle footer",
+                self._action_toggle_footer,
+                "Toggle the footer and hide hotkey hints",
+                True,
+            ),
+            (
                 "config: open config file",
                 self._action_open_config_file,
                 "Open the config file in the default editor",
@@ -144,3 +150,9 @@ class AppProvider(Provider):
             self.app.notify(
                 f"Failed to open config file: {e}", title="Error", severity="error"
             )
+
+    def _action_toggle_footer(self) -> None:
+        cur = CONFIG.state.footer_visibility
+        write_state("footer_visibility", not cur)
+        self.app.refresh(layout=True, recompose=True)
+        self.app.notify(f"Footer {'enabled' if not cur else 'disabled'}")

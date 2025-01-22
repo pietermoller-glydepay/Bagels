@@ -1,18 +1,7 @@
 /* ------------ Spending ------------ */
 
-.h {
-  #spending-container {
-    height: 60%
-  }
-}
-
-.v {
-  #spending-container {
-    height: 70%
-  }
-}
-
 #spending-container {
+  height: 1fr;
   layout: grid;
   grid-size: 1 3;
   grid-rows: 1 1fr 2;
@@ -40,15 +29,93 @@
 
 /* ------------- Budgets ------------ */
 
-.h {
-  #budgets-container {
-    height: 1fr;
-  }
-}
+#budgets-container {
+  height: auto;
 
-.v {
-  #budgets-container {
-    height: 1fr;
+  & > .config-rows {
+    border-bottom: round $panel;
+    height: 2;
+    & > Label {
+      margin-right: 2;
+    }
+    & > Button {
+      width: auto;
+      margin-right: 1;
+      background: $panel;
+    }
+    & > Input {
+      dock: right;
+      width: 12;
+
+      &.invalid {
+        border-left: outer $error;
+      }
+    }
+  }
+
+  .empty-bar {
+    width: 1fr;
+    height: 3;
+    hatch: right $panel-lighten-2;
+    align: center middle;
+  }
+
+  #income-bar {
+    height: 5;
+    margin-bottom: -1;
+
+    
+    & > #row-0 {
+      width: 1fr;
+      layout: horizontal;
+      # background: red;
+
+      #remaining {
+        dock: right;
+        width: auto;
+        opacity: 0.5;
+      }
+    }
+
+    & > #row-1 {
+      layout: grid;
+      grid-size: 3 1;
+      width: 1fr;
+      height: 1;
+      
+      & > #bar-spent {
+        background: $accent;
+      }
+      & > #bar-saving {
+        background: $secondary;
+      }
+      & > #bar-remaining {
+        background: $panel;
+      }
+    }
+
+    & > #row-2 {
+      layout: grid;
+      grid-size: 2 1;
+    }
+
+    & > #row-3 {
+      layout: grid;
+      grid-size: 3 2;
+      height: 2;
+      offset: 0 -1;
+      position: relative;
+
+      & > #bar-spent-must {
+        hatch: "/" orange;
+      }
+      & > #bar-spent-need {
+        hatch: "/" lime;
+      }
+      & > #bar-spent-want {
+        hatch: "/" aqua;
+      }
+    }
   }
 }
 

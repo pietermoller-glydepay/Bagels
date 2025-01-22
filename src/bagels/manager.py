@@ -1,4 +1,5 @@
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.containers import Center, Container
 from textual.widgets import Static
 
@@ -12,22 +13,29 @@ from bagels.managers.categories import get_categories_count
 
 
 class Manager(Static):
+    offset = 0
+
+    BINDINGS = [
+        Binding("left", "dec_offset", "Shift back", show=True),
+        Binding("right", "inc_offset", "Shfit front", show=True),
+    ]
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs, id="manager-page")
         self.isReady = get_accounts_count() and get_categories_count()
-        self.spending_module = Spending()
+        self.spendings_module = Spending(page_parent=self)
         self.categories_module = Categories()
-        self.budgets_module = Budgets()
+        self.budgets_module = Budgets(page_parent=self)
         self.people_module = People()
 
     def on_mount(self) -> None:
-        self.app.watch(self.app, "layout", self.on_layout_change)
+        pass
 
     # -------------- Helpers ------------- #
 
     def rebuild(self) -> None:
         if self.isReady:
-            self.spending_module.rebuild()
+            self.spendings_module.rebuild()
             self.categories_module.rebuild()
             self.budgets_module.rebuild()
             self.people_module.rebuild()
@@ -35,11 +43,16 @@ class Manager(Static):
     # region Callbacks
     # ------------- Callbacks ------------ #
 
-    def on_layout_change(self, layout: str) -> None:
-        pass
-        # layout_container = self.query(".home-modules-container")
-        # if len(layout_container) > 0:
-        #     layout_container[0].set_classes(f"home-modules-container {layout}")
+    def action_inc_offset(self) -> None:
+        if self.offset < 0:
+            self.offset += 1
+            self.spendings_module.rebuild()
+            self.budgets_module.rebuild()
+
+    def action_dec_offset(self) -> None:
+        self.offset -= 1
+        self.spendings_module.rebuild()
+        self.budgets_module.rebuild()
 
     # region View
     # --------------- View --------------- #
@@ -48,7 +61,7 @@ class Manager(Static):
         if self.isReady:
             with Static(classes="manager-modules-container"):
                 with Container(classes="left"):
-                    yield self.spending_module
+                    yield self.spendings_module
                     yield self.budgets_module
                 with Container(classes="right"):
                     yield self.categories_module

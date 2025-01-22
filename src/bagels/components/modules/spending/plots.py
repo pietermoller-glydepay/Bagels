@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
+from functools import lru_cache
 
 import numpy as np
 
@@ -7,10 +8,10 @@ from bagels.components.tplot.plot import Plot
 from bagels.config import CONFIG
 from bagels.managers.records import (
     get_daily_balance,
-    get_net_income,
     get_spending,
     get_spending_trend,
 )
+from bagels.managers.utils import get_income_to_use
 
 
 class BasePlot(ABC):
@@ -45,6 +46,7 @@ class BasePlot(ABC):
 class SpendingPlot(BasePlot):
     name: str = "Spending"
 
+    @lru_cache
     def get_data(self, start_of_period, end_of_period):
         return get_spending(start_of_period, end_of_period)
 
@@ -65,6 +67,7 @@ class SpendingPlot(BasePlot):
 class SpendingTrajectoryPlot(BasePlot):
     name: str = "Spending Trajectory"
 
+    @lru_cache
     def get_data(self, start_of_period, end_of_period):
         return get_spending_trend(start_of_period, end_of_period)
 
@@ -79,22 +82,9 @@ class SpendingTrajectoryPlot(BasePlot):
         get_theme_color,
     ) -> None:
         # --------- Limit computation -------- #
-        metric = CONFIG.state.budgeting.income_assess_metric  # use number if provided
-        threshold = CONFIG.state.budgeting.income_assess_threshold
-        fallback = CONFIG.state.budgeting.income_assess_fallback
 
-        limit = 0
-        if metric == "periodIncome":
-            this_month_income = get_net_income(offset)
-            if this_month_income > threshold:
-                limit = this_month_income
-            else:
-                limit = get_net_income(offset - 1)
+        limit = get_income_to_use(offset)
 
-        if limit < fallback:
-            limit = fallback
-
-        print(f"Limit: {limit}")
         plt.ylim(upper=limit, lower=0)
 
         if len(data) == len(dates):
@@ -141,6 +131,7 @@ class BalancePlot(BasePlot):
     name: str = "Balance"
     supports_cross_periods = True
 
+    @lru_cache
     def get_data(self, start_of_period, end_of_period):
         return get_daily_balance(start_of_period, end_of_period)
 

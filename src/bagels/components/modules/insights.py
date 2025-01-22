@@ -2,7 +2,6 @@ from textual.app import ComposeResult
 from textual.containers import Container, Horizontal
 from textual.widgets import Label, Static
 
-from bagels.components.barchart import Barchart
 from bagels.components.percentage_bar import PercentageBar, PercentageBarItem
 from bagels.config import CONFIG
 from bagels.managers.categories import get_all_categories_records
@@ -192,6 +191,6 @@ class Insights(Static):
                 yield Label("Loading...", classes="period-average amount")  # dynamic
 
         self.percentage_bar = PercentageBar()
-        self.period_barchart = Barchart()
+        # self.period_barchart = Barchart()
         yield self.percentage_bar
-        yield self.period_barchart
+        # yield self.period_barchart

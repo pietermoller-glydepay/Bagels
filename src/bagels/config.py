@@ -67,6 +67,7 @@ class Symbols(BaseModel):
 
 
 class BudgetingStates(BaseModel):
+    # ---------- Income policies --------- #
     income_assess_metric: Literal["periodIncome", "fallback"] = (
         "periodIncome"  # use the current period's income, or if less than threshold, use the past period's income
     )
@@ -76,11 +77,30 @@ class BudgetingStates(BaseModel):
     income_assess_fallback: float = (
         3500  # if income less than threshold, we use this as the income
     )
+    # -------- Savings budgetting -------- #
+    savings_assess_metric: Literal["percentagePeriodIncome", "setAmount"] = (
+        "percentagePeriodIncome"
+    )
+    savings_percentage: float = (
+        0.2  # used only if savings_assess_metric is percentagePeriodIncome
+    )
+    savings_amount: float = 0  # used only if savings_assess_metric is setAmount
+    # ---------- MNW budgetting ---------- #
+    wants_spending_assess_metric: Literal["percentage", "setAmount"] = (
+        "percentage"  # percentage of all expenses
+    )
+    wants_spending_percentage: float = (
+        0.2  # used only if wants_spending_assess_metric is setPercentage
+    )
+    wants_spending_amount: float = (
+        0  # used only if wants_spending_assess_metric is setAmount
+    )
 
 
 class State(BaseModel):
     theme: str = "dark"
     check_for_updates: bool = True
+    footer_visibility: bool = True
     budgeting: BudgetingStates = BudgetingStates()
 
 
@@ -157,20 +177,25 @@ def load_config():
 
 
 def write_state(key: str, value: Any) -> None:
-    """Write a state value to the config.yaml file."""
+    """Write a state value to the config.yaml file, supporting nested keys with dot operator."""
     try:
         with open(config_file(), "r") as f:
             config = yaml.safe_load(f) or {}
     except FileNotFoundError:
         config = {}
 
-    if "state" not in config:
-        config["state"] = {}
-    config["state"][key] = value
+    keys = key.split(".")
+    d = config.setdefault("state", {})
+    for k in keys[:-1]:
+        d = d.setdefault(k, {})
+    d[keys[-1]] = value
 
     with open(config_file(), "w") as f:
         yaml.dump(config, f, default_flow_style=False)
 
     # update the global config object
     global CONFIG
-    setattr(CONFIG.state, key, value)
+    d = CONFIG.state
+    for k in keys[:-1]:
+        d = getattr(d, k)
+    setattr(d, keys[-1], value)

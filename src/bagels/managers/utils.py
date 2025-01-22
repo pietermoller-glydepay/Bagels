@@ -1,13 +1,27 @@
 import re
 from datetime import datetime, timedelta
+from functools import lru_cache
 
 from sqlalchemy.orm import sessionmaker
+from textual.widget import Widget
 
 from bagels.config import CONFIG
+from bagels.models.category import Category
 from bagels.models.database.app import db_engine
 from bagels.models.record import Record
 
 Session = sessionmaker(bind=db_engine)
+
+# --------------- query -------------- #
+
+
+def try_method_query_one(widget: Widget, query: str, method: str, params):
+    try:
+        widget = widget.query_one(query)
+        getattr(widget, method)(*params)
+    except Exception as e:
+        print(e)
+        return
 
 
 # region period
@@ -78,7 +92,12 @@ def get_start_end_of_period(offset: int = 0, offset_type: str = "month"):
 
 
 def get_period_figures(
-    accountId=None, offset_type=None, offset=None, isIncome=None, session=None
+    accountId=None,
+    offset_type=None,
+    offset=None,
+    isIncome=None,
+    nature=None,
+    session=None,
 ):
     """Returns the income / expense for a given period.
 
@@ -92,6 +111,7 @@ def get_period_figures(
         offset_type (str): The type of period to filter by.
         offset (int): The offset from the current period.
         isIncome (bool): Whether to filter by income or expense.
+        nature (Nature): Filter by category nature (Want/Need/Must). (Optional)
         session (Session, optional): SQLAlchemy session to use. If None, creates a new session.
     """
     if session is None:
@@ -116,6 +136,10 @@ def get_period_figures(
                 Record.date >= start_of_period, Record.date < end_of_period
             )
 
+        # Filter by category nature if specified
+        if nature is not None:
+            query = query.join(Record.category).filter(Category.nature == nature)
+
         # Calculate net amount
         total = 0
         records = query.all()
@@ -133,13 +157,7 @@ def get_period_figures(
             split_total = sum(split.amount for split in record.splits)
             record_amount = record.amount - split_total
 
-            # For transfers, only consider the direction
-            if record.isTransfer:
-                if record.accountId == accountId:
-                    total -= record_amount  # Money leaving this account
-                else:
-                    total += record_amount  # Money entering this account
-            else:
+            if not record.isTransfer:
                 # For regular income/expenses
                 if record.isIncome:
                     total += record_amount
@@ -187,3 +205,38 @@ def get_operator_amount(operator_amount: str = None):
         return operator, amount
     else:
         return None, None
+
+
+# region Budgeting
+# ------------- budgeting ------------ #
+
+
+def get_income_to_use(offset: int):
+    metric = CONFIG.state.budgeting.income_assess_metric  # use number if provided
+    threshold = CONFIG.state.budgeting.income_assess_threshold
+    fallback = CONFIG.state.budgeting.income_assess_fallback
+
+    limit = 0
+    if metric == "periodIncome":
+        this_month_income = get_period_figures(
+            isIncome=True, offset=offset, offset_type="month"
+        )
+        if this_month_income > threshold:
+            limit = this_month_income
+        else:
+            limit = get_period_figures(
+                isIncome=True, offset=offset - 1, offset_type="month"
+            )
+
+    if limit < fallback:
+        limit = fallback
+
+    return limit
+
+
+def dynamic_cache(func, *args, **kwargs):
+    # Create a cached version of the function
+    cached_func = lru_cache()(func)
+    # Call the cached version with the provided arguments
+    result = cached_func(*args, **kwargs)
+    return result

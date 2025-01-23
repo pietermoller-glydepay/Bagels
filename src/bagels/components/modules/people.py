@@ -30,6 +30,7 @@ class People(Static):
             *args, **kwargs, id="people-container", classes="module-container"
         )
         super().__setattr__("border_title", "People")
+        self.current_row = None
 
     # --------------- Hooks -------------- #
 

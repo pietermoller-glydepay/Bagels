@@ -30,5 +30,5 @@
 .manager-modules-container {
   height: 1fr;
   width: 1fr;
-  padding: 0 2;
+  padding: 0 2 1 2;
 }

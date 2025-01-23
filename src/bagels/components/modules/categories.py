@@ -66,9 +66,18 @@ class Categories(Static):
 
         categories = get_all_categories_tree()
         if categories:
-            for category, node in categories:
+            for category, node, depth in categories:
+                char = " "
+                nature = category.nature.value
+                if nature == "Want":
+                    nature = f"[red]{nature}[/red]"
+                if depth == 0:
+                    char = ""
                 table.add_row(
-                    node, category.name, category.nature.value, key=category.id
+                    node,
+                    char + category.name,
+                    char + nature,
+                    key=category.id,
                 )
             table.zebra_stripes = True
         else:

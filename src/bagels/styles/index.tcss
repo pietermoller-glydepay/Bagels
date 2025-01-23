@@ -49,10 +49,6 @@ Button {
   }
 }
 
-.base-page {
-  padding: 0 1;
-}
-
 Center {
   align: center middle;
   height: 1fr;

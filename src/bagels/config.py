@@ -1,8 +1,11 @@
+import os
+import platform
+import subprocess
 import warnings
 from typing import Any, Literal
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 from bagels.locations import config_file
 
@@ -111,10 +114,35 @@ class Config(BaseModel):
     state: State = State()
 
     def __init__(self, **data):
-        config_data = self._load_yaml_config()
-        merged_data = {**self.model_dump(), **config_data, **data}
-        super().__init__(**merged_data)
-        self.ensure_yaml_fields()
+        try:
+            config_data = self._load_yaml_config()
+            merged_data = {**self.model_dump(), **config_data, **data}
+            super().__init__(**merged_data)
+            self.ensure_yaml_fields()
+        except ValidationError as e:
+            error_messages = []
+            for error in e.errors():
+                field = error["loc"]
+                field_path = ".".join(str(x) for x in field)
+                input_value = error.get("input")
+                allowed_values = None
+
+                # Extract allowed values for literal errors
+                if error["type"] == "literal_error":
+                    # Parse the error message to extract allowed values
+                    msg = error["msg"]
+                    allowed_list = msg.split("'")[1::2]  # Extract values between quotes
+                    allowed_values = " or ".join(f"'{v}'" for v in allowed_list)
+
+                message = f"Invalid configuration in field '{field_path}'"
+                if input_value is not None:
+                    message += f"\nCurrent value: '{input_value}'"
+                if allowed_values:
+                    message += f"\nAllowed values: {allowed_values}"
+
+                error_messages.append(message)
+
+            raise ConfigurationError("\n\n".join(error_messages))
 
     def _load_yaml_config(self) -> dict[str, Any]:
         config_path = config_file()
@@ -157,7 +185,24 @@ class Config(BaseModel):
         )
 
 
+class ConfigurationError(Exception):
+    """Custom exception for configuration errors"""
+
+    pass
+
+
 CONFIG = None
+
+
+def open_config_file():
+    """Open the config file with the default application."""
+    config_path = config_file()
+    if platform.system() == "Darwin":  # macOS
+        subprocess.run(["open", config_path])
+    elif platform.system() == "Windows":  # Windows
+        os.startfile(config_path)
+    else:  # Linux
+        subprocess.run(["xdg-open", config_path])
 
 
 def load_config():
@@ -171,9 +216,31 @@ def load_config():
             pass
 
     global CONFIG
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        CONFIG = Config()  # ignore warnings about empty env file
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            CONFIG = Config()  # ignore warnings about empty env file
+    except ConfigurationError as e:
+        print("\nConfiguration Error:")
+        print("==================")
+        print(f"{e}\n")
+        print("Would you like to open the config file to fix this? (y/n)")
+
+        try:
+            response = input().lower()
+            if response.startswith("y"):
+                open_config_file()
+                print(
+                    "\nOpened config file. Please fix the error and restart the application."
+                )
+            else:
+                print(
+                    "\nPlease update your config.yaml file with valid values and try again."
+                )
+        except KeyboardInterrupt:
+            print("\nExiting...")
+
+        raise SystemExit(1)
 
 
 def write_state(key: str, value: Any) -> None:

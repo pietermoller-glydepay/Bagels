@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.2
+
+- Added error message and user prompt when config error
+
 ## 0.3.0
 
 - New! Label, amount and category filters in records module!

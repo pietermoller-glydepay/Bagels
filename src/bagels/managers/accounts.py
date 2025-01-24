@@ -1,14 +1,34 @@
 from datetime import datetime
+
 from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
 
 from bagels.config import CONFIG
 from bagels.models.account import Account
+from bagels.models.database.app import db_engine
 from bagels.models.record import Record
 from bagels.models.split import Split
-from bagels.models.database.app import db_engine
 
 Session = sessionmaker(bind=db_engine)
+
+
+# region Create
+
+
+def create_account(data):
+    session = Session()
+    try:
+        new_account = Account(**data)
+        session.add(new_account)
+        session.commit()
+        session.refresh(new_account)
+        session.expunge(new_account)
+        return new_account
+    finally:
+        session.close()
+
+
+# region Read
 
 
 def get_account_balance(accountId, session=None):
@@ -56,7 +76,7 @@ def get_account_balance(accountId, session=None):
         # Get all records where this account is the transfer destination
         transfer_to_records = (
             session.query(Record)
-            .filter(Record.transferToAccountId == accountId, Record.isTransfer == True)
+            .filter(Record.transferToAccountId == accountId, Record.isTransfer == True)  # noqa
             .all()
         )
 
@@ -79,19 +99,6 @@ def get_account_balance(accountId, session=None):
     finally:
         if should_close:
             session.close()
-
-
-def create_account(data):
-    session = Session()
-    try:
-        new_account = Account(**data)
-        session.add(new_account)
-        session.commit()
-        session.refresh(new_account)
-        session.expunge(new_account)
-        return new_account
-    finally:
-        session.close()
 
 
 def _get_base_accounts_query(get_hidden=False):
@@ -149,6 +156,9 @@ def get_account_by_id(account_id):
         session.close()
 
 
+# region Update
+
+
 def update_account(account_id, data):
     session = Session()
     try:
@@ -162,6 +172,9 @@ def update_account(account_id, data):
         return account
     finally:
         session.close()
+
+
+# region Delete
 
 
 def delete_account(account_id):

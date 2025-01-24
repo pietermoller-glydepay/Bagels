@@ -1,12 +1,13 @@
 from datetime import datetime
+
 from rich.text import Text
-from sqlalchemy import func, desc, select
+from sqlalchemy import desc, func, select
 from sqlalchemy.orm import joinedload, sessionmaker
 
-from bagels.models.category import Category
-from bagels.models.record import Record
 from bagels.managers.utils import get_start_end_of_period
+from bagels.models.category import Category
 from bagels.models.database.app import db_engine
+from bagels.models.record import Record
 
 Session = sessionmaker(bind=db_engine)
 
@@ -22,7 +23,7 @@ def get_categories_count():
         session.close()
 
 
-def get_all_categories_tree():
+def get_all_categories_tree() -> list[tuple[Category, Text, int]]:
     """Retrieve all categories in a hierarchical tree format."""
     session = Session()
     try:
@@ -46,7 +47,7 @@ def get_all_categories_tree():
                             + ("└" if is_last(category, parent_id) else "├"),
                             style=category.color,
                         )
-                    result.append((category, node))
+                    result.append((category, node, depth))
                     result.extend(build_category_tree(category.id, depth + 1))
             return result
 

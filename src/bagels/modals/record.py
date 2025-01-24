@@ -1,16 +1,14 @@
-from textual import events
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Container
 from textual.widgets import (
-    Input,
     Label,
 )
 
 from bagels.components.autocomplete import AutoComplete, Dropdown, DropdownItem
 from bagels.components.fields import Fields
 from bagels.config import CONFIG
-from bagels.managers.record_templates import get_template_by_id, create_template
+from bagels.managers.record_templates import get_template_by_id
 from bagels.modals.input import InputModal
 from bagels.managers.accounts import get_all_accounts_with_balance
 from bagels.managers.persons import create_person, get_all_persons
@@ -23,7 +21,6 @@ from datetime import datetime
 
 
 class RecordModal(InputModal):
-
     isEditing = False
 
     BINDINGS = [

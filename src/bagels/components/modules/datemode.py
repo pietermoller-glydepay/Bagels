@@ -12,7 +12,6 @@ from bagels.config import CONFIG
 
 
 class DateMode(Static):
-
     can_focus = True
 
     BINDINGS = [
@@ -85,7 +84,7 @@ class DateMode(Static):
         - Month: Every day of the specified filter month: "target_month"
         - Year: No rules.
         """
-        filter_offset = self.page_parent.filter["offset"]
+        self.page_parent.filter["offset"]
         filter_offset_type = self.page_parent.filter["offset_type"]
 
         today = datetime.now()

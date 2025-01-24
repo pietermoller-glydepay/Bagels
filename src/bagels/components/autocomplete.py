@@ -12,7 +12,7 @@ from textual.app import ComposeResult
 from textual.geometry import Region, Size
 from textual.message import Message
 from textual.widget import Widget
-from textual.widgets import Input, Label
+from textual.widgets import Input
 
 
 class DropdownRender:
@@ -129,7 +129,6 @@ class InputState:
 
 
 class AutoComplete(Widget):
-
     def __init__(
         self,
         input: Input,
@@ -338,7 +337,7 @@ Dropdown .autocomplete--right-column {
 
     def on_mount(self, event: events.Mount) -> None:
         screen_layers = list(self.screen.styles.layers)
-        if not "textual-autocomplete" in screen_layers:
+        if "textual-autocomplete" not in screen_layers:
             screen_layers.append("textual-autocomplete")
 
         # TODO: Ignoring type below because Textual is typed incorrectly here.

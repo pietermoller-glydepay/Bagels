@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0
+
+- New! Label, amount and category filters in records module!
+- New! Manager page to view your categories and people.
+- New! Spending plottings / graphs with estimated spendings!
+- New! Budgetting tool for saving money and limiting unnecessary spendings
+- Fixed bugs
+- Removed barchart in insights.
+
 ## 0.2.7
 
 - Fix record module input and loading issues.

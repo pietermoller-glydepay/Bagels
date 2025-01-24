@@ -1,6 +1,6 @@
 import copy
 from bagels.managers.accounts import get_account_by_id
-from bagels.forms.form import Form, FormField, Option, Options
+from bagels.forms.form import Form, FormField
 
 
 class AccountForm:

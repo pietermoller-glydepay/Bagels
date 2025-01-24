@@ -1,10 +1,10 @@
 # file is used with textual run --dev
 
-from pathlib import Path
+
 from bagels.locations import set_custom_root
 
 if __name__ == "__main__":
-    # set_custom_root(Path("../../../bagels_instance/"))
+    set_custom_root("./instance/")
 
     from bagels.config import load_config
 

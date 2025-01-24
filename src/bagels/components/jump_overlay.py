@@ -4,12 +4,10 @@ from textual import events
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Center
-from textual.geometry import Offset
 from textual.screen import ModalScreen
 from textual.widget import Widget
 from textual.widgets import Label
 
-from bagels.components.jumper import JumpInfo
 from bagels.config import CONFIG
 
 if TYPE_CHECKING:

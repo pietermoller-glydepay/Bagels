@@ -56,7 +56,7 @@ bagels locate database # find database file path
 bagels locate config # find config file path
 ```
 
-> It is recommended, but not required, to use "modern" terminals to run the app. MacOS users are recommended to use iTerm2, and Windows users are recommended to use Windows Terminal.
+> It is recommended, but not required, to use "modern" terminals to run the app. MacOS users are recommended to use Ghostty, and Windows users are recommended to use Windows Terminal.
 
 To upgrade:
 
@@ -70,6 +70,7 @@ uv tool upgrade bagels
 git clone https://github.com/EnhancedJax/Bagels.git
 cd Bagels
 uv sync
+uv run pre-commit install
 mkdir instance
 uv run bagels --at "./instance/" # runs app with storage in ./instance/
 # alternatively, use textual dev mode to catch prints
@@ -81,13 +82,17 @@ Please use the black formatter to format the code.
 
 ## Roadmap
 
-- [ ] More insight displays and analysis (by nature etc.)
+- [x] Budgets (Major!)
+- [x] More insight displays and analysis (by nature etc.)
+- [ ] Daily check-ins
+- [ ] Pagination for records on monthly and yearly views.
+
+Backlog:
+
 - [ ] "Processing" bool on records for transactions in process
 - [ ] Record flags for future insights implementation
-- [ ] Repayment reminders
 - [ ] Code review
-- [ ] Daily check-ins
-- [ ] Budgets
+- [ ] Repayment reminders
 - [ ] Add tests
 - [ ] Bank sync
 

@@ -1,10 +1,15 @@
-from sqlalchemy.orm import sessionmaker, joinedload
-from sqlalchemy import func, desc
+from datetime import datetime, timedelta
+
+from sqlalchemy import func
+from sqlalchemy.orm import joinedload, sessionmaker
+
+from bagels.managers.splits import create_split, get_splits_by_record_id, update_split
+from bagels.managers.utils import get_operator_amount, get_start_end_of_period
+from bagels.models.account import Account
+from bagels.models.category import Category
 from bagels.models.database.app import db_engine
 from bagels.models.record import Record
 from bagels.models.split import Split
-from bagels.managers.splits import create_split, get_splits_by_record_id, update_split
-from bagels.managers.utils import get_start_end_of_period
 
 Session = sessionmaker(bind=db_engine)
 
@@ -65,7 +70,14 @@ def get_record_total_split_amount(record_id: int):
         session.close()
 
 
-def get_records(offset: int = 0, offset_type: str = "month", account_id: int = None):
+def get_records(
+    offset: int = 0,
+    offset_type: str = "month",
+    account_id: int = None,
+    category_piped_names: str = None,
+    operator_amount: str = None,
+    label: str = None,
+):
     session = Session()
     try:
         query = session.query(Record).options(
@@ -82,8 +94,19 @@ def get_records(offset: int = 0, offset_type: str = "month", account_id: int = N
             Record.date >= start_of_period, Record.date < end_of_period
         )
 
-        if account_id is not None:
+        if account_id not in [None, ""]:
             query = query.filter(Record.accountId == account_id)
+        if category_piped_names not in [None, ""]:
+            category_names = category_piped_names.split("|")
+            query = query.join(Record.category).filter(
+                Category.name.in_(category_names)
+            )
+        if operator_amount not in [None, ""]:
+            operator, amount = get_operator_amount(operator_amount)
+            if operator and amount:
+                query = query.filter(Record.amount.op(operator)(amount))
+        if label not in [None, ""]:
+            query = query.filter(Record.label.ilike(f"%{label}%"))
 
         createdAt_column = getattr(Record, "createdAt")
         date_column = func.date(getattr(Record, "date"))
@@ -95,11 +118,148 @@ def get_records(offset: int = 0, offset_type: str = "month", account_id: int = N
         session.close()
 
 
+def _get_spending_records(session, start_date, end_date):
+    """Common function to fetch records for spending calculations"""
+    return (
+        session.query(Record)
+        .filter(
+            Record.isIncome == False,  # noqa: E712
+            Record.date >= start_date,
+            Record.date < end_date,
+            Record.isTransfer == False,  # noqa: E712
+        )
+        .options(joinedload(Record.splits))
+        .all()
+    )
+
+
+def _calculate_daily_spending(records, start_date, end_date, cumulative=False):
+    """Calculate daily spending with optional cumulative sum"""
+    daily_spending = {}
+    for record in records:
+        date_key = record.date.date()
+        splits_sum = sum(split.amount for split in record.splits)
+        actual_spend = record.amount - splits_sum
+        daily_spending[date_key] = daily_spending.get(date_key, 0) + actual_spend
+
+    current_date = start_date.date()
+    end_date_normalized = end_date.date()
+    today = datetime.today().date()
+    result = []
+    running_total = 0
+
+    while current_date <= end_date_normalized:
+        if current_date <= today:
+            daily_amount = daily_spending.get(current_date, 0)
+            if cumulative:
+                running_total += daily_amount
+                result.append(running_total)
+            else:
+                result.append(daily_amount)
+        current_date += timedelta(days=1)
+
+    return result
+
+
+def get_spending(start_date, end_date) -> list[float]:
+    """Gets a list of spent amounts for each day in the period, less split amounts of the records"""
+    session = Session()
+    try:
+        records = _get_spending_records(session, start_date, end_date)
+        return _calculate_daily_spending(
+            records, start_date, end_date, cumulative=False
+        )
+    finally:
+        session.close()
+
+
+def get_spending_trend(start_date, end_date) -> list[float]:
+    """Gets a cumulative list of spent amounts for each day in the period"""
+    session = Session()
+    try:
+        records = _get_spending_records(session, start_date, end_date)
+        return _calculate_daily_spending(records, start_date, end_date, cumulative=True)
+    finally:
+        session.close()
+
+
 def is_record_all_splits_paid(record_id: int):
     session = Session()
     try:
         splits = get_splits_by_record_id(record_id)
         return all(split.isPaid for split in splits)
+    finally:
+        session.close()
+
+
+def get_daily_balance(start_date, end_date) -> list[float]:
+    """Gets a list of account balances for each day in the period"""
+    # Calculating net beginning balance
+
+    # Handle records up till start_date, then process each day one by one.
+
+    # Records.isIncome ? add : subtract
+
+    # for Record.splits => Record.isIncome ? subtract Split.amount : add Split.amount
+
+    # Record.isTransfer ? Record.transferToAccount.name == "Outside source" ? subtract : Record.account.name == "Outside source" ? add : ignore
+
+    # return result
+    session = Session()
+    try:
+        accounts = session.query(Account).filter(Account.deletedAt.is_(None)).all()
+        total_balance = sum(a.beginningBalance for a in accounts)
+        old_records = (
+            session.query(Record)
+            .filter(
+                Record.date < start_date, Record.accountId.in_([a.id for a in accounts])
+            )
+            .options(
+                joinedload(Record.splits),
+                joinedload(Record.account),
+                joinedload(Record.transferToAccount),
+            )
+            .all()
+        )
+
+        def adjust_balance(r):
+            if r.isTransfer:
+                if r.transferToAccount and r.transferToAccount.name == "Outside source":
+                    return -r.amount
+                if r.account and r.account.name == "Outside source":
+                    return r.amount
+                return 0
+            if r.isIncome:
+                return r.amount - sum(s.amount for s in r.splits)
+            return -r.amount + sum(s.amount for s in r.splits)
+
+        for rec in old_records:
+            total_balance += adjust_balance(rec)
+
+        results = []
+        current = start_date
+        today = datetime.today()
+        while current <= end_date:
+            if current > today:
+                break
+            day_records = (
+                session.query(Record)
+                .filter(
+                    func.date(Record.date) == current.date(),
+                    Record.accountId.in_([a.id for a in accounts]),
+                )
+                .options(
+                    joinedload(Record.splits),
+                    joinedload(Record.account),
+                    joinedload(Record.transferToAccount),
+                )
+                .all()
+            )
+            day_effect = sum(adjust_balance(dr) for dr in day_records)
+            total_balance += day_effect
+            results.append(total_balance)
+            current += timedelta(days=1)
+        return results
     finally:
         session.close()
 

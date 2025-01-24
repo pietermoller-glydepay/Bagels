@@ -1,7 +1,5 @@
 from importlib.metadata import metadata
 
-from rich.console import Group
-from rich.text import Text
 from textual import events, log, on
 from textual.app import App as TextualApp
 from textual.app import ComposeResult
@@ -13,25 +11,35 @@ from textual.geometry import Size
 from textual.reactive import Reactive, reactive
 from textual.signal import Signal
 from textual.widget import Widget
-from textual.widgets import Footer, Label, Tabs
+from textual.widgets import Footer, Label, Tab, Tabs
 
 from bagels.components.jump_overlay import JumpOverlay
 from bagels.components.jumper import Jumper
 from bagels.config import CONFIG, write_state
 from bagels.home import Home
-from bagels.modals.categories import CategoriesModal
+from bagels.locations import data_directory
+from bagels.manager import Manager
 from bagels.provider import AppProvider
 from bagels.themes import BUILTIN_THEMES, Theme
-from bagels.utils.user_host import get_user_host_string
+
+PAGES = [
+    {"name": "Home", "class": Home},
+    {"name": "Manager", "class": Manager},
+]
 
 
 class App(TextualApp):
-
-    CSS_PATH = "index.tcss"
+    CSS_PATH = [
+        "styles/index.tcss",
+        "styles/modals.tcss",
+        "styles/home.tcss",
+        "styles/home_modules.tcss",
+        "styles/manager.tcss",
+        "styles/manager_modules.tcss",
+    ]
     BINDINGS = [
         (CONFIG.hotkeys.toggle_jump_mode, "toggle_jump_mode", "Jump Mode"),
-        (CONFIG.hotkeys.home.categories, "go_to_categories", "Categories"),
-        (CONFIG.hotkeys.home.budgets, "go_to_budgets", "Budgets"),
+        (CONFIG.hotkeys.home.cycle_tabs, "cycle_tabs", "Cycle tabs"),
         ("ctrl+q", "quit", "Quit"),
     ]
     COMMANDS = {AppProvider}
@@ -43,15 +51,17 @@ class App(TextualApp):
     """The current layout of the app."""
     _jumping: Reactive[bool] = reactive(False, init=False, bindings=True)
     """True if 'jump mode' is currently active, otherwise False."""
+    current_tab = 0
 
     # region init
     def __init__(self, is_testing=False) -> None:
         # Initialize available themes with a default
-        available_themes: dict[str, Theme] = {"galaxy": BUILTIN_THEMES["galaxy"]}
+        available_themes: dict[str, Theme] = {"cobalt": BUILTIN_THEMES["cobalt"]}
         available_themes |= BUILTIN_THEMES
         self.themes = available_themes
         self.is_testing = is_testing
         super().__init__()
+        self.theme_changed_signal2: Signal[Theme] = Signal(self, "theme-changed")
 
         # Get package metadata directly
         meta = metadata("bagels")
@@ -59,7 +69,6 @@ class App(TextualApp):
 
     def on_mount(self) -> None:
         # --------------- theme -------------- #
-        self.theme_change_signal = Signal[Theme](self, "theme-changed")
         # -------------- jumper -------------- #
         self.jumper = Jumper(
             {
@@ -67,8 +76,11 @@ class App(TextualApp):
                 "insights-container": "i",
                 "records-container": "r",
                 "templates-container": "t",
-                # "incomemode-container": "v",
                 "datemode-container": "p",
+                "categories-container": "a",
+                "people-container": "p",
+                "budgets-container": "b",
+                "spending-container": "s",
             },
             screen=self.screen,
         )
@@ -99,13 +111,14 @@ class App(TextualApp):
         self.screen._update_styles()
         if theme:
             try:
-                theme_object = self.themes[theme]
+                self.themes[theme]
             except KeyError:
                 self.notify(
                     f"Theme {theme!r} not found.", title="Theme Error", timeout=1
                 )
                 return
-            self.theme_change_signal.publish(theme_object)
+            print(f"Theme changed to {theme!r}")
+            self.theme_changed_signal2.publish(theme)
 
     @on(CommandPalette.Opened)
     def palette_opened(self) -> None:
@@ -178,17 +191,21 @@ class App(TextualApp):
     # region hooks
     # --------------- hooks -------------- #
 
-    def on_tabs_tab_activated(self, event: Tabs.TabActivated) -> None:
-        if event.tab.id.startswith("t"):
-            activeIndex = int(event.tab.id.removeprefix("t")) - 1
+    async def on_tabs_tab_activated(self, event: Tabs.TabActivated) -> None:
+        if event.tab.id.startswith("tab-"):
             try:
                 currentContent = self.query_one(".content")
                 currentContent.remove()
             except NoMatches:
                 pass
-            page_class = self.PAGES[activeIndex]["class"]
+            page_class = next(
+                page["class"]
+                for page in PAGES
+                if page["name"].lower() == event.tab.id.replace("tab-", "")
+            )
             page_instance = page_class(classes="content")
-            self.mount(page_instance)
+            await self.mount(page_instance)
+            self.query_one(".content").set_classes(f"content {self.layout}")
 
     def on_resize(self, event: events.Resize) -> None:
         console_size: Size = event.size
@@ -197,6 +214,11 @@ class App(TextualApp):
             self.layout = "v"
         else:
             self.layout = "h"
+        self.log(f"Aspect ratio: {aspect_ratio}, layout: {self.layout}")
+        try:
+            self.query_one(".content").set_classes(f"content {self.layout}")
+        except:  # noqa
+            pass
         if self.is_testing:
             self.query_one(".version").update(
                 "Layout: " + self.layout + " " + str(aspect_ratio)
@@ -213,11 +235,11 @@ class App(TextualApp):
     def action_quit(self) -> None:
         self.exit()
 
-    def action_go_to_categories(self) -> None:
-        self.push_screen(CategoriesModal(), callback=self.on_categories_dismissed)
-
-    def action_go_to_budgets(self) -> None:
-        self.notify("Work in progress!", title="Budgets")
+    def action_cycle_tabs(self) -> None:
+        self.current_tab = (self.current_tab + 1) % len(PAGES)
+        tabs = self.query_one(Tabs)
+        tab_id = f"tab-{PAGES[self.current_tab]['name'].lower()}"
+        tabs.active = tab_id
 
     def on_categories_dismissed(self, _) -> None:
         self.app.refresh(recompose=True)
@@ -226,10 +248,19 @@ class App(TextualApp):
     # --------------- View --------------- #
     def compose(self) -> ComposeResult:
         version = self.project_info["version"] if not self.is_testing else "vt"
-        user_host = get_user_host_string() if not self.is_testing else "test"
+        path = str(data_directory()) if not self.is_testing else "test"
         with Container(classes="header"):
-            yield Label(f"↪ {self.project_info["name"]}", classes="title")
+            yield Label(f"↪ {self.project_info['name']}", classes="title")
             yield Label(version, classes="version")
-            yield Label(user_host, classes="user")
-        yield Home(classes="content")
-        yield Footer()
+            tabs = Tabs(
+                *[
+                    Tab(name, id=f"tab-{name.lower()}")
+                    for name in [page["name"] for page in PAGES]
+                ],
+                classes="root-tabs",
+            )
+            tabs.can_focus = False
+            yield tabs
+            yield Label(path, classes="path")
+        if CONFIG.state.footer_visibility:
+            yield Footer()

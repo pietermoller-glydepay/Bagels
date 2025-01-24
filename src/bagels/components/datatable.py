@@ -34,12 +34,8 @@ from typing_extensions import Literal, Self, TypeAlias
 CellCacheKey: TypeAlias = (
     "tuple[RowKey, ColumnKey, Style, bool, bool, bool, int, PseudoClasses]"
 )
-LineCacheKey: TypeAlias = (
-    "tuple[int, int, int, int, Coordinate, Coordinate, Style, CursorType, bool, int, PseudoClasses]"
-)
-RowCacheKey: TypeAlias = (
-    "tuple[RowKey, int, Style, Coordinate, Coordinate, CursorType, bool, bool, int, PseudoClasses]"
-)
+LineCacheKey: TypeAlias = "tuple[int, int, int, int, Coordinate, Coordinate, Style, CursorType, bool, int, PseudoClasses]"
+RowCacheKey: TypeAlias = "tuple[RowKey, int, Style, Coordinate, Coordinate, CursorType, bool, bool, int, PseudoClasses]"
 CursorType = Literal["cell", "row", "column", "none"]
 """The valid types of cursors for [`DataTable.cursor_type`][textual.widgets.DataTable.cursor_type]."""
 CellType = TypeVar("CellType")
@@ -298,6 +294,8 @@ class DataTable(ScrollView, Generic[CellType], can_focus=True):
         "datatable--header-hover",
         "datatable--odd-row",
         "datatable--even-row",
+        "datatable--net-row",
+        "datatable--group-header-row",
     }
     """
     | Class | Description |
@@ -365,6 +363,16 @@ class DataTable(ScrollView, Generic[CellType], can_focus=True):
 
     DataTable > .datatable--hover {
         background: $secondary 20%;
+    }
+
+    DataTable > .datatable--net-row {
+        color: $primary-background-lighten-3;
+        text-style: italic;
+    }
+
+    DataTable > .datatable--group-header-row {
+        color: $foreground 50%;
+        text-style: italic;
     }
     """
 
@@ -659,7 +667,6 @@ class DataTable(ScrollView, Generic[CellType], can_focus=True):
         id: str | None = None,
         classes: str | None = None,
         disabled: bool = False,
-        additional_classes: set[str] = set(),
     ) -> None:
         """Initializes a widget to display tabular data.
 
@@ -690,7 +697,6 @@ class DataTable(ScrollView, Generic[CellType], can_focus=True):
             id: The ID of the widget in the DOM.
             classes: The CSS classes for the widget.
             disabled: Whether the widget is disabled or not.
-            additional_classes: Additional CSS classes to apply to the widget.
         """
 
         super().__init__(name=name, id=id, classes=classes, disabled=disabled)
@@ -780,8 +786,6 @@ class DataTable(ScrollView, Generic[CellType], can_focus=True):
         """The type of cursor of the `DataTable`."""
         self.cell_padding = cell_padding
         """Horizontal padding between cells, applied on each side of each cell."""
-        self.additional_classes = additional_classes
-        self.COMPONENT_CLASSES.update(additional_classes)
 
     @property
     def hover_row(self) -> int:

@@ -11,7 +11,6 @@ from sqlalchemy import (
     event,
     func,
     select,
-    update,
 )
 from sqlalchemy.orm import relationship, validates
 from .database.db import Base

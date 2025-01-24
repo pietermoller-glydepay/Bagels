@@ -128,5 +128,5 @@ class Barchart(Static):
 
     def compose(self) -> ComposeResult:
         # Create containers
-        yield Label(f"Loading...", classes="max-amount")
+        yield Label("Loading...", classes="max-amount")
         yield Container(classes="data-container")

@@ -4,13 +4,13 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.widgets import Label, Static
 
-from bagels.components.modules.welcome import Welcome
 from bagels.components.modules.accountmode import AccountMode
 from bagels.components.modules.datemode import DateMode
 from bagels.components.modules.incomemode import IncomeMode
 from bagels.components.modules.insights import Insights
 from bagels.components.modules.records import Records
 from bagels.components.modules.templates import Templates
+from bagels.components.modules.welcome import Welcome
 from bagels.config import CONFIG
 from bagels.managers.accounts import get_accounts_count, get_all_accounts
 from bagels.managers.categories import get_categories_count
@@ -90,7 +90,7 @@ class Home(Static):
         self.templates_module = Templates(parent=self)
 
     def on_mount(self) -> None:
-        self.app.watch(self.app, "layout", self.on_layout_change)
+        pass
 
     # -------------- Helpers ------------- #
 
@@ -155,11 +155,6 @@ class Home(Static):
 
     # region Callbacks
     # ------------- Callbacks ------------ #
-
-    def on_layout_change(self, layout: str) -> None:
-        layout_container = self.query(".home-modules-container")
-        if len(layout_container) > 0:
-            layout_container[0].set_classes(f"home-modules-container {layout}")
 
     def action_dec_offset(self) -> None:
         self.filter["offset"] -= 1
@@ -267,7 +262,7 @@ class Home(Static):
     # --------------- View --------------- #
 
     def compose(self) -> ComposeResult:
-        with Static(classes=f"home-modules-container v"):
+        with Static(classes="home-modules-container"):
             with Static(classes="left"):
                 with Static(id="home-top-container"):
                     yield self.accounts_module

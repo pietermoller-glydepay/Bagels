@@ -1,29 +1,23 @@
-from textual import events
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.screen import ModalScreen
-from textual.widget import Widget
 from textual.widgets import Static
 
 from bagels.components.datatable import DataTable
-from bagels.components.indicators import EmptyIndicator
-from bagels.modals.base_widget import ModalContainer
-from bagels.modals.confirmation import ConfirmationModal
-from bagels.modals.input import InputModal
-
 from bagels.config import CONFIG
+from bagels.forms.category_form import CategoryForm
 from bagels.managers.categories import (
     create_category,
     delete_category,
     get_all_categories_tree,
-    get_categories_count,
     get_category_by_id,
     update_category,
 )
-from bagels.forms.category_form import CategoryForm
+from bagels.modals.confirmation import ConfirmationModal
+from bagels.modals.input import InputModal
 
 
-class CategoriesModal(ModalScreen[str | Widget | None]):
+class Categories(Static):
+    can_focus = True
 
     COLUMNS = ("", "Name", "Nature")
 
@@ -46,19 +40,14 @@ class CategoriesModal(ModalScreen[str | Widget | None]):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(
-            *args, **kwargs, id="categories-modal-screen", classes="modal-screen"
+            *args, **kwargs, id="categories-container", classes="module-container"
         )
-        self.title = "Manage your categories"
+        super().__setattr__("border_title", "Categories")
 
     # --------------- Hooks -------------- #
 
     def on_mount(self) -> None:
-        categories_is_empty = get_categories_count() == 0
         self.rebuild()
-
-    def on_key(self, event: events.Key) -> None:
-        if event.key == "escape":
-            self.dismiss()
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         if event.row_key:
@@ -69,7 +58,7 @@ class CategoriesModal(ModalScreen[str | Widget | None]):
 
     def rebuild(self) -> None:
         table: DataTable = self.query_one("#categories-table")
-        empty_indicator: Static = self.query_one("#empty-indicator")
+        # empty_indicator: Static = self.query_one(".empty-indicator")
 
         table.clear()
         if not table.columns:
@@ -77,16 +66,24 @@ class CategoriesModal(ModalScreen[str | Widget | None]):
 
         categories = get_all_categories_tree()
         if categories:
-            for category, node in categories:
+            for category, node, depth in categories:
+                char = " "
+                nature = category.nature.value
+                if nature == "Want":
+                    nature = f"[red]{nature}[/red]"
+                if depth == 0:
+                    char = ""
                 table.add_row(
-                    node, category.name, category.nature.value, key=category.id
+                    node,
+                    char + category.name,
+                    char + nature,
+                    key=category.id,
                 )
             table.zebra_stripes = True
-            table.focus()
         else:
             self.current_row = None
 
-        empty_indicator.display = not categories
+        # empty_indicator.display = not categories
 
     # region Helpers
     # -------------- Helpers ------------- #
@@ -98,12 +95,6 @@ class CategoriesModal(ModalScreen[str | Widget | None]):
             severity="error",
             timeout=2,
         )
-
-    # def new_binding(self, binding: Binding) -> None:
-    #     self._bindings.key_to_bindings.setdefault(binding.key, []).append(binding)
-
-    # def remove_binding(self, key: str) -> None:
-    #     self._bindings.key_to_bindings.pop(key, None)
 
     # region callbacks
     # ------------- Callbacks ------------ #
@@ -120,7 +111,7 @@ class CategoriesModal(ModalScreen[str | Widget | None]):
                 else:
                     self.app.notify(
                         title="Success",
-                        message=f"Category created",
+                        message="Category created",
                         severity="information",
                         timeout=3,
                     )
@@ -146,7 +137,7 @@ class CategoriesModal(ModalScreen[str | Widget | None]):
                 else:
                     self.app.notify(
                         title="Success",
-                        message=f"Subcategory created",
+                        message="Subcategory created",
                         severity="information",
                         timeout=3,
                     )
@@ -210,11 +201,9 @@ class CategoriesModal(ModalScreen[str | Widget | None]):
     # region View
     # --------------- View --------------- #
     def compose(self) -> ComposeResult:
-        yield ModalContainer(
-            DataTable(
-                id="categories-table",
-                cursor_type="row",
-                cursor_foreground_priority=True,
-            ),
-            EmptyIndicator("No categories"),
+        yield DataTable(
+            id="categories-table",
+            cursor_type="row",
+            cursor_foreground_priority=True,
         )
+        # yield EmptyIndicator("No categories")

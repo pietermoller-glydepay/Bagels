@@ -1,22 +1,17 @@
-from datetime import datetime, timedelta
-
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal
 from textual.widgets import Label, Static
 
-from bagels.components.barchart import Barchart, BarchartData
 from bagels.components.percentage_bar import PercentageBar, PercentageBarItem
 from bagels.config import CONFIG
 from bagels.managers.categories import get_all_categories_records
 from bagels.managers.utils import (
     get_period_average,
     get_period_figures,
-    get_start_end_of_period,
 )
 
 
 class Insights(Static):
-
     can_focus = True
 
     def __init__(self, parent: Static, *args, **kwargs) -> None:
@@ -39,8 +34,8 @@ class Insights(Static):
         items = self.get_percentage_bar_items(period_net)
         self.percentage_bar.set_total(period_net, False)
         self.percentage_bar.set_items(items)
-        data = self.get_period_barchart_data()
-        self.period_barchart.set_data(data)
+        # data = self.get_period_barchart_data()
+        # self.period_barchart.set_data(data)
 
     def _update_labels(self) -> None:
         current_filter_label = self.query_one(".current-filter-label")
@@ -136,52 +131,52 @@ class Insights(Static):
 
         return items
 
-    def get_period_barchart_data(self) -> BarchartData:
-        offset_type = self.page_parent.filter["offset_type"]
-        offset = self.page_parent.filter["offset"]
-        if offset_type == "day":
-            return BarchartData(amounts=[], labels=[])
+    # def get_period_barchart_data(self) -> BarchartData:
+    #     offset_type = self.page_parent.filter["offset_type"]
+    #     offset = self.page_parent.filter["offset"]
+    #     if offset_type == "day":
+    #         return BarchartData(amounts=[], labels=[])
 
-        # Get data for each sub-period
-        amounts = []
-        labels = []
+    #     # Get data for each sub-period
+    #     amounts = []
+    #     labels = []
 
-        match offset_type:
-            case "year":
-                # Get start of the target year
-                start_date = datetime.now().replace(
-                    month=1, day=1, year=datetime.now().year + offset
-                )
-                for i in range(12):
-                    # Calculate month offset relative to today
-                    target_date = start_date.replace(month=i + 1)
-                    month_offset = (target_date.year - datetime.now().year) * 12 + (
-                        target_date.month - datetime.now().month
-                    )
+    #     match offset_type:
+    #         case "year":
+    #             # Get start of the target year
+    #             start_date = datetime.now().replace(
+    #                 month=1, day=1, year=datetime.now().year + offset
+    #             )
+    #             for i in range(12):
+    #                 # Calculate month offset relative to today
+    #                 target_date = start_date.replace(month=i + 1)
+    #                 month_offset = (target_date.year - datetime.now().year) * 12 + (
+    #                     target_date.month - datetime.now().month
+    #                 )
 
-                    amount = get_period_figures(
-                        offset_type="month",
-                        offset=month_offset,
-                        isIncome=self.page_parent.mode["isIncome"],
-                    )
-                    amounts.append(abs(amount))
-                    labels.append(target_date.strftime("%b"))
-            case "week":
-                start_date, end_date = get_start_end_of_period(offset, offset_type)
+    #                 amount = get_period_figures(
+    #                     offset_type="month",
+    #                     offset=month_offset,
+    #                     isIncome=self.page_parent.mode["isIncome"],
+    #                 )
+    #                 amounts.append(abs(amount))
+    #                 labels.append(target_date.strftime("%b"))
+    #         case "week":
+    #             start_date, end_date = get_start_end_of_period(offset, offset_type)
 
-                for i in range(7):
-                    current_date = start_date + timedelta(days=i)
-                    day_offset = (current_date - datetime.now()).days + 1
+    #             for i in range(7):
+    #                 current_date = start_date + timedelta(days=i)
+    #                 day_offset = (current_date - datetime.now()).days + 1
 
-                    amount = get_period_figures(
-                        offset_type="day",
-                        offset=day_offset,
-                        isIncome=self.page_parent.mode["isIncome"],
-                    )
-                    amounts.append(abs(amount))
-                    labels.append(current_date.strftime("%d"))
+    #                 amount = get_period_figures(
+    #                     offset_type="day",
+    #                     offset=day_offset,
+    #                     isIncome=self.page_parent.mode["isIncome"],
+    #                 )
+    #                 amounts.append(abs(amount))
+    #                 labels.append(current_date.strftime("%d"))
 
-        return BarchartData(amounts=amounts, labels=labels)
+    #     return BarchartData(amounts=amounts, labels=labels)
 
     # region View
     # --------------- View --------------- #
@@ -196,6 +191,6 @@ class Insights(Static):
                 yield Label("Loading...", classes="period-average amount")  # dynamic
 
         self.percentage_bar = PercentageBar()
-        self.period_barchart = Barchart()
+        # self.period_barchart = Barchart()
         yield self.percentage_bar
-        yield self.period_barchart
+        # yield self.period_barchart

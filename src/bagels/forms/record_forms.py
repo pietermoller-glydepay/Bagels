@@ -3,11 +3,10 @@ from datetime import datetime
 
 from rich.text import Text
 
-from bagels.components.autocomplete import Dropdown
 from bagels.config import CONFIG
 from bagels.managers.accounts import get_all_accounts_with_balance
 from bagels.managers.categories import get_all_categories_by_freq
-from bagels.managers.persons import create_person, get_all_persons
+from bagels.managers.persons import get_all_persons
 from bagels.managers.record_templates import get_all_templates
 from bagels.managers.records import get_record_by_id, get_record_total_split_amount
 from bagels.forms.form import Form, FormField, Option, Options

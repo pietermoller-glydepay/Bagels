@@ -61,14 +61,13 @@
   }
 
   #income-bar {
-    height: 5;
-    margin-bottom: -1;
-
+    height: 9;
+    align-vertical: middle;
     
     & > #row-0 {
       width: 1fr;
       layout: horizontal;
-      # background: red;
+      height: 1;
 
       #remaining {
         dock: right;
@@ -97,23 +96,53 @@
     & > #row-2 {
       layout: grid;
       grid-size: 2 1;
+      height: 1;
     }
 
     & > #row-3 {
       layout: grid;
-      grid-size: 3 2;
-      height: 2;
-      offset: 0 -1;
-      position: relative;
+      grid-size: 3 1;
+      margin-top: 1;
+      height: 1;
 
+      #want {
+        align-horizontal: right;
+      }
+    }
+
+    & > #row-4 {
+      layout: grid;
+      width: 1fr;
+      grid-size: 5 1;
+      height: 1;
+      
       & > #bar-spent-must {
-        hatch: "/" orange;
+        hatch: "/" $secondary;
       }
       & > #bar-spent-need {
-        hatch: "/" lime;
+        hatch: "/" $success;
       }
       & > #bar-spent-want {
-        hatch: "/" aqua;
+        hatch: "/" $accent;
+      }
+      & > #bar-spent-quota {
+        hatch: "/" $panel;
+      }
+      & > Label {
+        hatch: "·" $panel;
+        width: 1fr;
+        text-align: center;
+        color: $panel;
+        background: transparent;
+      }
+    }
+
+    & > #row-5 {
+      align-horizontal: right;
+      height: 1;
+
+      & > #bar-must-quota {
+        hatch: "/" $accent;
       }
     }
   }

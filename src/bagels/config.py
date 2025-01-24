@@ -86,8 +86,8 @@ class BudgetingStates(BaseModel):
     )
     savings_amount: float = 0  # used only if savings_assess_metric is setAmount
     # ---------- MNW budgetting ---------- #
-    wants_spending_assess_metric: Literal["percentage", "setAmount"] = (
-        "percentage"  # percentage of all expenses
+    wants_spending_assess_metric: Literal["percentageQuota", "setAmount"] = (
+        "percentageQuota"  # percentage of all expenses
     )
     wants_spending_percentage: float = (
         0.2  # used only if wants_spending_assess_metric is setPercentage

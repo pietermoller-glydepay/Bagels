@@ -27,12 +27,16 @@ class Budgets(Static):
     def on_mount(self) -> None:
         self.rebuild()
 
-    def _write_state(self, key: str, value: str) -> bool:
+    def _write_state(self, key: str, value: str, typing=None) -> bool:
         current_value = CONFIG.state
         for part in key.split("."):
             current_value = getattr(current_value, part)
-        if value != "" and current_value != float(value):
-            write_state(key, float(value))
+        if value != "":
+            typed_val = value
+            if typing:
+                typed_val = typing(value)
+            if current_value != typed_val:
+                write_state(key, typed_val)
             return True
         return False
 
@@ -40,18 +44,22 @@ class Budgets(Static):
         updated = False
         if event.input.id == "savings-input":
             if self.savings_assess_metric.startswith("percentage"):
-                updated = self._write_state("budgeting.savings_percentage", event.value)
+                updated = self._write_state(
+                    "budgeting.savings_percentage", event.value, float
+                )
             else:
-                updated = self._write_state("budgeting.savings_amount", event.value)
+                updated = self._write_state(
+                    "budgeting.savings_amount", event.value, float
+                )
 
         elif event.input.id == "wants-input":
             if self.wants_spending_assess_metric.startswith("percentage"):
                 updated = self._write_state(
-                    "budgeting.wants_spending_percentage", event.value
+                    "budgeting.wants_spending_percentage", event.value, float
                 )
             else:
                 updated = self._write_state(
-                    "budgeting.wants_spending_amount", event.value
+                    "budgeting.wants_spending_amount", event.value, float
                 )
         if updated:
             self.rebuild()

@@ -23,8 +23,8 @@ from bagels.provider import AppProvider
 from bagels.themes import BUILTIN_THEMES, Theme
 
 PAGES = [
-    {"name": "Manager", "class": Manager},
     {"name": "Home", "class": Home},
+    {"name": "Manager", "class": Manager},
 ]
 
 

@@ -37,12 +37,15 @@ class RecordTableBuilder:
             case _:
                 pass
 
-        if focus:
-            table.focus()
         if hasattr(self, "current_row_index"):
             table.move_cursor(row=self.current_row_index)
         empty_indicator.display = not table.rows
         table.display = not not table.rows
+        if focus:
+            if table.display:
+                table.focus()
+            else:
+                self.focus()
 
     def _fetch_records(self):
         params = {

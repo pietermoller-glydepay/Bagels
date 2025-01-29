@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.4
+
+- Added ability to click on accounts in accounts-mode module
+- Fix: Focus removed when switching to persons with empty view
+
 ## 0.3.2
 
 - Added error message and user prompt when config error

@@ -1,15 +1,12 @@
 from datetime import datetime
 
-
-from bagels.managers.record_templates import create_template_from_record
-from bagels.modals.confirmation import ConfirmationModal
-from bagels.modals.record import RecordModal
-from bagels.modals.transfer import TransferModal
-from bagels.modals.input import InputModal
+from bagels.forms.form import Form
+from bagels.forms.record_forms import RecordForm
 from bagels.managers.persons import (
     get_person_by_id,
     update_person,
 )
+from bagels.managers.record_templates import create_template_from_record
 from bagels.managers.records import (
     create_record,
     create_record_and_splits,
@@ -19,9 +16,11 @@ from bagels.managers.records import (
     update_record_and_splits,
 )
 from bagels.managers.splits import get_split_by_id, update_split
-from bagels.forms.form import Form
+from bagels.modals.confirmation import ConfirmationModal
+from bagels.modals.input import InputModal
+from bagels.modals.record import RecordModal
+from bagels.modals.transfer import TransferModal
 from bagels.utils.format import format_date_to_readable
-from bagels.forms.record_forms import RecordForm
 
 
 class RecordCUD:
@@ -43,7 +42,7 @@ class RecordCUD:
                         severity="information",
                         timeout=3,
                     )
-                    self.page_parent.rebuild()
+                    self.page_parent.rebuild(templates=result["createTemplate"])
 
         date = format_date_to_readable(self.page_parent.mode["date"])
         account_name = self.page_parent.mode["accountId"]["default_value_text"]

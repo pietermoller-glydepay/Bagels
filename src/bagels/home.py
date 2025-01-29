@@ -94,14 +94,15 @@ class Home(Static):
 
     # -------------- Helpers ------------- #
 
-    def rebuild(self) -> None:
+    def rebuild(self, templates=False) -> None:
         self.insights_module.rebuild()
         self.accounts_module.rebuild()
         self.income_mode_module.rebuild()
         self.date_mode_module.rebuild()
         if self.isReady:
             self.record_module.rebuild()
-            self.templates_module.rebuild(reset_state=True)
+            if templates:
+                self.templates_module.rebuild(reset_state=True)
 
     def get_filter_label(self) -> str:
         return format_period_to_readable(self.filter)
@@ -204,24 +205,35 @@ class Home(Static):
         self.income_mode_module.rebuild()
         self.insights_module.rebuild()
 
-    def _select_account(self, dir: int) -> None:
-        if self.accounts_indices["count"] > 0:
+    def _select_account(self, dir: int = 0, id: int = None) -> None:
+        if id is not None:
+            for index, account in enumerate(self.accounts):
+                if account.id == int(id):
+                    self.accounts_indices["index"] = index
+                    self.mode["accountId"]["default_value"] = account.id
+                    self.mode["accountId"]["default_value_text"] = account.name
+                    break
+        elif self.accounts_indices["count"] > 0:
             new_index = (self.accounts_indices["index"] + dir) % self.accounts_indices[
                 "count"
             ]
             self.accounts_indices["index"] = new_index
             self.mode["accountId"]["default_value"] = self.accounts[new_index].id
             self.mode["accountId"]["default_value_text"] = self.accounts[new_index].name
-            self.accounts_module.rebuild()
-            self.insights_module.rebuild()
-            if self.filter["byAccount"]:
-                self.record_module.rebuild()
+
+        self.accounts_module.rebuild()
+        self.insights_module.rebuild()
+        if self.filter["byAccount"]:
+            self.record_module.rebuild()
 
     def action_select_prev_account(self) -> None:
         self._select_account(-1)
 
     def action_select_next_account(self) -> None:
         self._select_account(1)
+
+    def action_select_account(self, account_id: int) -> None:
+        self._select_account(id=account_id)
 
     def action_toggle_use_account(self) -> None:
         self.filter["byAccount"] = not self.filter["byAccount"]

@@ -9,6 +9,8 @@
     align-vertical: middle;
     padding: 0 1 1 1;
     border-top: tall $surface;
+    width: 1fr;
+    background: $background;
     
     .left-container {
       height: auto;

@@ -2,7 +2,7 @@
 from textual import events
 from textual.app import ComposeResult
 from textual.containers import Container, ScrollableContainer
-from textual.widgets import Label, Static
+from textual.widgets import Label, ListItem, ListView, Static
 
 from bagels.components.indicators import EmptyIndicator
 from bagels.config import CONFIG
@@ -15,6 +15,40 @@ from bagels.managers.accounts import (
 )
 from bagels.modals.confirmation import ConfirmationModal
 from bagels.modals.input import InputModal
+
+
+class AccountsList(ListView):
+    def __init__(self, accounts, *args, **kwargs):
+        super().__init__(
+            *[
+                ListItem(
+                    Container(
+                        Label(
+                            str(account.name),
+                            classes="name",
+                            id=f"account-{account.id}-name",
+                        ),
+                        Label(
+                            str(account.description or ""),
+                            classes=f"description{'none' if not account.description else ''}",
+                            id=f"account-{account.id}-description",
+                        ),
+                        classes="left-container",
+                    ),
+                    Label(
+                        str(account.balance),
+                        classes="balance",
+                        id=f"account-{account.id}-balance",
+                    ),
+                    classes="account-container",
+                    id=f"account-{account.id}-container",
+                )
+                for account in accounts
+            ],
+            id="accounts-list",
+            *args,
+            **kwargs,
+        )
 
 
 class AccountMode(ScrollableContainer):
@@ -90,6 +124,10 @@ class AccountMode(ScrollableContainer):
             self.page_parent.action_select_prev_account()
         elif event.key == "down":
             self.page_parent.action_select_next_account()
+
+    def on_list_view_selected(self, event: ListView.Selected) -> None:
+        account_id = event.item.id.split("-")[1]
+        self.page_parent.action_select_account(account_id)
 
     # region cud
     # ---------------- cud --------------- #
@@ -185,19 +223,4 @@ class AccountMode(ScrollableContainer):
             yield EmptyIndicator("No accounts")
             return
 
-        for account in accounts:
-            with Container(
-                id=f"account-{account.id}-container", classes="account-container"
-            ):
-                with Container(classes="left-container"):
-                    yield Label(
-                        "",  # Will be populated in rebuild()
-                        classes="name",
-                        id=f"account-{account.id}-name",
-                    )
-                    yield Label(
-                        "",  # Will be populated in rebuild()
-                        classes="description",
-                        id=f"account-{account.id}-description",
-                    )
-                yield Label("", classes="balance", id=f"account-{account.id}-balance")
+        yield AccountsList(accounts)

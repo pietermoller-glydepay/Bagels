@@ -1,6 +1,11 @@
-# Bagels - TUI Expense Tracker
+# 🥯 Bagels - TUI Expense Tracker
 
 Powerful expense tracker that lives in your terminal.
+
+![GitHub commit activity](https://img.shields.io/github/commit-activity/t/EnhancedJax/Bagels?style=for-the-badge)
+![GitHub License](https://img.shields.io/github/license/EnhancedJax/Bagels?style=for-the-badge)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/Bagels?style=for-the-badge)
+<a title="This tool is Tool of The Week on Terminal Trove, The $HOME of all things in the terminal" href="https://terminaltrove.com/bagels"><img src="https://cdn.terminaltrove.com/media/badges/tool_of_the_week/svg/terminal_trove_tool_of_the_week_black_on_white_bg.svg" alt="Terminal Trove Tool of The Week" height="28" /></a>
 
 ![Bagels](./public/screenshots/thumb1.png)
 ![Bagels](./public/screenshots/thumb2.png)
@@ -10,7 +15,7 @@ Bagels expense tracker is a TUI application where you can track and analyse your
 > **Why an expense tracker in the terminal?**
 > I found it easier to build a habit and keep an accurate track of my expenses if I do it at the end of the day, instead of on the go. So why not in the terminal where it's fast, and I can keep all my data locally?
 
-## Features
+## ✨ Features
 
 Some notable features include:
 
@@ -27,9 +32,12 @@ Some notable features include:
 - Spending plottings / graphs with estimated spendings
 - Budgetting tool for saving money and limiting unnecessary spendings
 
-## Installation
+## 📦 Installation
 
-MacOS:
+<details open>
+    <summary><b>Recommended: By UV</b></summary>
+
+#### Unix / MacOS:
 
 ```bash
 # install uv (package manager):
@@ -42,16 +50,36 @@ source $HOME/.local/bin/env # or follow instructions
 uv tool install --python 3.13 bagels
 ```
 
-Windows:
+#### Windows:
 
 ```bash
 # install uv:
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+winget install --id=astral-sh.uv  -e
 # then follow instructions to add uv to path
 uv tool install --python 3.13 bagels
 ```
 
-Usage:
+</details>
+
+<details>
+    <summary>By Pipx</summary>
+
+    ```bash
+    pipx install bagels
+    ```
+
+</details>
+
+<details>
+    <summary>By Conda</summary>
+
+    ```bash
+    conda install -c conda-forge bagels
+    ```
+
+</details>
+
+## 🥯 Usage:
 
 ```bash
 bagels # start bagels
@@ -62,13 +90,13 @@ bagels locate config # find config file path
 
 > It is recommended, but not required, to use "modern" terminals to run the app. MacOS users are recommended to use Ghostty, and Windows users are recommended to use Windows Terminal.
 
-To upgrade:
+To upgrade with uv:
 
 ```bash
 uv tool upgrade bagels
 ```
 
-## Development setup
+## 🛠️ Development setup
 
 ```sh
 git clone https://github.com/EnhancedJax/Bagels.git
@@ -83,12 +111,13 @@ uv run textual console -x SYSTEM -x EVENT -x DEBUG -x INFO # for logging
 
 Please use the black formatter to format the code.
 
-## Roadmap
+## 🗺️ Roadmap
 
 - [x] Budgets (Major!)
 - [x] More insight displays and analysis (by nature etc.)
 - [ ] Daily check-ins
 - [ ] Pagination for records on monthly and yearly views.
+- [ ] Importing from various formats
 
 Backlog:
 

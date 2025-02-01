@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Tuple, Dict, Any
+from typing import Any, Dict, Tuple
 
 from textual.widget import Widget
 

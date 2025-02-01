@@ -1,9 +1,5 @@
 # Changelog
 
-## 0.3.5
-
-- Removed minimum amount validation for records for flexibility.
-
 ## 0.3.4
 
 - Added ability to click on accounts in accounts-mode module

@@ -3,12 +3,12 @@ from datetime import datetime
 
 from rich.text import Text
 
-from bagels.forms.form import Form, FormField, Option, Options
 from bagels.managers.accounts import get_all_accounts_with_balance
 from bagels.managers.categories import get_all_categories_by_freq
 from bagels.managers.persons import get_all_persons
 from bagels.managers.record_templates import get_all_templates
 from bagels.managers.records import get_record_by_id
+from bagels.forms.form import Form, FormField, Option, Options
 
 
 class RecordForm:
@@ -45,6 +45,7 @@ class RecordForm:
                 title="Amount",
                 key="amount",
                 type="number",
+                min=0,
                 is_required=True,
             ),
             FormField(
@@ -87,6 +88,7 @@ class RecordForm:
                 title="Amount",
                 key="amount",
                 type="number",
+                min=0,
                 is_required=True,
                 placeholder="0.00",
             ),

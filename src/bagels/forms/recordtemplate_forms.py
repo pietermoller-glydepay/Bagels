@@ -1,11 +1,10 @@
 import copy
-
 from rich.text import Text
 
-from bagels.forms.form import Form, FormField, Option, Options
 from bagels.managers.accounts import get_all_accounts_with_balance
 from bagels.managers.categories import get_all_categories_by_freq
 from bagels.managers.record_templates import get_template_by_id
+from bagels.forms.form import Form, FormField, Option, Options
 
 
 class RecordTemplateForm:
@@ -40,6 +39,7 @@ class RecordTemplateForm:
                 title="Amount",
                 key="amount",
                 type="number",
+                min=0,
                 is_required=True,
             ),
             FormField(

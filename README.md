@@ -37,12 +37,6 @@ Some notable features include:
 <details open>
     <summary><b>Recommended: By UV</b></summary>
 
-Bagels can be installed via uv on MacOS, Linux, and Windows.
-
-`uv` is a single Rust binary that you can use to install Python apps. It's significantly faster than alternative tools, and will get you up and running with Bagels in seconds.
-
-You don't even need to worry about installing Python yourself - uv will manage everything for you.
-
 #### Unix / MacOS:
 
 ```bash
@@ -55,10 +49,6 @@ source $HOME/.local/bin/env # or follow instructions
 # install bagels through uv
 uv tool install --python 3.13 bagels
 ```
-
-`uv` can also be installed via Homebrew, Cargo, Winget, pipx, and more. See the [installation guide](https://docs.astral.sh/uv/getting-started/installation/) for more information.
-
-Now you can run Posting via the command line:
 
 #### Windows:
 

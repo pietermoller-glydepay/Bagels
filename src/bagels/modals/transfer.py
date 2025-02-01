@@ -11,10 +11,10 @@ from textual.widgets import (
 )
 
 from bagels.components.fields import Fields
-from bagels.managers.accounts import get_all_accounts_with_balance
-from bagels.utils.validation import validateForm
-from bagels.modals.base_widget import ModalContainer
 from bagels.forms.form import Form, FormField
+from bagels.managers.accounts import get_all_accounts_with_balance
+from bagels.modals.base_widget import ModalContainer
+from bagels.utils.validation import validateForm
 
 
 class Accounts(ListView):
@@ -74,7 +74,6 @@ class TransferModal(ModalScreen):
                     key="amount",
                     type="number",
                     placeholder="0.00",
-                    min=0,
                     is_required=True,
                     default_value=str(record.amount) if record else "",
                 ),

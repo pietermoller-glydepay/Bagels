@@ -8,8 +8,6 @@ If you have a migration script you'd like to share, please submit a pull request
 
 Migrate data from Actual Budget (https://actualbudget.com/) to Bagels. It transfers your accounts, categories, and transactions while preserving their relationships and attributes.
 
-> To fix: Transactions having incorrect double entries.
-
 ## Rules
 
 - Transactions without categories in Actual Budget will be assigned to an "Uncategorized" category in Bagels

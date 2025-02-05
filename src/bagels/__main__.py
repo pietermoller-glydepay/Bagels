@@ -20,11 +20,46 @@ from bagels.versioning import get_current_version, get_pypi_version, needs_updat
     type=click.Path(exists=True, file_okay=True, dir_okay=True, path_type=Path),
     help="Specify the path.",
 )
+@click.option(
+    "--migrate",
+    type=click.Choice(["actualbudget"]),
+    help="Specify the migration type.",
+)
+@click.option(
+    "--source",
+    type=click.Path(exists=True, file_okay=True, dir_okay=False, path_type=Path),
+    help="Path to source database file for migration.",
+)
 @click.pass_context
-def cli(ctx, at: click.Path | None):
+def cli(ctx, at: Path | None, migrate: str | None, source: Path | None):
     """Bagels CLI."""
     if at:
         set_custom_root(at)
+
+    if migrate:
+        if not source:
+            raise click.UsageError("--source is required when using --migrate")
+
+        if migrate == "actualbudget":
+            try:
+                click.echo(f"Starting migration from {source}")
+                from bagels.models.database.app import init_db
+
+                init_db()
+
+                from bagels.locations import database_file
+                from bagels.migrations.migrate_actualbudget import (
+                    BudgetToBagelsMigration,
+                )
+
+                migrator = BudgetToBagelsMigration(str(source), str(database_file()))
+                migrator.migrate()
+                click.echo(click.style("Migration completed successfully!", fg="green"))
+                return
+            except Exception as e:
+                click.echo(click.style(f"Migration failed: {str(e)}", fg="red"))
+                ctx.exit(1)
+
     if ctx.invoked_subcommand is None:
         with Progress(
             TextColumn("[progress.description]{task.description}"),

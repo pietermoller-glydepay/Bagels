@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.5
+
+- Added ActualBudget migration
+- Fixed datemode styling
+
 ## 0.3.4
 
 - Added ability to click on accounts in accounts-mode module

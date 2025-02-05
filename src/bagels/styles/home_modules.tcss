@@ -4,45 +4,52 @@
   width: 1fr;
   height: 100%;
 
-  .account-container {
-    height: auto;
-    align-vertical: middle;
-    padding: 0 1 1 1;
-    border-top: tall $surface;
-    width: 1fr;
+  #accounts-list {
     background: $background;
     
-    .left-container {
+    &:focus {
+      background-tint: none;
+    }
+
+    .account-container {
       height: auto;
-      # layout: horizontal;
-
-      .name {
-        margin-right: 2;
-      }
-
-      .description {
-        color: $primary-background-lighten-3;
+      align-vertical: middle;
+      padding: 0 1 1 1;
+      border-top: tall $surface;
+      width: 1fr;
+      background: $background;
+      
+      .left-container {
+        height: auto;
+        # layout: horizontal;
+  
+        .name {
+          margin-right: 2;
+        }
+  
+        .description {
+          color: $primary-background-lighten-3;
+          
+        }
         
+        .none {
+          display: none;
+        }
       }
       
-      .none {
-        display: none;
+      &.selected {
+        border-left: outer $surface-lighten-2;
+        padding: 1 1 1 1;
+        border-top: none;
+        background: $surface;
+      }
+      
+      .balance {
+        dock: right;
+        color: $secondary;
       }
     }
-    
-    &.selected {
-      border-left: outer $surface-lighten-2;
-      padding: 1 1 1 1;
-      border-top: none;
-      background: $surface;
-    }
-    
-    .balance {
-      dock: right;
-      color: $secondary;
-    }
   }
-
 }
 
 #home-mode-container {

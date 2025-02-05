@@ -106,6 +106,10 @@ To upgrade with uv:
 uv tool upgrade bagels
 ```
 
+## ↔️ Migration
+
+Please read the [migration guide](MIGRATION.md) for migration from other services.
+
 ## 🛠️ Development setup
 
 ```sh
